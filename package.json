@@ -1,7 +1,7 @@
 {
   "name": "elastic-nest-logger",
   "version": "0.0.1",
-  "description": "Sprinting Elastic Nest Logger",
+  "description": "Elastic Nest Logger",
   "author": "Nairi Abgaryan",
   "contributors": [
     "Nairi Abgaryan"

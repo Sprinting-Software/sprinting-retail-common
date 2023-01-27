@@ -302,7 +302,7 @@ $ nc -v -u -z -w 3 10.0.0.170 51420
 </ul>
 
 For APM click the link and choose the service.
-https://kibana.sprinting.io/app/apm/services
+https://kibana.io/app/apm/services
 
 For the Logstash
-https://kibana.sprinting.io/app/discover#
+https://kibana.io/app/discover#
