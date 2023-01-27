@@ -286,9 +286,10 @@ The function decodes the JWT token and returns the needed field
 <h3 style="color:#3788c3;">Useful information</h3>
 For the sending logs the module using Logstash UDP transport.
 To test if udp port is responding, use netcat.
-```bash
-$nc -v -u -z -w 3 10.0.0.170 51420
-```
+
+`
+$ nc -v -u -z -w 3 10.0.0.170 51420
+`
 
 
 <h3 style="color:#3788c3;">Usage</h3>
