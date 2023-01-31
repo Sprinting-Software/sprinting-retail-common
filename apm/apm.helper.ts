@@ -56,6 +56,15 @@ export class ApmHelper {
     this.apm.setCustomContext({ [fileName]: msg });
   }
 
+  public setLabel(field: string, value: string){
+    if (!this.apm) return;
+    if (!this.apm.currentTransaction) {
+      return;
+    }
+    
+    this.apm.currentTransaction.setLabel(field, value)
+  }
+  
   public startSpan(fileName: string, spanName: string, message?: string): IApmSpan | undefined {
     if (!this.apm) return;
     if (!this.apm.currentTransaction) {

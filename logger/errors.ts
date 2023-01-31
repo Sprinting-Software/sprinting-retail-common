@@ -4,7 +4,7 @@ const util = require('util');
 type IException = {
   statusCode: number;
   name: string;
-  data?: Record<string, any>;
+  contextData?: Record<string, any>;
   message?: string;
   innerError?: any;
 };
@@ -14,7 +14,7 @@ export class HttpException extends DefaultHttpException implements IException {
     readonly statusCode: number,
     readonly name: string,
     readonly message: string = 'Internal error',
-    readonly data?: Record<string, any>,
+    readonly contextData?: Record<string, any>,
     readonly innerError?: any,
   ) {
     super(name, statusCode);
@@ -26,7 +26,7 @@ export class HttpException extends DefaultHttpException implements IException {
       ' (http status ' +
       this.statusCode +
       ')' +
-      (this.data ? ' - errorData: ' + util.inspect(this.data) : '') +
+      (this.contextData ? ' - errorData: ' + util.inspect(this.contextData) : '') +
       (this.message ? ' - ' + this.message : '') +
       (this.innerError ? '\n    |-> innerError: ' + error2string(this.innerError) : '')
     );
@@ -36,22 +36,20 @@ export class HttpException extends DefaultHttpException implements IException {
     return {
       errorName: this.name,
       innerError: error2string(this.innerError),
-      errorData: this.data,
+      errorData: this.contextData,
       message: this.message,
       httpStatus: this.statusCode,
     };
   }
 }
 
-export class InternalServerError extends HttpException {
-  constructor(
-    name: string,
-    message: string,
-    data?: Record<string, any>,
-    innerError?: any
-  ) {
-    super(HttpStatus.INTERNAL_SERVER_ERROR, name, message, data, innerError)
-  }
+export function innerError(name, message: string, data?: Record<string, any>, innerError?: any) {
+    return createError(HttpStatus.INTERNAL_SERVER_ERROR, name,  message, data, innerError)
+}
+
+
+export function createError(status: number, name: string, message: string, data?: Record<string, any>, innerError?: any) {
+  return new HttpException(status, name, message, data, innerError)
 }
 
 function error2string(e?: any): string | undefined {
@@ -63,7 +61,7 @@ function error2string(e?: any): string | undefined {
     return JSON.stringify({
       httpStatus: e2.statusCode,
       errorName: e2.name,
-      errorData: e2.data,
+      errorData: e2.contextData,
       detailedMessage: e2.message,
       innerError: error2string(e2.innerError),
     });
