@@ -1,5 +1,5 @@
 {
-  "name": "elastic-nest-logger",
+  "name": "sprinting-retail-common",
   "version": "0.0.1",
   "description": "Elastic Nest Logger",
   "author": "Nairi Abgaryan",
@@ -19,7 +19,7 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Sprinting-Software/sprinting-retail-common"
   },
   "files": [
     "dist"
