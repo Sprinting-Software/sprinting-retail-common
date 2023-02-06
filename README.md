@@ -99,7 +99,7 @@ import conf from '../../config/configuration';
           env: conf.env,
           serviceName: conf.serviceName,
           logging: {
-            enableLogs: conf.logging.silent,
+            enableLogs: conf.logging.enableLogs,
             enableAPM: conf.elk.enableApm,
           },
           logstash: {
@@ -140,19 +140,27 @@ import { LoggerModule } from "../logger/logger.module";
 export class DevSupportModule {}
 ```
 
-Example of Dev support controller and usage of all logs functions
+Example of Dev support controller and usage of all logs functions. 
+
 ```typescript
-import { Controller, Get, Header } from '@nestjs/common';
+import { ConflictException, Controller, Get, Header } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import formatError from '../../error/formatError';
-import { BaseError } from '../../error/error.base';
-import { LoggerService } from 'nest-logger';
-import { HttpException, InternalServerError } from 'nest-logger';
+import { LoggerService, HttpException, ErrorFactory } from 'sprinting-retail-common';
 
 @Controller('api/devSupport')
 @ApiTags('DevSupport')
 export class DevSupportController {
   constructor(private readonly logger: LoggerService) {}
+  
+  @Get('trigger-logstash')
+  @Header('content-type', 'application/json')
+  public async triggerLogStash() {
+    this.logger.log(__filename, 'Check if logstash sends the request using the configs');
+    this.logger.debug(__filename, 'Check if logstash sends the INFO request using the configs');
+    this.logger.warn(__filename, 'Check if logstash sends the  WARN request using the configs');
+    this.logger.error(__filename, 'Check if logstash sends the  ERROR request using the configs');
+    throw new ConflictException();
+  }
   
   @Get('trigger-errors')
   @Header('content-type', 'application/json')
@@ -166,12 +174,8 @@ export class DevSupportController {
     this.logger.apm.logSpanEvent(__filename, 'SomeEvent', { message: 'Some event message' });
     this.logger.log(__filename, 'message XXXXX');
     this.logger.log(__filename, 'Log message XXXXX');
-    this.logger.log(__filename, 'Log something important');
-    this.logger.debug(__filename, 'Debug messages for the logger');
-    this.logger.warn(__filename, 'Warning messages for the logger');
-    this.logger.error(__filename, 'ERROR messages for the logger');
+    this.logger.debug(__filename, { someKey: 'someVal', anotherKey: 'anotherVal' });
     
-    // Demonstrate erors and check if the APM and logs working properly
     const firstError = new HttpException(
       400,
       'BadRequestExceptionDevSupportError',
@@ -199,18 +203,12 @@ export class DevSupportController {
       secondError,
     );
     
-    const innerError = new InternalServerError(
+    //For throwing inner errors you can use the helper functions as ErrorFactory.innerError
+    throw ErrorFactory.innerError(
       'InnerErrorName',
       'Inner detailed message',
       { someKey: 'someValue', anotherKey: 123 },
       new Error('some inner error'),
-    );
-    
-    throw new BaseError(
-      { someKeyValue: 'someKeyValue' },
-      innerError,
-      'InnerError',
-      'Three errors have been created to demonstrate the framework around error logging. In addition to this error, the error logs should show two other errors with these error trace IDs: ',
     );
   }
   
@@ -220,6 +218,11 @@ export class DevSupportController {
     }
   }
 }
+
+function formatError(error: HttpException): string {
+  return `name: ${error.name}, errorData: ${JSON.stringify(error.contextData)}`;
+}
+
 ```
 
 <h3 style="color:#3788c3;">Http Exceptions</h3>
