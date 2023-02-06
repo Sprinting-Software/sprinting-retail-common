@@ -49,9 +49,7 @@ export class LoggerService {
     if (config.logstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf));
     }
-  
-    console.log(!(config.logging.enableLogs))
-  
+    
     this.logger = winston.createLogger({
       format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
       silent: !(config.logging.enableLogs),
