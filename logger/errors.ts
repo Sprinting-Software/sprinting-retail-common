@@ -9,7 +9,7 @@ type IException = {
   innerError?: any;
 };
 
-export class HttpException extends DefaultHttpException implements IException {
+export class HttpException extends DefaultHttpException {
   constructor(
     readonly statusCode: number,
     readonly name: string,

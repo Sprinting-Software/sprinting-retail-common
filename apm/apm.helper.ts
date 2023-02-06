@@ -6,7 +6,7 @@ export class ApmHelper {
   private readonly apm = require("elastic-apm-node");
 
   constructor(private readonly config: ConfigOptions) {
-    if (!(config.logging.enableAPM === false)) {
+    if (config.logging.enableAPM === false) {
       ApmHelper.myConsole(
         "Transaction data ARE NOT SENT to APM because ENABLE_APM is overridden and set to false in the environment"
       );

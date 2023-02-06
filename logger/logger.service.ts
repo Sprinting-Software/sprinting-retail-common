@@ -6,6 +6,7 @@ import { ApmHelper } from "../apm/apm.helper";
 import { Utils } from './utils';
 const { combine, timestamp } = winston.format;
 const ecsFormat = require("@elastic/ecs-winston-format");
+import { HttpException as DefaultHttpException } from '@nestjs/common';
 
 export const enum LogLevel {
   info = "info",
@@ -48,7 +49,9 @@ export class LoggerService {
     if (config.logstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf));
     }
-
+  
+    console.log(!(config.logging.enableLogs))
+  
     this.logger = winston.createLogger({
       format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
       silent: !(config.logging.enableLogs),
@@ -84,7 +87,7 @@ export class LoggerService {
     this.logger.warn({ message, logSource: fileName, error });
   }
   
-  error(fileName: string, message: unknown, error?: HttpException, context?: HttpArgumentsHost, data?: any) {
+  error(fileName: string, message: unknown, error?: HttpException | DefaultHttpException, context?: HttpArgumentsHost, data?: any) {
     delete error?.stack;
 
     const logMessage = {
