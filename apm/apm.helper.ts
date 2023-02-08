@@ -1,4 +1,5 @@
 import { ConfigOptions } from "../logger/logger.service";
+import { Agent } from 'elastic-apm-node';
 
 export type IApmSpan = { end: () => void };
 
@@ -6,13 +7,18 @@ export class ApmHelper {
   private readonly apm = require("elastic-apm-node");
 
   constructor(private readonly config: ConfigOptions) {
+    this.config = config
+    this.initAPM(config)
+  }
+
+  private initAPM(config: ConfigOptions){
     if (config.logging.enableAPM === false) {
       ApmHelper.myConsole(
         "Transaction data ARE NOT SENT to APM because ENABLE_APM is overridden and set to false in the environment"
       );
       return;
     }
-
+  
     const devConfig = {
       serviceName: config.serviceName,
       centralConfig: false,
@@ -21,14 +27,14 @@ export class ApmHelper {
       serverUrl: config.apm.serviceUrl,
       secretToken: config.apm.serviceSecret,
     };
-
+  
     this.apm.start(devConfig);
     ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(config.apm.serviceUrl)}`);
     ApmHelper.myConsole(
       `Transaction data can be found here: https://kibana.io/ under APM. Look for the service named ${config.serviceName}.`
     );
   }
-
+  
   private static myConsole(msg: string) {
     if (process.env.NODE_ENV !== "test") {
       console.log(__filename, msg);
@@ -63,6 +69,15 @@ export class ApmHelper {
     }
     
     this.apm.currentTransaction.setLabel(field, value)
+  }
+  
+  
+  public getAPMClient(): Agent {
+    if (!this.apm) {
+      this.initAPM(this.config)
+    }
+    
+    return this.apm
   }
   
   public startSpan(fileName: string, spanName: string, message?: string): IApmSpan | undefined {
