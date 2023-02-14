@@ -10,6 +10,8 @@ type IException = {
 };
 
 export class HttpException extends DefaultHttpException {
+  private customException = true;
+
   constructor(
     readonly statusCode: number,
     readonly name: string,
@@ -19,7 +21,7 @@ export class HttpException extends DefaultHttpException {
   ) {
     super(name, statusCode);
   }
-  
+
   override toString() {
     return (
       this.name +
@@ -31,7 +33,7 @@ export class HttpException extends DefaultHttpException {
       (this.innerError ? '\n    |-> innerError: ' + this.error2string(this.innerError) : '')
     );
   }
-  
+
   toJson(): any {
     return {
       errorName: this.name,
@@ -41,7 +43,7 @@ export class HttpException extends DefaultHttpException {
       httpStatus: this.statusCode,
     };
   }
-  
+
   private error2string(e?: any): string | undefined {
     if (e === undefined) return undefined;
     if (e instanceof HttpException) {
@@ -61,15 +63,8 @@ export class HttpException extends DefaultHttpException {
   }
 }
 
-
 export class InternalServerError extends HttpException {
-  constructor(
-    name: string,
-    message: string,
-    data?: Record<string, any>,
-    innerError?: any
-  ) {
-    super(HttpStatus.INTERNAL_SERVER_ERROR, name, message, data, innerError)
+  constructor(name: string, message: string, data?: Record<string, any>, innerError?: any) {
+    super(HttpStatus.INTERNAL_SERVER_ERROR, name, message, data, innerError);
   }
 }
-

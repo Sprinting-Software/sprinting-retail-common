@@ -1,96 +1,89 @@
-import { ConfigOptions } from "../logger/logger.service";
-import { Agent } from 'elastic-apm-node';
-
 export type IApmSpan = { end: () => void };
 
 export class ApmHelper {
-  private readonly apm = require("elastic-apm-node");
+  private static apm;
 
-  constructor(private readonly config: ConfigOptions) {
-    this.config = config
-    this.initAPM(config)
+  constructor() {
+    ApmHelper.init();
   }
 
-  private initAPM(config: ConfigOptions){
-    if (config.logging.enableAPM === false) {
+  static init() {
+    const enableApmEnv = !(process.env.ENABLE_LOGS === 'false');
+    if (!enableApmEnv) {
       ApmHelper.myConsole(
-        "Transaction data ARE NOT SENT to APM because ENABLE_APM is overridden and set to false in the environment"
+        'Transaction data ARE NOT SENT to APM because ENABLE_APM is overridden and set to false in the environment',
       );
       return;
     }
-  
+    if (ApmHelper.apm) return ApmHelper.apm;
+
+    ApmHelper.apm = require('elastic-apm-node');
     const devConfig = {
-      serviceName: config.serviceName,
+      serviceName: 'loyaltyBE',
       centralConfig: false,
       captureExceptions: false,
       metricsInterval: 0,
-      serverUrl: config.apm.serviceUrl,
-      secretToken: config.apm.serviceSecret,
+      serverUrl: process.env.ELK_SERVICE_URL,
+      secretToken: process.env.ELK_SERVICE_SECRET,
     };
-  
-    this.apm.start(devConfig);
-    ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(config.apm.serviceUrl)}`);
+
+    ApmHelper.apm.start(devConfig);
+    ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(process.env.ELK_SERVICE_URL)}`);
     ApmHelper.myConsole(
-      `Transaction data can be found here: https://kibana.io/ under APM. Look for the service named ${config.serviceName}.`
+      `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${process.env.SERVICE_NAME}.`,
     );
   }
-  
+
   private static myConsole(msg: string) {
-    if (process.env.NODE_ENV !== "test") {
+    if (process.env.NODE_ENV !== 'test') {
       console.log(__filename, msg);
     }
   }
 
-  public captureError(exception: Error, tenantId?: string) {
-    if (!this.apm) return;
-    this.apm.captureError(
-      { exception },
-      {
-        handled: false,
-        labels: { errorName: exception.name, tenantId },
-        custom: {
-          errorName: exception.name,
-          errorString: exception.toString(),
-          message: exception.message,
-        },
-      }
-    );
+  public static captureError(exception: Error, tenantId?: string) {
+    if (!ApmHelper.apm) ApmHelper.init();
+    ApmHelper.apm.captureError(exception, {
+      handled: false,
+      labels: { errorName: exception.name, tenantId },
+      custom: {
+        errorName: exception.name,
+        errorString: exception.toString(),
+        message: exception.message,
+      },
+    });
   }
 
   public logContextObject(fileName: string, msg: any): void {
-    if (!this.apm) return;
-    this.apm.setCustomContext({ [fileName]: msg });
+    if (!ApmHelper.apm) return;
+    ApmHelper.apm.setCustomContext({ [fileName]: msg });
   }
 
-  public setLabel(field: string, value: string){
-    if (!this.apm) return;
-    if (!this.apm.currentTransaction) {
+  public setLabel(field: string, value: string) {
+    if (!ApmHelper.apm) return;
+    if (!ApmHelper.apm.currentTransaction) {
       return;
     }
-    
-    this.apm.currentTransaction.setLabel(field, value)
-  }
-  
-  
-  public getAPMClient(): Agent {
-    if (!this.apm) {
-      this.initAPM(this.config)
-    }
-    
-    return this.apm
-  }
-  
-  public startSpan(fileName: string, spanName: string, message?: string): IApmSpan | undefined {
-    if (!this.apm) return;
-    if (!this.apm.currentTransaction) {
-      return;
-    }
-    return this.apm.currentTransaction.startSpan(fileName, spanName, "Javascript", undefined, message);
+
+    ApmHelper.apm.currentTransaction.setLabel(field, value);
   }
 
-  public logSpanEvent(fileName: string, eventName: string, eventMessage: any): void {
-    if (!this.apm) return;
-    const span = this.startSpan(fileName, eventName, eventMessage);
+  public static getAPMClient(): any {
+    if (!ApmHelper.apm) ApmHelper.init();
+
+    return ApmHelper.apm;
+  }
+
+  public static startSpan(fileName: string, spanName: string, message?: string): IApmSpan | undefined {
+    if (!ApmHelper.apm) return;
+    if (!ApmHelper.apm.currentTransaction) {
+      return;
+    }
+    return ApmHelper.apm.currentTransaction.startSpan(fileName, spanName, 'Javascript', undefined, message);
+  }
+
+  public static logSpanEvent(fileName: string, eventName: string, eventMessage: any): void {
+    if (!ApmHelper.apm) return;
+    const span = ApmHelper.apm.startSpan(fileName, eventName, eventMessage);
     span?.end();
   }
 }

@@ -1,18 +1,18 @@
 import { HttpException } from './errors';
-import { UDPTransport } from "udp-transport-winston";
-import * as winston from "winston";
-import { HttpArgumentsHost } from "@nestjs/common/interfaces";
-import { ApmHelper } from "../apm/apm.helper";
+import { UDPTransport } from 'udp-transport-winston';
+import * as winston from 'winston';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces';
+import { ApmHelper } from '../apm/apm.helper';
 import { Utils } from './utils';
 const { combine, timestamp } = winston.format;
-const ecsFormat = require("@elastic/ecs-winston-format");
-import { HttpException as DefaultHttpException } from '@nestjs/common';
+const ecsFormat = require('@elastic/ecs-winston-format');
+import { HttpException as DefaultHttpException, Injectable, Scope } from '@nestjs/common';
 
 export const enum LogLevel {
-  info = "info",
-  debug = "debug",
-  error = "error",
-  warn = "warn",
+  info = 'info',
+  debug = 'debug',
+  error = 'error',
+  warn = 'warn',
 }
 
 export interface ConfigOptions {
@@ -28,18 +28,18 @@ export interface ConfigOptions {
     port: number;
   };
   apm: {
-    serviceUrl: string,
-    serviceSecret: string
-  }
+    serviceUrl: string;
+    serviceSecret?: string;
+  };
 }
 
+@Injectable({ scope: Scope.DEFAULT })
 export class LoggerService {
   private readonly logger: winston.Logger;
-  public readonly apm: ApmHelper
+  public readonly apm;
 
   constructor(private readonly config: ConfigOptions, transports: any[] = []) {
-    this.apm = new ApmHelper(config)
-
+    this.apm = ApmHelper.getAPMClient();
     const conf = {
       systemName: config.serviceName,
       host: config.logstash.host,
@@ -49,15 +49,15 @@ export class LoggerService {
     if (config.logstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf));
     }
-    
+
     this.logger = winston.createLogger({
       format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
-      silent: !(config.logging.enableLogs),
+      silent: !config.logging.enableLogs,
       transports: [
         new winston.transports.Console({
           format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
         }),
-        ...transports
+        ...transports,
       ],
     });
   }
@@ -70,42 +70,38 @@ export class LoggerService {
     const logMessage = {
       ...data,
       message,
-      system: this.config.serviceName,
-      component: this.config.serviceName,
-      env: this.config.env,
-      systemEnv: this.config.env + "-" + this.config.serviceName,
-      logSource: filename,
-      logType: LogLevel.debug,
+      ...this.formatMessage(filename, LogLevel.info),
     };
 
     this.logger.info(logMessage);
   }
 
   warn(fileName: string, message: string, error?: Error) {
-    this.logger.warn({ message, logSource: fileName, error });
+    this.logger.warn({
+      ...this.formatMessage(fileName, LogLevel.warn),
+      message,
+    });
   }
-  
-  error(fileName: string, message: unknown, error?: HttpException | DefaultHttpException, context?: HttpArgumentsHost, data?: any) {
-    delete error?.stack;
+
+  error(
+    fileName: string,
+    message: unknown,
+    error?: HttpException | DefaultHttpException,
+    context?: HttpArgumentsHost,
+    data?: any,
+  ) {
+    const tenantId = Utils.getJwtTokenData(context?.getRequest().headers?.authorization, 'tenantId');
+    this.apm.captureError(error, tenantId);
 
     const logMessage = {
       ...data,
-      message,
-      system: this.config.serviceName,
-      component: this.config.serviceName,
-      env: this.config.env,
-      systemEnv: this.config.env + "-" + this.config.serviceName,
-      logSource: fileName,
-      logType: LogLevel.error,
+      ...this.formatMessage(fileName, LogLevel.error),
+      message: message,
       context: {
         error: JSON.stringify(error),
         body: JSON.stringify(context?.getRequest().body ?? {}),
       },
     };
-
-    const tenantId = Utils.getJwtTokenData(context?.getRequest().headers?.authorization, 'tenantId')
-    if (error) this.apm.captureError(error, tenantId);
-
     this.logger.error(logMessage);
   }
 
@@ -113,20 +109,24 @@ export class LoggerService {
     delete error?.stack;
 
     const logMessage = {
-      message,
+      ...this.formatMessage(fileName, logLevel),
+      message: message,
       context: {
         error,
       },
+    };
+
+    this.logger.log(logLevel, logMessage);
+  }
+
+  private formatMessage(fileName: string, logLevel: LogLevel = LogLevel.info) {
+    return {
+      filename: fileName,
       system: this.config.serviceName,
       component: this.config.serviceName,
       env: this.config.env,
-      systemEnv: this.config.env + "-" + this.config.serviceName,
-      logSource: fileName,
+      systemEnv: this.config.env + '-' + this.config.serviceName,
       logType: logLevel,
     };
-
-    this.apm.logContextObject(fileName, logMessage);
-
-    this.logger.log(logLevel, logMessage);
   }
 }

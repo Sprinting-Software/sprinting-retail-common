@@ -7,9 +7,9 @@ export class Utils {
     if (!jws.isValid(signature)) {
       return;
     }
-    
+
     const decodedJWT = jws.decode(signature);
-    
+
     return decodedJWT.payload[field];
   }
 }
