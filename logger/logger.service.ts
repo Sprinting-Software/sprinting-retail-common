@@ -36,10 +36,8 @@ export interface ConfigOptions {
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerService {
   private readonly logger: winston.Logger;
-  public readonly apm;
 
   constructor(private readonly config: ConfigOptions, transports: any[] = []) {
-    this.apm = ApmHelper.getAPMClient();
     const conf = {
       systemName: config.serviceName,
       host: config.logstash.host,
@@ -76,7 +74,7 @@ export class LoggerService {
     this.logger.info(logMessage);
   }
 
-  warn(fileName: string, message: string, error?: Error) {
+  warn(fileName: string, message: string) {
     this.logger.warn({
       ...this.formatMessage(fileName, LogLevel.warn),
       message,
@@ -91,7 +89,7 @@ export class LoggerService {
     data?: any,
   ) {
     const tenantId = Utils.getJwtTokenData(context?.getRequest().headers?.authorization, 'tenantId');
-    this.apm.captureError(error, tenantId);
+    ApmHelper.captureError(error, tenantId);
 
     const logMessage = {
       ...data,
@@ -103,20 +101,6 @@ export class LoggerService {
       },
     };
     this.logger.error(logMessage);
-  }
-
-  log(fileName: string, message: string, logLevel: LogLevel = LogLevel.info, error?: Error): void {
-    delete error?.stack;
-
-    const logMessage = {
-      ...this.formatMessage(fileName, logLevel),
-      message: message,
-      context: {
-        error,
-      },
-    };
-
-    this.logger.log(logLevel, logMessage);
   }
 
   private formatMessage(fileName: string, logLevel: LogLevel = LogLevel.info) {
