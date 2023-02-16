@@ -1,14 +1,38 @@
 export type IApmSpan = { end: () => void };
 
+export interface ApmConfig {
+  enableLogs: boolean;
+  serviceName: string;
+  serverUrl: string;
+  secretToken: string;
+  apmSamplingRate?: string;
+}
+
 export class ApmHelper {
   private static apm;
+  private static config;
 
-  constructor() {
+  constructor(private readonly config?: ApmConfig) {
+    ApmHelper.config = config;
     ApmHelper.init();
   }
 
+  static getConfig(): ApmConfig {
+    if (ApmHelper.config != undefined) {
+      return ApmHelper.config;
+    }
+
+    return {
+      enableLogs: Boolean(process.env.ENABLE_LOGS),
+      serverUrl: process.env.ELK_SERVICE_URL,
+      secretToken: process.env.ELK_SERVICE_SECRET,
+      serviceName: process.env.ELK_SERVICE_SECRET,
+      apmSamplingRate: process.env.ELK_APM_SAMPLINGRATE,
+    };
+  }
   static init() {
-    const enableApmEnv = !(process.env.ENABLE_LOGS === 'false');
+    const config = ApmHelper.getConfig();
+    const enableApmEnv = !(Boolean(config.enableLogs) === false);
     if (!enableApmEnv) {
       ApmHelper.myConsole(
         'Transaction data ARE NOT SENT to APM because ENABLE_APM is overridden and set to false in the environment',
@@ -19,12 +43,13 @@ export class ApmHelper {
 
     ApmHelper.apm = require('elastic-apm-node');
     const devConfig = {
-      serviceName: 'loyaltyBE',
+      serviceName: config.serviceName,
       centralConfig: false,
       captureExceptions: false,
       metricsInterval: 0,
-      serverUrl: process.env.ELK_SERVICE_URL,
-      secretToken: process.env.ELK_SERVICE_SECRET,
+      transactionSampleRate: config.apmSamplingRate,
+      serverUrl: config.serverUrl,
+      secretToken: config.secretToken,
     };
 
     ApmHelper.apm.start(devConfig);
@@ -41,7 +66,7 @@ export class ApmHelper {
   }
 
   public static captureError(exception: Error, tenantId?: string) {
-    if (!ApmHelper.apm) ApmHelper.init();
+    if (!ApmHelper.apm) return;
     ApmHelper.apm.captureError(exception, {
       handled: false,
       labels: { errorName: exception.name, tenantId },

@@ -18,18 +18,11 @@ export const enum LogLevel {
 export interface ConfigOptions {
   env: string;
   serviceName: string;
-  logging: {
-    enableLogs: boolean;
-    enableAPM: boolean;
-  };
+  enableLogs: boolean;
   logstash: {
     isUDPEnabled: boolean;
     host: string;
     port: number;
-  };
-  apm: {
-    serviceUrl: string;
-    serviceSecret?: string;
   };
 }
 
@@ -50,7 +43,7 @@ export class LoggerService {
 
     this.logger = winston.createLogger({
       format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
-      silent: !config.logging.enableLogs,
+      silent: !config.enableLogs,
       transports: [
         new winston.transports.Console({
           format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
