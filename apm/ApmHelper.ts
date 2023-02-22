@@ -5,7 +5,7 @@ export interface ApmConfig {
   serviceName: string;
   serverUrl: string;
   secretToken: string;
-  apmSamplingRate?: string;
+  apmSamplingRate?: number;
 }
 
 export class ApmHelper {
@@ -27,7 +27,7 @@ export class ApmHelper {
       serverUrl: process.env.ELK_SERVICE_URL,
       secretToken: process.env.ELK_SERVICE_SECRET,
       serviceName: process.env.ELK_SERVICE_SECRET,
-      apmSamplingRate: process.env.ELK_APM_SAMPLINGRATE,
+      apmSamplingRate: Number(process.env.ELK_APM_SAMPLINGRATE),
     };
   }
   static init() {
@@ -53,9 +53,9 @@ export class ApmHelper {
     };
 
     ApmHelper.apm.start(devConfig);
-    ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(process.env.ELK_SERVICE_URL)}`);
+    ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(devConfig.serverUrl)}`);
     ApmHelper.myConsole(
-      `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${process.env.SERVICE_NAME}.`,
+      `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${devConfig.serviceName}.`,
     );
   }
 
@@ -70,12 +70,28 @@ export class ApmHelper {
     ApmHelper.apm.captureError(exception, {
       handled: false,
       labels: { errorName: exception.name, tenantId },
+      message: exception.message,
       custom: {
         errorName: exception.name,
         errorString: exception.toString(),
-        message: exception.message,
       },
     });
+  }
+
+  /**
+   * @returns The transaction ID from the current APM transaction. Will be undefined if no such transaction exists.
+   */
+  static getTraceIds(): any {
+    if (!ApmHelper.apm) return;
+    const ids: any = ApmHelper.apm.currentTransaction?.ids;
+    if (ids) {
+      return {
+        transactionId: ids['transaction.id'],
+        traceId: ids['trace.id'],
+      };
+    } else {
+      return undefined;
+    }
   }
 
   public logContextObject(fileName: string, msg: any): void {

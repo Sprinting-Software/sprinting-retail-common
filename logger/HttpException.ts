@@ -1,11 +1,11 @@
-import { HttpException as DefaultHttpException, HttpStatus } from '@nestjs/common';
+import { HttpException as DefaultHttpException } from '@nestjs/common';
 const util = require('util');
 
 type IException = {
   statusCode: number;
   name: string;
   contextData?: Record<string, any>;
-  message?: string;
+  detailedMessage?: string;
   innerError?: any;
 };
 
@@ -15,22 +15,23 @@ export class HttpException extends DefaultHttpException {
   constructor(
     readonly statusCode: number,
     readonly name: string,
-    readonly message: string = 'Internal error',
-    readonly contextData?: Record<string, any>,
     readonly innerError?: any,
+    readonly contextData?: Record<string, any>,
+    readonly detailedMessage?: string,
   ) {
     super(name, statusCode);
+    this.message = this.toString();
   }
 
   override toString() {
     return (
       this.name +
-      ' (http status ' +
-      this.statusCode +
-      ')' +
-      (this.contextData ? ' - errorData: ' + util.inspect(this.contextData) : '') +
-      (this.message ? ' - ' + this.message : '') +
-      (this.innerError ? '\n    |-> innerError: ' + this.error2string(this.innerError) : '')
+        ' (http status ' +
+        this.statusCode +
+        ')' +
+        (this.contextData ? ' - errorData: ' + util.inspect(this.contextData) : '') +
+        this.detailedMessage ??
+      '' + (this.innerError ? '\n    |-> innerError: ' + this.error2string(this.innerError) : '')
     );
   }
 
@@ -40,7 +41,7 @@ export class HttpException extends DefaultHttpException {
       innerError: this.error2string(this.innerError),
       errorData: this.contextData,
       message: this.message,
-      httpStatus: this.statusCode,
+      status: this.statusCode,
     };
   }
 
@@ -51,20 +52,14 @@ export class HttpException extends DefaultHttpException {
     } else if (e as IException) {
       const e2 = e as IException;
       return JSON.stringify({
-        httpStatus: e2.statusCode,
+        status: e2.statusCode,
         errorName: e2.name,
         errorData: e2.contextData,
-        detailedMessage: e2.message,
+        detailedMessage: e2.detailedMessage,
         innerError: this.error2string(e2.innerError),
       });
     } else {
       return '' + e;
     }
-  }
-}
-
-export class InternalServerError extends HttpException {
-  constructor(name: string, message: string, data?: Record<string, any>, innerError?: any) {
-    super(HttpStatus.INTERNAL_SERVER_ERROR, name, message, data, innerError);
   }
 }

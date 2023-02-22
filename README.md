@@ -81,12 +81,11 @@ const convictSchema = convict({elk: {
   }});
 ```
 
-Create the logger module.
+Create the logger module. It will enable APM as well. 
 `logger/logger.module.ts`
 ```javascript
-
 import { Module } from '@nestjs/common';
-import { ConfigOptions, LoggerService } from 'nest-logger';
+import { ApmHelper, ConfigOptions, LoggerService } from 'sprinting-retail-common';
 import conf from '../../config/configuration';
 
 @Module({
@@ -98,23 +97,25 @@ import conf from '../../config/configuration';
         const configOptions: ConfigOptions = {
           env: conf.env,
           serviceName: conf.serviceName,
-          logging: {
-            enableLogs: conf.logging.enableLogs,
-            enableAPM: conf.elk.enableApm,
-          },
+          enableLogs: conf.elk.enableLogs,
           logstash: {
             isUDPEnabled: conf.elk.logstash.enableUDP,
             host: conf.elk.logstash.host,
             port: conf.elk.logstash.port,
           },
-          apm: {
-            serviceUrl: conf.elk.serviceUrl,
-            serviceSecret: conf.elk.serviceSecret,
-          },
         };
 
         return new LoggerService(configOptions);
       },
+    },
+    {
+      provide: ApmHelper,
+      useValue: new ApmHelper({
+        serviceName: conf.serviceName,
+        serverUrl: conf.elk.apm.serviceUrl,
+        secretToken: conf.elk.apm.serviceSecret,
+        enableLogs: conf.elk.enableLogs,
+      }),
     },
   ],
   exports: [LoggerService],
@@ -155,10 +156,9 @@ export class DevSupportController {
   @Get('trigger-logstash')
   @Header('content-type', 'application/json')
   public async triggerLogStash() {
-    this.logger.log(__filename, 'Check if logstash sends the request using the configs');
-    this.logger.debug(__filename, 'Check if logstash sends the INFO request using the configs');
+    this.logger.info(__filename, 'Check if logstash sends the INFO request using the configs');
+    this.logger.debug(__filename, 'Check if logstash sends the DEBUG request using the configs');
     this.logger.warn(__filename, 'Check if logstash sends the  WARN request using the configs');
-    this.logger.error(__filename, 'Check if logstash sends the  ERROR request using the configs');
     throw new ConflictException();
   }
   
@@ -166,50 +166,39 @@ export class DevSupportController {
   @Header('content-type', 'application/json')
   public async triggerErrors(): Promise<void> {
     this.startEmptyLoop();
-    const span = this.logger.apm.startSpan('SomeHardWork', 'Some message');
+    const span = ApmHelper.startSpan('SomeHardWork', 'Some message');
     this.startEmptyLoop();
     
     span?.end();
     
-    this.logger.apm.logSpanEvent(__filename, 'SomeEvent', { message: 'Some event message' });
-    this.logger.log(__filename, 'message XXXXX');
-    this.logger.log(__filename, 'Log message XXXXX');
-    this.logger.debug(__filename, { someKey: 'someVal', anotherKey: 'anotherVal' });
+    ApmHelper.logSpanEvent(__filename, 'SomeEvent', {
+      message: 'Some event message',
+    });
     
-    const firstError = new HttpException(
-      400,
-      'BadRequestExceptionDevSupportError',
+    const firstError = ErrorFactory.createError(
+      new Error('Some inner error'),
+      {
+        someKey: 'someValue',
+        anotherKey: 123,
+      },
       'some detailed message',
-      { someKey: 'someValue', anotherKey: 123 },
-      new Error('inner error'),
     );
     
-    this.logger.error(
-      __filename,
-      `Caught ${firstError.name}: ${formatError(firstError)}, response: ${JSON.stringify(firstError.toJson())}`,
-      firstError,
-    );
+    this.logger.logError(firstError);
     
     const secondError = new HttpException(
       400,
       'ForbiddenExceptionDevSupportError',
-      'some detailed message',
-      { someKey: 'someValue', anotherKey: 123 },
       new Error('inner error'),
+      {},
+      'some detailed message',
     );
-    this.logger.error(
-      __filename,
-      `Caught ${secondError.name}: ${formatError(secondError)}, response: ${JSON.stringify(secondError.toJson())}`,
-      secondError,
-    );
+    this.logger.logError(secondError, {
+      someKey: 'someValue',
+      anotherKey: 123,
+    });
     
-    //For throwing inner errors you can use the helper functions as ErrorFactory.innerError
-    throw ErrorFactory.innerError(
-      'InnerErrorName',
-      'Inner detailed message',
-      { someKey: 'someValue', anotherKey: 123 },
-      new Error('some inner error'),
-    );
+    throw firstError;
   }
   
   startEmptyLoop() {
@@ -219,71 +208,73 @@ export class DevSupportController {
   }
 }
 
-function formatError(error: HttpException): string {
-  return `name: ${error.name}, errorData: ${JSON.stringify(error.contextData)}`;
-}
-
 ```
 
 <h3 style="color:#3788c3;">Http Exceptions</h3>
-The logger uses a custom-created interface for the Exceptions. It's for having structured error messages.
-For making another exception, you should extend HttpException as `InternalServerError` shown in the code.
-
+The logger uses a custom-created interface for the Exceptions. 
+The Logger provides `GlobalErrorFilter` for filtering exceptions
+Enable it from AppModule.
 ```typescript
-import { HttpException as DefaultHttpException, HttpStatus } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
+import { GlobalErrorFilter } from 'sprinting-retail-common';
 
-export class HttpException extends DefaultHttpException implements IException {
-  constructor(
-    readonly statusCode: number,
-    readonly name: string,
-    readonly message: string,
-    readonly data?: Record<string, any>,
-    readonly innerError?: any,
-  ) {
-    super(name, statusCode);
-  }
-  
-  override toString() {
-    return (
-      this.name +
-      ' (http status ' +
-      this.statusCode +
-      ')' +
-      (this.data ? ' - errorData: ' + util.inspect(this.data) : '') +
-      (this.message ? ' - ' + this.message : '') +
-      (this.innerError ? '\n    |-> innerError: ' + error2string(this.innerError) : '')
-    );
-  }
-  
-  toJson(): any {
-    return {
-      errorName: this.name,
-      innerError: error2string(this.innerError),
-      errorData: this.data,
-      message: this.message,
-      httpStatus: this.statusCode,
-    };
-  }
-}
-
-export class InternalServerError extends HttpException {
-  constructor(
-    name: string,
-    message: string,
-    data?: Record<string, any>,
-    innerError?: any
-  ) {
-    super(HttpStatus.INTERNAL_SERVER_ERROR, name, message, data, innerError)
-  }
-}
+@Module({
+  imports: [],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: GlobalErrorFilter,
+    },
+  ],
+  exports: [],
+})
+export class AppModule {}
 ```
 
-<h3 style="color:#3788c3;">Tenants Information</h3>
 
-The logger service uses the ``Utils.getJwtTokenData`` data to get tenant id from jwt token.
-The function decodes the JWT token and returns the needed field
-```typescript
-    const tenantId = Utils.getJwtTokenData(context?.getRequest().headers?.authorization, 'tenantId')
+<h3 style="color:#3788c3;">Create errors methods signatures </h3>
+
+```
+/**
+   * where you have not caught an error, but you have a business error, and want to throw it as a new error
+   * @param name
+   * @param contextData
+   * @param detailedMessage
+   */
+  static createError(name: string, contextData?: Record<string, any>, detailedMessage?: string): HttpException;
+  /**
+   *  where you have caught an error and want to throw a new error
+   * @param innerError
+   * @param contextData
+   * @param detailedMessage
+   */
+  static createError(
+    innerError: Error | DefaultDefaultHttpException,
+    contextData?: Record<string, any>,
+    detailedMessage?: string,
+  ): HttpException;
+  
+```
+
+<h3 style="color:#3788c3;">Log errors methods signatures </h3>
+```
+  /**
+   * logError Overloading with type Error
+   * logError method -> where you have caught an error and only want to log
+   * @param innerError
+   * @param data
+   * @param detailedMessage
+   */
+  logError(innerError: HttpException, data?: Record<string, any>, detailedMessage?: string): void;
+  /**
+   * logError Overloading by name
+   * where you have not caught an error, but you have a business error, and you want to log it but not throw it
+   * @param name
+   * @param data
+   * @param detailedMessage
+   */
+  logError(name: string, data?: Record<any, any>, detailedMessage?: string): void;
 ```
 
 <h3 style="color:#3788c3;">Useful information</h3>
