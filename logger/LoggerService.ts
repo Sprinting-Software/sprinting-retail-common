@@ -131,21 +131,21 @@ export class LoggerService {
     This method for getting file caller info, it should be used when someone directly calls logError method
    */
   private static _getCallerFile(error?: Error) {
-    let filename;
     const _pst = Error.prepareStackTrace;
+    const stackTraceLimit = Error.stackTraceLimit;
+
     Error.prepareStackTrace = function (err, stack) {
       return stack;
     };
+    Error.stackTraceLimit = 3;
 
     let err = error;
     if (error === undefined) err = new Error();
-    // @ts-ignore
     const stack = err.stack;
-    // @ts-ignore
-    stack.shift();
     Error.prepareStackTrace = _pst;
+    Error.stackTraceLimit = stackTraceLimit;
 
     // @ts-ignore
-    return stack.shift().getFileName();
+    return stack[2].getFileName();
   }
 }

@@ -14,35 +14,44 @@ export class HttpException extends DefaultHttpException {
 
   constructor(
     readonly statusCode: number,
-    readonly name: string,
+    readonly responseData: any,
     readonly innerError?: any,
     readonly contextData?: Record<string, any>,
     readonly detailedMessage?: string,
   ) {
-    super(name, statusCode);
-    this.message = this.toString();
+    super(responseData, statusCode);
+    this.detailedMessage = this.toString();
   }
 
   override toString() {
     return (
       this.name +
-        ' (http status ' +
-        this.statusCode +
-        ')' +
-        (this.contextData ? ' - errorData: ' + util.inspect(this.contextData) : '') +
-        this.detailedMessage ??
-      '' + (this.innerError ? '\n    |-> innerError: ' + this.error2string(this.innerError) : '')
+      ' (http status ' +
+      this.statusCode +
+      ')' +
+      (this.detailedMessage ? ' - detailedMessage: ' + this.detailedMessage : '') +
+      (this.contextData ? ' - errorData: ' + util.inspect(this.contextData) : '') +
+      (this.innerError ? '\n    |-> innerError: ' + this.error2string(this.innerError) : '')
     );
   }
 
   toJson(): any {
-    return {
+    const response = {
       errorName: this.name,
       innerError: this.error2string(this.innerError),
       errorData: this.contextData,
       message: this.message,
-      status: this.statusCode,
+      detailedMessage: this.detailedMessage,
+      statusCode: this.statusCode,
     };
+    if (typeof this.responseData === 'object') {
+      return {
+        ...response,
+        ...this.responseData,
+      };
+    }
+
+    return response;
   }
 
   private error2string(e?: any): string | undefined {
