@@ -70,7 +70,7 @@ export class ApmHelper {
     ApmHelper.apm.captureError(exception, {
       handled: false,
       labels: { errorName: exception.name, tenantId },
-      message: exception.message,
+      message: exception.message.toString(),
       custom: {
         errorName: exception.name,
         errorString: exception.toString(),

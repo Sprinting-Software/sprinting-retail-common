@@ -47,7 +47,7 @@ export class ErrorFactory {
       const exception = <DefaultHttpException>error;
       return new HttpException(
         exception.getStatus(),
-        exception.getResponse(),
+        JSON.stringify(exception.getResponse()),
         { name: exception.name },
         contextData,
         exception.message,
