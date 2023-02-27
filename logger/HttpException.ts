@@ -14,12 +14,12 @@ export class HttpException extends DefaultHttpException {
 
   constructor(
     readonly statusCode: number,
-    readonly responseData: any,
+    readonly message: any,
     readonly innerError?: any,
     readonly contextData?: Record<string, any>,
     readonly detailedMessage?: string,
   ) {
-    super(responseData, statusCode);
+    super(message, statusCode);
     this.detailedMessage = this.toString();
   }
 
@@ -37,17 +37,17 @@ export class HttpException extends DefaultHttpException {
 
   toJson(): any {
     const response = {
-      errorName: this.name,
+      errorName: this.innerError?.name ?? this.name,
       innerError: this.error2string(this.innerError),
       errorData: this.contextData,
-      message: this.message,
+      message: this.innerError?.message ?? this.message,
       detailedMessage: this.detailedMessage,
       statusCode: this.statusCode,
     };
-    if (typeof this.responseData === 'object') {
+    if (typeof this.message === 'object') {
       return {
         ...response,
-        ...this.responseData,
+        ...this.message,
       };
     }
 

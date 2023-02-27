@@ -29,7 +29,7 @@ export class GlobalErrorFilter implements ExceptionFilter {
 
       response.status(error.getStatus() ?? 500).send(httpException.toJson());
     } else {
-      const unknownError = ErrorFactory.createError(error.name, {}, 'Unknown error');
+      const unknownError = ErrorFactory.createError(error.name, 500, {}, 'Unknown error');
       this.logger.logError(unknownError, { response: ctx.getResponse() });
       response.status(500).send({
         message: 'Unknown error',

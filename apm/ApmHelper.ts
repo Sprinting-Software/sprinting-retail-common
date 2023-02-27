@@ -18,7 +18,7 @@ export class ApmHelper {
   }
 
   static getConfig(): ApmConfig {
-    if (ApmHelper.config != undefined) {
+    if (ApmHelper.config !== undefined) {
       return ApmHelper.config;
     }
 

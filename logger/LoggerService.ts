@@ -102,13 +102,10 @@ export class LoggerService {
     }
 
     ApmHelper.captureError(error);
-    const traceIds = ApmHelper.getTraceIds();
     const logMessage = {
       ...data,
       ...this.formatMessage(LoggerService._getCallerFile(), LogLevel.error),
       message: error.message,
-      traceId: traceIds.traceId,
-      transactionId: traceIds.transactionId,
       context: {
         error: JSON.stringify(error),
       },
