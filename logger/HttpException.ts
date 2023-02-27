@@ -1,16 +1,16 @@
-import { HttpException as DefaultHttpException } from '@nestjs/common';
-const util = require('util');
+import { HttpException as NestHttpException } from '@nestjs/common';
+import util from 'util';
 
-type IException = {
+interface IException {
   statusCode: number;
   name: string;
   contextData?: Record<string, any>;
   detailedMessage?: string;
   innerError?: any;
-};
+}
 
-export class HttpException extends DefaultHttpException {
-  private customException = true;
+export class HttpException extends NestHttpException {
+  private readonly customException = true;
 
   constructor(
     readonly statusCode: number,
@@ -20,30 +20,37 @@ export class HttpException extends DefaultHttpException {
     readonly detailedMessage?: string,
   ) {
     super(message, statusCode);
-    this.detailedMessage = this.toString();
+    this.detailedMessage = detailedMessage ?? this.toString();
   }
 
-  override toString() {
-    return (
-      this.name +
-      ' (http status ' +
-      this.statusCode +
-      ')' +
-      (this.detailedMessage ? ' - detailedMessage: ' + this.detailedMessage : '') +
-      (this.contextData ? ' - errorData: ' + util.inspect(this.contextData) : '') +
-      (this.innerError ? '\n    |-> innerError: ' + this.error2string(this.innerError) : '')
-    );
+  public override toString(): string {
+    const details = [
+      `http status ${this.statusCode}`,
+      this.detailedMessage ? `detailedMessage: ${this.detailedMessage}` : '',
+      this.contextData ? `errorData: ${util.inspect(this.contextData)}` : '',
+      this.innerError ? `innerError: ${this.errorToString(this.innerError)}` : '',
+    ]
+      .filter((detail) => !!detail)
+      .join(' - ');
+
+    return `${this.name} (${details})`;
   }
 
-  toJson(): any {
+  public toJson(): any {
+    let message = this.innerError?.message ?? this.message;
+    if (this.isJsonString(message)) {
+      message = JSON.parse(message);
+    }
+
     const response = {
       errorName: this.innerError?.name ?? this.name,
-      innerError: this.error2string(this.innerError),
+      innerError: this.errorToString(this.innerError),
       errorData: this.contextData,
-      message: this.innerError?.message ?? this.message,
+      message: message,
       detailedMessage: this.detailedMessage,
       statusCode: this.statusCode,
     };
+
     if (typeof this.message === 'object') {
       return {
         ...response,
@@ -54,8 +61,7 @@ export class HttpException extends DefaultHttpException {
     return response;
   }
 
-  private error2string(e?: any): string | undefined {
-    if (e === undefined) return undefined;
+  private errorToString(e?: any): string | undefined {
     if (e instanceof HttpException) {
       return e.toString();
     } else if (e as IException) {
@@ -65,10 +71,19 @@ export class HttpException extends DefaultHttpException {
         errorName: e2.name,
         errorData: e2.contextData,
         detailedMessage: e2.detailedMessage,
-        innerError: this.error2string(e2.innerError),
+        innerError: this.errorToString(e2.innerError),
       });
     } else {
-      return '' + e;
+      return `${e}`;
+    }
+  }
+
+  private isJsonString(str: string): boolean {
+    try {
+      JSON.parse(str);
+      return true;
+    } catch {
+      return false;
     }
   }
 }

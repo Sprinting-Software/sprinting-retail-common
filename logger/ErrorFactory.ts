@@ -1,4 +1,4 @@
-import { HttpException as DefaultHttpException } from '@nestjs/common';
+import { BadRequestException, HttpException as DefaultHttpException } from '@nestjs/common';
 import { HttpException } from './HttpException';
 
 export class ErrorFactory {
@@ -44,10 +44,12 @@ export class ErrorFactory {
         detailedMessage,
       );
     if (error.name === 'BadRequestException') {
-      const exception = <DefaultHttpException>error;
+      const exception = <BadRequestException>error;
+      const response = <any>exception.getResponse();
+
       return new HttpException(
         exception.getStatus(),
-        JSON.stringify(exception.getResponse()),
+        JSON.stringify(response.message),
         { name: exception.name },
         contextData,
         exception.message,
