@@ -20,7 +20,7 @@ export class HttpException extends NestHttpException {
     readonly detailedMessage?: string,
   ) {
     super(message, statusCode);
-    this.detailedMessage = detailedMessage ?? this.toString();
+    this.detailedMessage = this.toString();
   }
 
   public override toString(): string {
