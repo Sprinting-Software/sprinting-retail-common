@@ -4,7 +4,7 @@ import { ApmHelper } from '../apm/ApmHelper';
 const { combine, timestamp } = winston.format;
 const ecsFormat = require('@elastic/ecs-winston-format');
 import { Injectable, Scope } from '@nestjs/common';
-import { CommonException } from './CommonException';
+import { CommonException } from '../errorHandling/CommonException';
 import { ConfigOptions, LogLevel } from './LoggerService';
 
 @Injectable({ scope: Scope.DEFAULT })

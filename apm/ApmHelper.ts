@@ -1,4 +1,4 @@
-import { CommonException } from '../logger/CommonException';
+import { CommonException } from '../errorHandling/CommonException';
 
 export type IApmSpan = { end: () => void };
 

@@ -6,8 +6,8 @@ import {
   HttpException as DefaultHttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { CommonException } from '../logger/CommonException';
-import { ErrorFactoryV2 } from '../logger/ErrorFactoryV2';
+import { CommonException } from '../errorHandling/CommonException';
+import { ErrorFactoryV2 } from '../errorHandling/ErrorFactoryV2';
 import { HttpException } from '../logger/HttpException';
 import { LoggerServiceV2 } from '../logger/LoggerServiceV2';
 
