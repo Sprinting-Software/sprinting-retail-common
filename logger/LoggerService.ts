@@ -66,7 +66,6 @@ export class LoggerService {
       ...this.formatMessage(filename),
     };
 
-    console.log(this.logger.isDebugEnabled());
     this.logger.debug(logMessage);
   }
 
