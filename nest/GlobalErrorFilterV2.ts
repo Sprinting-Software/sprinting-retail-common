@@ -30,7 +30,7 @@ export class GlobalErrorFilterV2 implements ExceptionFilter {
     const response = ctx.getResponse();
 
     const mappedError: CommonException = ErrorFactoryV2.parseAnyError(error);
-    this.logger.logError(mappedError, this.logContext);
+    this.logger.logError(__filename, mappedError, this.logContext);
     response.status(mappedError.httpStatus ?? HttpStatus.BAD_GATEWAY).send(mappedError.toJson());
   }
 }

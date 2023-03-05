@@ -35,42 +35,29 @@ export class LoggerServiceV2 {
     });
   }
 
-  public info(filename: string, message: string) {
-    this.logger.info({
-      message: message,
-      logType: LogLevel.info,
-      ...this.formatMessage(filename),
-    });
+  public info(fileName: string, message: string, data?: any) {
+    this.logger.info(this.formatMessage(fileName, LogLevel.info, message, data));
   }
 
-  public debug(filename: string, message: any, data?: any) {
-    const logMessage = {
-      ...data,
-      message,
-      ...this.formatMessage(filename),
-    };
-
-    this.logger.debug(logMessage);
+  public debug(fileName: string, message: any, data?: any) {
+    this.logger.debug(this.formatMessage(fileName, LogLevel.debug, message, data));
   }
 
-  public warn(fileName: string, message: string) {
-    this.logger.warn({
-      ...this.formatMessage(fileName, LogLevel.warn),
-      message,
-    });
+  public warn(fileName: string, message: string, data?: any) {
+    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, data));
   }
 
   /**
    * When you want to log an error. You need to use the ErrorFactoryV2 to product the exception object
    * @param error
    */
-  public logError(error: CommonException, logContext?: LogContext) {
+  public logError(fileName: string, error: CommonException, logContext?: LogContext) {
     ApmHelper.captureErrorV2(error, logContext);
     const logMessage = error.toString();
-    this.logger.error(logMessage);
+    this.logger.error(this.formatMessage(fileName, LogLevel.error, logMessage));
   }
 
-  private formatMessage(fileName: string, logLevel: LogLevel = LogLevel.info) {
+  private formatMessage(fileName: string, logLevel: LogLevel = LogLevel.info, message: string, data?: any) {
     return {
       filename: fileName,
       system: this.config.serviceName,
@@ -78,6 +65,8 @@ export class LoggerServiceV2 {
       env: this.config.env,
       systemEnv: this.config.env + '-' + this.config.serviceName,
       logType: logLevel,
+      message: message,
+      ...data,
     };
   }
 
