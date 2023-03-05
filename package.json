@@ -1,7 +1,7 @@
 {
   "name": "sprinting-retail-common",
-  "version": "0.1.0",
-  "description": "Elastic Nest Logger",
+  "version": "1.0.0",
+  "description": "Error handling and logging with APM",
   "author": "Nairi Abgaryan",
   "contributors": [
     "Nairi Abgaryan"
