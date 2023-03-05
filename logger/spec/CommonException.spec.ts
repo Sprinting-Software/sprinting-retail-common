@@ -1,4 +1,4 @@
-import { CommonException } from './CommonException';
+import { CommonException } from '../CommonException';
 import util from 'util';
 
 describe('CommonException', () => {

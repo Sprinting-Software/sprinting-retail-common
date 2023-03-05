@@ -1,10 +1,10 @@
-import { LoggerServiceV2 } from '../logger/LoggerServiceV2';
-import { GlobalErrorFilterV2 } from './GlobalErrorFilterV2';
+import { LoggerServiceV2 } from '../../logger/LoggerServiceV2';
+import { GlobalErrorFilterV2 } from '../GlobalErrorFilterV2';
 import { ArgumentsHost, HttpStatus } from '@nestjs/common';
 import { HttpException as NestHttpException } from '@nestjs/common';
-import { CommonException } from '../logger/CommonException';
-import { ErrorFactory } from '../logger/ErrorFactory';
-import { ErrorFactoryV2 } from '../logger/ErrorFactoryV2';
+import { CommonException } from '../../logger/CommonException';
+import { ErrorFactory } from '../../logger/ErrorFactory';
+import { ErrorFactoryV2 } from '../../logger/ErrorFactoryV2';
 describe('GlobalErrorFilter', () => {
   let globalErrorFilter: GlobalErrorFilterV2;
   let loggerService: LoggerServiceV2;

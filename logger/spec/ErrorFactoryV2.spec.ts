@@ -1,4 +1,5 @@
-import { ErrorFactoryV2 } from './ErrorFactoryV2';
+import { ErrorFactoryV2 } from '../ErrorFactoryV2';
+
 describe('ErrorFactory2', () => {
   it('should createNamedException', () => {
     console.log(ErrorFactoryV2.createNamedException('MyError').toString());
