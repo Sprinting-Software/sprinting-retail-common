@@ -1,3 +1,5 @@
+import { CommonException } from '../logger/CommonException';
+
 export type IApmSpan = { end: () => void };
 
 export interface ApmConfig {
@@ -75,6 +77,17 @@ export class ApmHelper {
         errorName: exception.name,
         errorString: exception.toString(),
       },
+    });
+  }
+
+  public static captureErrorV2(exception: CommonException, tenantId?: string, handled?: boolean) {
+    if (!ApmHelper.apm) return;
+    ApmHelper.apm.captureError(exception, {
+      handled: handled,
+      labels: { errorName: exception.errorName, errorDescription: exception.description, tenantId },
+      captureAttributes: false,
+      custom: exception.contextData,
+      message: exception.toPrintFriendlyString(),
     });
   }
 
