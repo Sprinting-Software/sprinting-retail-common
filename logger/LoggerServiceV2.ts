@@ -6,6 +6,7 @@ const ecsFormat = require('@elastic/ecs-winston-format');
 import { Injectable, Scope } from '@nestjs/common';
 import { CommonException } from '../errorHandling/CommonException';
 import { ConfigOptions, LogLevel } from './LoggerService';
+import { LogContext } from '../common/LogContext';
 
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerServiceV2 {
@@ -34,7 +35,7 @@ export class LoggerServiceV2 {
     });
   }
 
-  info(filename: string, message: string) {
+  public info(filename: string, message: string) {
     this.logger.info({
       message: message,
       logType: LogLevel.info,
@@ -42,7 +43,7 @@ export class LoggerServiceV2 {
     });
   }
 
-  debug(filename: string, message: any, data?: any) {
+  public debug(filename: string, message: any, data?: any) {
     const logMessage = {
       ...data,
       message,
@@ -52,7 +53,7 @@ export class LoggerServiceV2 {
     this.logger.debug(logMessage);
   }
 
-  warn(fileName: string, message: string) {
+  public warn(fileName: string, message: string) {
     this.logger.warn({
       ...this.formatMessage(fileName, LogLevel.warn),
       message,
@@ -63,8 +64,8 @@ export class LoggerServiceV2 {
    * When you want to log an error. You need to use the ErrorFactoryV2 to product the exception object
    * @param error
    */
-  logError(error: CommonException) {
-    ApmHelper.captureErrorV2(error);
+  public logError(error: CommonException, logContext?: LogContext) {
+    ApmHelper.captureErrorV2(error, logContext);
     const logMessage = error.toString();
     this.logger.error(logMessage);
   }

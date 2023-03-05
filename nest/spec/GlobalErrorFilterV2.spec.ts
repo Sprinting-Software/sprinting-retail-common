@@ -5,6 +5,9 @@ import { HttpException as NestHttpException } from '@nestjs/common';
 import { CommonException } from '../../errorHandling/CommonException';
 import { ErrorFactory } from '../../logger/ErrorFactory';
 import { ErrorFactoryV2 } from '../../errorHandling/ErrorFactoryV2';
+import { LogContext } from '../../common/LogContext';
+import { UserIdContext } from '../../common/UserIdContext';
+import { TenantContext } from '../../common/TenantContext';
 describe('GlobalErrorFilter', () => {
   let globalErrorFilter: GlobalErrorFilterV2;
   let loggerService: LoggerServiceV2;
@@ -27,7 +30,10 @@ describe('GlobalErrorFilter', () => {
       }),
     } as any;
 
-    globalErrorFilter = new GlobalErrorFilterV2(loggerService);
+    globalErrorFilter = new GlobalErrorFilterV2(
+      loggerService,
+      new LogContext(new TenantContext(100), new UserIdContext('xxx')),
+    );
   });
 
   it('should handle named exceptions', () => {

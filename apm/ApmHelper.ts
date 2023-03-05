@@ -1,3 +1,4 @@
+import { LogContext } from '../common/LogContext';
 import { CommonException } from '../errorHandling/CommonException';
 
 export type IApmSpan = { end: () => void };
@@ -8,6 +9,7 @@ export interface ApmConfig {
   serverUrl: string;
   secretToken: string;
   apmSamplingRate?: number;
+  labels?: Record<string, string>;
 }
 
 export class ApmHelper {
@@ -17,6 +19,14 @@ export class ApmHelper {
   constructor(private readonly config?: ApmConfig) {
     ApmHelper.config = config;
     ApmHelper.init();
+  }
+
+  /**
+   * Same as getAPMClient()
+   * @returns
+   */
+  static getApmAgent() {
+    return ApmHelper.getAPMClient();
   }
 
   static getConfig(): ApmConfig {
@@ -69,6 +79,7 @@ export class ApmHelper {
 
   public static captureError(exception: Error, tenantId?: string) {
     if (!ApmHelper.apm) return;
+    ApmHelper.apm.getTransaction();
     ApmHelper.apm.captureError(exception, {
       handled: false,
       labels: { errorName: exception.name, tenantId },
@@ -80,14 +91,26 @@ export class ApmHelper {
     });
   }
 
-  public static captureErrorV2(exception: CommonException, tenantId?: string, handled?: boolean) {
+  public static captureErrorV2(exception: CommonException, logContext: LogContext, handled?: boolean) {
     if (!ApmHelper.apm) return;
+    const labels = ApmHelper.getApmAgent().currentTransaction?.labels;
+    const tenantId = logContext?.tenantContext?.tenantId;
+    const userId = logContext?.userIdContext?.userId;
+    const myLabels = {
+      errorName: exception.errorName,
+      errorDescription: exception.description,
+      ...ApmHelper.config.labels,
+    };
+    if (tenantId) myLabels.tenant = 'tid' + tenantId;
+    if (userId) myLabels.userId = userId;
+
     ApmHelper.apm.captureError(exception, {
       handled: handled,
-      labels: { errorName: exception.errorName, errorDescription: exception.description, tenantId },
+      labels: myLabels,
       captureAttributes: false,
-      custom: exception.contextData,
+      custom: { ...exception.contextData },
       message: exception.toPrintFriendlyString(),
+      'user.id': userId,
     });
   }
 

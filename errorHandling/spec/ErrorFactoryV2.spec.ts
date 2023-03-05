@@ -1,3 +1,5 @@
+import { LogContext } from '../../common/LogContext';
+import { UserIdContext } from '../../common/UserIdContext';
 import { ErrorFactoryV2 } from '../ErrorFactoryV2';
 
 describe('ErrorFactory2', () => {
