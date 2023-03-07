@@ -6,7 +6,7 @@ export interface ApmConfig {
   enableLogs: boolean
   serviceName: string
   serverUrl: string
-  secretToken: string
+  secretToken?: string
   apmSamplingRate?: number
   labels?: Record<string, string>
 }
@@ -75,7 +75,6 @@ export class ApmHelper {
 
   public static captureError(exception: Error, tenantId?: string) {
     if (!ApmHelper.apm) return
-    // why do we need call transaction?
     ApmHelper.apm.captureError(exception, {
       handled: false,
       labels: { errorName: exception.name, tenantId },
