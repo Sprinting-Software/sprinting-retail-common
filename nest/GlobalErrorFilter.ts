@@ -22,14 +22,14 @@ export class GlobalErrorFilter implements ExceptionFilter {
       this.logger.logError(exception)
 
       response.status(error.getStatus() ?? 500).send(exception.toJson())
-    } else if (Object.prototype.hasOwnProperty.call(error, "status") && typeof error.getStatus() === "function") {
+    } else if (Object.prototype.hasOwnProperty.call(error, "status") && typeof error.getStatus === "function") {
       const httpException = ErrorFactory.createError(error)
       this.logger.logError(httpException)
 
       response.status(error.getStatus() ?? 500).send(httpException.toJson())
     } else {
       const unknownError = ErrorFactory.createError(error.name, 500, {}, "Unknown error")
-      this.logger.logError(unknownError, { response: ctx.getResponse() })
+      this.logger.logError(unknownError)
       response.status(500).send({
         message: "Unknown error",
       })
