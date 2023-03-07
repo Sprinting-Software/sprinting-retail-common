@@ -1,14 +1,14 @@
 export type IApmSpan = { end: () => void }
-import { LogContext } from '../common/LogContext'
-import { CommonException } from '../errorHandling/CommonException'
+import { LogContext } from "../common/LogContext"
+import { CommonException } from "../errorHandling/CommonException"
 
 export interface ApmConfig {
-  enableLogs: boolean;
-  serviceName: string;
-  serverUrl: string;
-  secretToken: string;
-  apmSamplingRate?: number;
-  labels?: Record<string, string>;
+  enableLogs: boolean
+  serviceName: string
+  serverUrl: string
+  secretToken: string
+  apmSamplingRate?: number
+  labels?: Record<string, string>
 }
 
 export class ApmHelper {
@@ -19,9 +19,9 @@ export class ApmHelper {
     ApmHelper.config = config
     ApmHelper.init()
   }
-  
+
   static getApmAgent() {
-    return ApmHelper.getAPMClient();
+    return ApmHelper.getAPMClient()
   }
 
   static getConfig(): ApmConfig {
@@ -76,7 +76,6 @@ export class ApmHelper {
   public static captureError(exception: Error, tenantId?: string) {
     if (!ApmHelper.apm) return
     // why do we need call transaction?
-    ApmHelper.apm.getTransaction();
     ApmHelper.apm.captureError(exception, {
       handled: false,
       labels: { errorName: exception.name, tenantId },
@@ -89,17 +88,16 @@ export class ApmHelper {
   }
 
   public static captureErrorV2(exception: CommonException, logContext: LogContext, handled?: boolean) {
-    if (!ApmHelper.apm) return;
-    const labels = ApmHelper.getApmAgent().currentTransaction?.labels;
-    const tenantId = logContext?.tenantContext?.tenantId;
-    const userId = logContext?.userIdContext?.userId;
+    if (!ApmHelper.apm) return
+    const tenantId = logContext?.tenantContext?.tenantId
+    const userId = logContext?.userIdContext?.userId
     const myLabels = {
       errorName: exception.errorName,
       errorDescription: exception.description,
       ...ApmHelper.config.labels,
-    };
-    if (tenantId) myLabels.tenant = 'tid' + tenantId;
-    if (userId) myLabels.userId = userId;
+    }
+    if (tenantId) myLabels.tenant = `tid${tenantId}`
+    if (userId) myLabels.userId = userId
 
     ApmHelper.apm.captureError(exception, {
       handled: handled,
@@ -107,8 +105,8 @@ export class ApmHelper {
       captureAttributes: false,
       custom: { ...exception.contextData },
       message: exception.toPrintFriendlyString(),
-      'user.id': userId,
-    });
+      "user.id": userId,
+    })
   }
 
   /**
@@ -141,6 +139,7 @@ export class ApmHelper {
     ApmHelper.apm.currentTransaction.setLabel(field, value)
   }
 
+  //change to apmagent
   public static getAPMClient(): any {
     if (!ApmHelper.apm) ApmHelper.init()
 
