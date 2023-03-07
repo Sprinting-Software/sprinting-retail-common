@@ -1,5 +1,5 @@
-import { BadRequestException, HttpException as DefaultHttpException } from '@nestjs/common';
-import { HttpException } from './HttpException';
+import { BadRequestException, HttpException as DefaultHttpException } from "@nestjs/common"
+import { HttpException } from "./HttpException"
 
 export class ErrorFactory {
   /**
@@ -13,8 +13,8 @@ export class ErrorFactory {
     name: string,
     status?: number,
     contextData?: Record<string, any>,
-    detailedMessage?: string,
-  ): HttpException;
+    detailedMessage?: string
+  ): HttpException
   /**
    *  where you have caught an error and want to throw a new error
    * @param innerError
@@ -26,44 +26,44 @@ export class ErrorFactory {
     innerError: Error | DefaultHttpException,
     status?: number,
     contextData?: Record<string, any>,
-    detailedMessage?: string,
-  ): HttpException;
+    detailedMessage?: string
+  ): HttpException
 
   static createError(
     error: string | Error | DefaultHttpException,
     status?: number,
     contextData?: Record<string, any>,
-    detailedMessage?: string,
+    detailedMessage?: string
   ): HttpException {
-    if (typeof error === 'string')
+    if (typeof error === "string")
       return new HttpException(
         status ?? 400,
         error,
         { name: error, message: detailedMessage },
         contextData,
-        detailedMessage,
-      );
-    if (error.name === 'BadRequestException') {
-      const exception = <BadRequestException>error;
-      const response = <any>exception.getResponse();
+        detailedMessage
+      )
+    if (error.name === "BadRequestException") {
+      const exception = <BadRequestException>error
+      const response = <any>exception.getResponse()
 
       return new HttpException(
         exception.getStatus(),
         JSON.stringify(response.message),
         { name: exception.name },
         contextData,
-        exception.message,
-      );
+        exception.message
+      )
     }
-    if (error.hasOwnProperty('status')) {
-      const exception = <DefaultHttpException>error;
-      return new HttpException(exception.getStatus(), exception.message, exception, contextData, exception.message);
+    if (Object.prototype.hasOwnProperty.call(error, "status")) {
+      const exception = <DefaultHttpException>error
+      return new HttpException(exception.getStatus(), exception.message, exception, contextData, exception.message)
     }
 
-    return new HttpException(status ?? 400, error.name, error, contextData, detailedMessage);
+    return new HttpException(status ?? 400, error.name, error, contextData, detailedMessage)
   }
 
   static formatError(error: HttpException): string {
-    return `name: ${error.name}, errorData: ${JSON.stringify(error.contextData)}`;
+    return `name: ${error.name}, errorData: ${JSON.stringify(error.contextData)}`
   }
 }
