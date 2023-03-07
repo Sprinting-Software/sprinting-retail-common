@@ -22,7 +22,7 @@ export class GlobalErrorFilter implements ExceptionFilter {
       this.logger.logError(exception)
 
       response.status(error.getStatus() ?? 500).send(exception.toJson())
-    } else if (Object.prototype.hasOwnProperty.call(error, "status") && error.getStatus() < 500) {
+    } else if (Object.prototype.hasOwnProperty.call(error, "status") && typeof error.getStatus() === "function") {
       const httpException = ErrorFactory.createError(error)
       this.logger.logError(httpException)
 
