@@ -1,4 +1,6 @@
 export type IApmSpan = { end: () => void }
+import { LogContext } from "../common/LogContext"
+import { CommonException } from "../errorHandling/CommonException"
 
 export interface ApmConfig {
   enableLogs: boolean
@@ -6,6 +8,7 @@ export interface ApmConfig {
   serverUrl: string
   secretToken?: string
   apmSamplingRate?: number
+  labels?: Record<string, string>
 }
 
 export class ApmHelper {
@@ -15,6 +18,10 @@ export class ApmHelper {
   constructor(private readonly config?: ApmConfig) {
     ApmHelper.config = config
     ApmHelper.init()
+  }
+
+  static getApmAgent() {
+    return ApmHelper.getAPMClient()
   }
 
   static getConfig(): ApmConfig {
@@ -79,6 +86,28 @@ export class ApmHelper {
     })
   }
 
+  public static captureErrorV2(exception: CommonException, logContext: LogContext, handled?: boolean) {
+    if (!ApmHelper.apm) return
+    const tenantId = logContext?.tenantContext?.tenantId
+    const userId = logContext?.userIdContext?.userId
+    const myLabels = {
+      errorName: exception.errorName,
+      errorDescription: exception.description,
+      ...ApmHelper.config.labels,
+    }
+    if (tenantId) myLabels.tenant = `tid${tenantId}`
+    if (userId) myLabels.userId = userId
+
+    ApmHelper.apm.captureError(exception, {
+      handled: handled,
+      labels: myLabels,
+      captureAttributes: false,
+      custom: { ...exception.contextData },
+      message: exception.toPrintFriendlyString(),
+      "user.id": userId,
+    })
+  }
+
   /**
    * @returns The transaction ID from the current APM transaction. Will be undefined if no such transaction exists.
    */
@@ -109,6 +138,7 @@ export class ApmHelper {
     ApmHelper.apm.currentTransaction.setLabel(field, value)
   }
 
+  //change to apmagent
   public static getAPMClient(): any {
     if (!ApmHelper.apm) ApmHelper.init()
 
