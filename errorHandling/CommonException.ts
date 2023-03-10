@@ -68,9 +68,9 @@ export class CommonException extends Error implements ICommonException {
   toJson(): IExceptionAsHttpResponse {
     const result: IExceptionAsHttpResponse = {
       errorName: this.errorName,
-      description: this.description,
-      contextData: this.contextData,
     }
+    if (this.description) result.description = this.description
+    if (this.contextData && Object.keys(this.contextData).length > 0) result.contextData = this.contextData
     if (this.innerError) result.innerError = error2string(this.innerError)
     return result
   }

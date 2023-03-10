@@ -61,6 +61,23 @@ describe("CommonException", () => {
         description,
       })
     })
+
+    it("should return an object without inner error", () => {
+      const exception = new CommonException(httpStatus, errorName, undefined, description)
+      const result = exception.toJson()
+      expect(result).toEqual({
+        errorName,
+        description,
+      })
+    })
+
+    it("should ret  urn an object without inner error", () => {
+      const exception = new CommonException(httpStatus, errorName)
+      const result = exception.toJson()
+      expect(result).toEqual({
+        errorName,
+      })
+    })
   })
 
   describe("addContextData", () => {
