@@ -1,10 +1,11 @@
 import { HttpStatus } from "@nestjs/common"
 import { ErrorFactoryV2 } from "../ErrorFactoryV2"
+import { Err } from "../Err"
 
-describe("ErrorFactoryV2", () => {
+describe("Err", () => {
   describe("createNamedException", () => {
     it("should create a named exception with the specified properties", () => {
-      const error = ErrorFactoryV2.createNamedException(
+      const error = new Err.NamedException(
         "MyError",
         "Something went wrong",
         { reason: "Unknown" },
@@ -22,11 +23,7 @@ describe("ErrorFactoryV2", () => {
 
   describe("createUnnamedException", () => {
     it("should create an unnamed exception with the specified properties", () => {
-      const error = ErrorFactoryV2.createUnnamedException(
-        "Something went wrong",
-        { reason: "Unknown" },
-        new Error("Inner error")
-      )
+      const error = new Err.UnnamedException("Something went wrong", { reason: "Unknown" }, new Error("Inner error"))
 
       expect(error.httpStatus).toEqual(HttpStatus.INTERNAL_SERVER_ERROR)
       expect(error.errorName).toEqual(HttpStatus[HttpStatus.INTERNAL_SERVER_ERROR])
@@ -39,7 +36,7 @@ describe("ErrorFactoryV2", () => {
 
   describe("createHttpException", () => {
     it("should create an http exception with the specified properties", () => {
-      const error = ErrorFactoryV2.createHttpException(
+      const error = new Err.HttpException(
         HttpStatus.NOT_FOUND,
         "Resource not found",
         { resource: "users" },
@@ -57,7 +54,7 @@ describe("ErrorFactoryV2", () => {
 
   describe("parseAnyError", () => {
     it("should return the same common exception if given one", () => {
-      const existingError = ErrorFactoryV2.createNamedException(
+      const existingError = new Err.NamedException(
         "MyError",
         "Something went wrong",
         { reason: "Unknown" },
