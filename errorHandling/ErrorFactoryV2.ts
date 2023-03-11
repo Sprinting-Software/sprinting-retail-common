@@ -1,6 +1,9 @@
 import { HttpStatus } from "@nestjs/common"
 import util from "util"
 import { CommonException } from "./CommonException"
+import { UnnamedException } from "./UnnamedException"
+import { CommonHttpException } from "./CommonHttpException"
+import { NamedException } from "./NamedException"
 
 /**
  * A factory class to product exception objects
@@ -17,7 +20,7 @@ export class ErrorFactoryV2 {
     contextData?: Record<string, any>,
     innerError?: Error | string
   ): CommonException {
-    return new CommonException(HttpStatus.BAD_REQUEST, errorName, contextData, description, innerError)
+    return new NamedException(errorName, description, contextData, innerError)
   }
 
   static createUnnamedException(
@@ -25,8 +28,7 @@ export class ErrorFactoryV2 {
     contextData?: Record<string, any>,
     innerError?: Error | string
   ): CommonException {
-    const TECHNICAL_ERROR = "TechnicalError"
-    return new CommonException(HttpStatus.BAD_REQUEST, TECHNICAL_ERROR, contextData, description, innerError)
+    return new UnnamedException(description, contextData, innerError)
   }
 
   static createHttpException(
@@ -35,9 +37,7 @@ export class ErrorFactoryV2 {
     contextData?: Record<string, any>,
     innerError?: Error | string
   ): CommonException {
-    const httpStatusName = HttpStatus[httpStatus]
-    const UNKNOWN_HTTP_ERROR = "UKNOWN HTTP ERROR"
-    return new CommonException(httpStatus, httpStatusName ?? UNKNOWN_HTTP_ERROR, contextData, description, innerError)
+    return new CommonHttpException(httpStatus, description, contextData, innerError)
   }
 
   /**
@@ -49,15 +49,11 @@ export class ErrorFactoryV2 {
     if (error instanceof CommonException) {
       return error
     } else if (error instanceof Error) {
-      return this.createUnnamedException().setInnerError(error)
+      return new UnnamedException().setInnerError(error)
     } else if (typeof error === "string") {
-      return this.createUnnamedException(undefined, undefined, `An error of type string was thrown: ${error}`)
+      return new UnnamedException(undefined, undefined, `An error of type string was thrown: ${error}`)
     } else {
-      return this.createUnnamedException(
-        undefined,
-        undefined,
-        `An error of unknown kind was thrown: ${util.inspect(error)}`
-      )
+      return new UnnamedException(undefined, undefined, `An error of unknown kind was thrown: ${util.inspect(error)}`)
     }
   }
 }

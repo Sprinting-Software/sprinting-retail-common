@@ -28,8 +28,8 @@ describe("ErrorFactoryV2", () => {
         new Error("Inner error")
       )
 
-      expect(error.httpStatus).toEqual(HttpStatus.BAD_REQUEST)
-      expect(error.errorName).toEqual("TechnicalError")
+      expect(error.httpStatus).toEqual(HttpStatus.INTERNAL_SERVER_ERROR)
+      expect(error.errorName).toEqual(HttpStatus[HttpStatus.INTERNAL_SERVER_ERROR])
       expect(error.description).toEqual("Something went wrong")
       expect(error.contextData).toEqual({ reason: "Unknown" })
       expect(error.innerError).toBeInstanceOf(Error)
@@ -74,8 +74,8 @@ describe("ErrorFactoryV2", () => {
 
       const parsedError = ErrorFactoryV2.parseAnyError(existingError)
 
-      expect(parsedError.httpStatus).toEqual(HttpStatus.BAD_REQUEST)
-      expect(parsedError.errorName).toEqual("TechnicalError")
+      expect(parsedError.httpStatus).toEqual(HttpStatus.INTERNAL_SERVER_ERROR)
+      expect(parsedError.errorName).toEqual(HttpStatus[HttpStatus.INTERNAL_SERVER_ERROR])
       expect(parsedError.description).toBeUndefined()
       expect(parsedError.contextData).toEqual({})
       expect(parsedError.innerError).toBe(existingError)
@@ -86,8 +86,7 @@ describe("ErrorFactoryV2", () => {
 
       const parsedError = ErrorFactoryV2.parseAnyError(existingError)
 
-      expect(parsedError.httpStatus).toEqual(HttpStatus.BAD_REQUEST)
-      expect(parsedError.errorName).toEqual("TechnicalError")
+      expect(parsedError.httpStatus).toEqual(HttpStatus.INTERNAL_SERVER_ERROR)
       expect(parsedError.description).toBeUndefined()
       expect(parsedError.contextData).toEqual({})
       expect(parsedError.innerError).toEqual("An error of type string was thrown: Something went wrong")

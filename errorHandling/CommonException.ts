@@ -17,14 +17,16 @@ interface ICommonException {
  * should go via ErrorFactoryV2
  */
 export class CommonException extends Error implements ICommonException {
+  public readonly errorTraceId: string
   constructor(
     public readonly httpStatus: number,
     public readonly errorName: string,
-    public readonly contextData: Record<string, any> = {},
     public description?: string,
+    public readonly contextData: Record<string, any> = {},
     public innerError?: any
   ) {
     super(errorName)
+    this.errorTraceId = this.generateErrorTraceId()
   }
 
   /**
@@ -72,6 +74,20 @@ export class CommonException extends Error implements ICommonException {
     if (this.description) result.description = this.description
     if (this.contextData && Object.keys(this.contextData).length > 0) result.contextData = this.contextData
     if (this.innerError) result.innerError = error2string(this.innerError)
+    return result
+  }
+
+  /**
+   * Generates a unique error trace id with the format ERR-<random-string> where random-string has length 8 and contains
+   * only these characters ABCDEFGHJKLMNPQRSTUVWXYZ23456789.
+   * @private
+   */
+  private generateErrorTraceId() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    let result = "ERR-"
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
     return result
   }
 }
