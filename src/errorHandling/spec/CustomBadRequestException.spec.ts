@@ -30,7 +30,7 @@ describe("CustomBadRequestException", () => {
       const customException = new CustomBadRequestException(exception)
 
       // Assert
-      expect(customException.validationErrors).toEqual(validationErrors.message)
+      expect(customException.errors).toEqual(validationErrors.message)
     })
   })
 
@@ -53,7 +53,7 @@ describe("CustomBadRequestException", () => {
       expect(result).toContain(customException.errorName)
       expect(result).toContain(customException.httpStatus.toString())
       expect(result).toContain(customException.description)
-      expect(result).toContain(JSON.stringify(customException.validationErrors))
+      expect(result).toContain(JSON.stringify(customException.errors))
     })
   })
 
@@ -73,7 +73,7 @@ describe("CustomBadRequestException", () => {
       // Assert
       expect(result.statusCode).toBe(customException.httpStatus)
       expect(result.errorName).toBe(customException.errorName)
-      expect(result.validationErrors).toEqual(customException.validationErrors)
+      expect(result.errors).toEqual(customException.errors)
     })
   })
 })
