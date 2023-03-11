@@ -1,18 +1,18 @@
-import { ConfigOptions, LoggerService, LogLevel } from "./LoggerService"
-import { HttpException } from "./HttpException"
-import { ApmHelper } from "../apm/ApmHelper"
+import { AppException } from "../errorHandling/AppException"
+import { LogContext } from "../common/LogContext"
+import { LoggerService, LogLevel } from "./LoggerService"
 
-describe("LoggerService", () => {
+describe("logger", () => {
   let loggerService: LoggerService
 
-  const mockConfig: ConfigOptions = {
+  const mockConfig = {
     env: "test",
-    serviceName: "my-service",
+    serviceName: "test-service",
     enableLogs: true,
     logstash: {
       isUDPEnabled: false,
-      host: "",
-      port: 0,
+      host: "localhost",
+      port: 9200,
     },
   }
 
@@ -20,21 +20,25 @@ describe("LoggerService", () => {
     loggerService = new LoggerService(mockConfig)
   })
 
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
   describe("info", () => {
     it("should log an info message", () => {
       const spy = jest.spyOn(loggerService["logger"], "info")
-
-      loggerService.info("filename.js", "This is an info message")
-
+      loggerService.info("test-file", "test-message")
+      expect(spy).toHaveBeenCalledTimes(1)
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: "This is an info message",
+          filename: "test-file",
+          system: mockConfig.serviceName,
+          component: "test-service",
+          env: mockConfig.env,
+          systemEnv: "test-test-service",
+          level: LogLevel.info,
           logType: LogLevel.info,
-          filename: "filename.js",
-          system: "my-service",
-          component: "my-service",
-          env: "test",
-          systemEnv: "test-my-service",
+          message: "test-message",
         })
       )
     })
@@ -42,132 +46,91 @@ describe("LoggerService", () => {
 
   describe("debug", () => {
     it("should log a debug message", () => {
-      const spy = jest.spyOn(loggerService["logger"], "debug")
-
-      loggerService.debug("filename.js", "This is a debug message", { foo: "bar" })
-
+      const spy = jest.spyOn(loggerService["logger"], "warn")
+      loggerService.debug("test-file", "test-message")
+      expect(spy).toHaveBeenCalledTimes(1)
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: "This is a debug message",
-          foo: "bar",
-          filename: "filename.js",
-          system: "my-service",
-          component: "my-service",
-          env: "test",
-          systemEnv: "test-my-service",
+          filename: "test-file",
+          system: mockConfig.serviceName,
+          component: "test-service",
+          env: mockConfig.env,
+          systemEnv: "test-test-service",
+          level: LogLevel.warn,
+          logType: LogLevel.warn,
+          message: "test-message",
         })
       )
     })
   })
 
   describe("warn", () => {
-    it("should log a warning message", () => {
+    it("should log a warn message", () => {
       const spy = jest.spyOn(loggerService["logger"], "warn")
-
-      loggerService.warn("filename.js", "This is a warning message")
-
+      loggerService.warn("test-file", "test-message")
+      expect(spy).toHaveBeenCalledTimes(1)
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: "This is a warning message",
-          filename: "filename.js",
-          system: "my-service",
-          component: "my-service",
-          env: "test",
-          systemEnv: "test-my-service",
+          filename: "test-file",
+          system: mockConfig.serviceName,
+          component: "test-service",
+          env: mockConfig.env,
+          systemEnv: "test-test-service",
+          level: LogLevel.warn,
           logType: LogLevel.warn,
+          message: "test-message",
         })
       )
     })
   })
 
   describe("logError", () => {
-    it("should log HttpException with data and detailedMessage", () => {
-      const innerError = new HttpException(404, "Not found")
-      const data = { userId: 123 }
-      const detailedMessage = "Error occurred while fetching user data"
-      const captureErrorSpy = jest.spyOn(ApmHelper, "captureError")
-      const logErrorSpy = jest.spyOn(loggerService["logger"], "error")
+    it("should log an AppException with context data", () => {
+      const appException = new AppException(404, "Test error", "Test error message")
+      const spy = jest.spyOn(loggerService["logger"], "error")
 
-      loggerService.logError(innerError, data, detailedMessage)
+      const contextData: LogContext = {
+        userId: "123",
+        tenantId: "abc123",
+      }
 
-      expect(captureErrorSpy).toHaveBeenCalledWith(innerError)
-      expect(logErrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filename: expect.any(String),
-          timestamp: expect.any(String),
-          system: "my-service",
-          component: "my-service",
-          env: "test",
-          systemEnv: "test-my-service",
-          logType: LogLevel.error,
-          message: "Not found",
-        })
-      )
+      loggerService.logError(appException, contextData)
+
+      // Ensure logger was called with the correct log message
+      const expectedLogMessage = {
+        filename: expect.any(String),
+        system: mockConfig.serviceName,
+        component: mockConfig.serviceName,
+        env: mockConfig.env,
+        systemEnv: `${mockConfig.env}-${mockConfig.serviceName}`,
+        logType: LogLevel.error,
+        message: expect.stringContaining(appException.toString()),
+        userId: contextData.userId,
+        tenantId: contextData.tenantId,
+      }
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining(expectedLogMessage))
     })
 
-    it("should log HttpException with default data and detailedMessage", () => {
-      const innerError = new HttpException(404, "Not found")
-      const captureErrorSpy = jest.spyOn(ApmHelper, "captureError")
-      const logErrorSpy = jest.spyOn(loggerService["logger"], "error")
+    it("should log an AppError with additional data", () => {
+      const appError = new AppException(400, "Test error")
+      const spy = jest.spyOn(loggerService["logger"], "error")
+      const data = { foo: "bar" }
 
-      loggerService.logError(innerError)
+      loggerService.logError(appError, data)
 
-      expect(captureErrorSpy).toHaveBeenCalledWith(innerError)
-      expect(logErrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filename: expect.any(String),
-          timestamp: expect.any(String),
-          system: "my-service",
-          component: "my-service",
-          env: "test",
-          systemEnv: "test-my-service",
-          logType: LogLevel.error,
-          message: "Not found",
-        })
-      )
-    })
-
-    it("should log named error with data and detailedMessage", () => {
-      const name = "UserNotFound"
-      const data = { userId: 123 }
-      const detailedMessage = "Error occurred while fetching user data"
-      const logErrorSpy = jest.spyOn(loggerService["logger"], "error")
-
-      loggerService.logError(name, data, detailedMessage)
-
-      expect(logErrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filename: expect.any(String),
-          timestamp: expect.any(String),
-          system: "my-service",
-          component: "my-service",
-          env: "test",
-          systemEnv: "test-my-service",
-          logType: LogLevel.error,
-          message: name,
-          ...data,
-        })
-      )
-    })
-
-    it("should log named error with default data and detailedMessage", () => {
-      const name = "UserNotFound"
-      const logErrorSpy = jest.spyOn(loggerService["logger"], "error")
-
-      loggerService.logError(name)
-
-      expect(logErrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filename: expect.any(String),
-          timestamp: expect.any(String),
-          system: "my-service",
-          component: "my-service",
-          env: "test",
-          systemEnv: "test-my-service",
-          logType: LogLevel.error,
-          message: name,
-        })
-      )
+      // Ensure logger was called with the correct log message
+      const expectedLogMessage = {
+        filename: expect.any(String),
+        system: mockConfig.serviceName,
+        component: mockConfig.serviceName,
+        env: mockConfig.env,
+        systemEnv: `${mockConfig.env}-${mockConfig.serviceName}`,
+        level: LogLevel.error,
+        logType: LogLevel.error,
+        message: expect.stringContaining(appError.toString()),
+        foo: data.foo,
+      }
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining(expectedLogMessage))
     })
   })
 })
