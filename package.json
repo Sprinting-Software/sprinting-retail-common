@@ -25,8 +25,8 @@
     "dist"
   ],
   "scripts": {
-    "format": "prettier --write \"./**/*.ts\"",
-    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"{src,}/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"{src,}/**/*.ts\" --fix",
     "build": "rimraf dist && npm run lint && tsc",
     "test": "jest",
     "prepublishOnly": "npm run build",
