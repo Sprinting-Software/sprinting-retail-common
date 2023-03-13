@@ -1,6 +1,6 @@
 {
   "name": "sprinting-retail-common",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Error handling and logging with APM",
   "author": "Nairi Abgaryan",
   "contributors": [
