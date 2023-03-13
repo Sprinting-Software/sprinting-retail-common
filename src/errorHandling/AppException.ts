@@ -12,12 +12,15 @@ interface AppExceptionResponse {
 export class AppException extends HttpException {
   constructor(
     public readonly httpStatus: number = HttpStatus.BAD_REQUEST,
-    public readonly errorName: string = "UNKNOWN_HTTP_EXCEPTION",
-    public readonly description?: string,
+    public errorName: string,
+    public description?: string,
     public contextData?: Record<string, any>,
     public innerError?: Error
   ) {
-    super(errorName, httpStatus)
+    super(errorName ?? HttpStatus[httpStatus], httpStatus)
+    if (!errorName) {
+      this.errorName = HttpStatus[httpStatus]
+    }
   }
 
   override toString(): string {
@@ -37,18 +40,29 @@ export class AppException extends HttpException {
    * @param {Error} innerError - The inner error to add to the AppException object.
    * @returns {AppException} - The modified AppException object with the new inner error.
    */
-  addInnerError(innerError: Error): AppException {
+  setInnerError(innerError: Error): AppException {
     this.innerError = innerError
 
     return this
   }
 
   /*
-   * Adds additional context data to the response object
+   * Adds additional context data to the response object. Existing context data will be merged with the new data.
+   * @param {Record<string, any>} contextData - The context data to be included with the error.
+   * @returns {AppException} - The modified AppException object with the enriched context data
    */
-  addContextData(contextData: Record<string, any>) {
+  setContextData(contextData: Record<string, any>) {
     this.contextData = contextData
+    return this
+  }
 
+  /*
+   * Sets a description for the error.
+   * @param {string} description - The description to be included with the error.
+   * @returns {AppException} - The modified AppException object with the description set.
+   */
+  setDescription(description: string) {
+    this.description = description
     return this
   }
 

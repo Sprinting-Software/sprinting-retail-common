@@ -51,7 +51,7 @@ describe("AppException", () => {
   describe("addInnerError()", () => {
     it("should add the innerError to the exception", () => {
       const innerError = new Error("Inner error message")
-      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").addInnerError(innerError)
+      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").setInnerError(innerError)
       expect(appException.innerError).toEqual(innerError)
     })
   })
@@ -59,7 +59,7 @@ describe("AppException", () => {
   describe("addContextData()", () => {
     it("should add the contextData to the exception", () => {
       const contextData = { key: "value" }
-      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").addContextData(contextData)
+      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").setContextData(contextData)
       expect(appException.contextData).toEqual(contextData)
     })
   })
