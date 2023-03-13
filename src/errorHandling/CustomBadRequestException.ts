@@ -16,7 +16,6 @@ export class CustomBadRequestException extends AppException {
     let message = `${errorName} (HTTP_STATUS ${httpStatus})`
     message += ` ERROR_NAME - ${this.errorName}`
     message += ` ERROR_MESSAGE - ${this.description}`
-    message += ` VALIDATION_ERRORS - ${JSON.stringify(this.errors)}`
 
     if (this.errors) message += ` VALIDATION_ERRORS - ${JSON.stringify(this.errors)}`
 
@@ -27,7 +26,7 @@ export class CustomBadRequestException extends AppException {
     return {
       statusCode: this.httpStatus,
       errorName: this.errorName,
-      errors: this.errors,
+      message: this.errors,
     }
   }
 }

@@ -5,7 +5,6 @@ const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ecsFormat = require("@elastic/ecs-winston-format")
 import { Injectable, Scope } from "@nestjs/common"
-import { AppError } from "../errorHandling/AppErrors"
 import { AppException } from "../errorHandling/AppException"
 import { LogContext } from "../common/LogContext"
 
@@ -90,7 +89,7 @@ export class LoggerService {
    * @param data
 =   */
   logError(appError: Error, data?: Record<string, any>): void
-  logError(error: AppError | AppException | Error, contextData?: LogContext) {
+  logError(error: AppException | Error, contextData?: LogContext) {
     ApmHelper.captureError(error, contextData)
     const fileName = LoggerService._getCallerFile()
 

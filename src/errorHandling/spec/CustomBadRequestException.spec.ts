@@ -73,7 +73,7 @@ describe("CustomBadRequestException", () => {
       // Assert
       expect(result.statusCode).toBe(customException.httpStatus)
       expect(result.errorName).toBe(customException.errorName)
-      expect(result.errors).toEqual(customException.errors)
+      expect(result.message).toEqual(customException.errors)
     })
   })
 })

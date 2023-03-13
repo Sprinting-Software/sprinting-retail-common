@@ -46,9 +46,15 @@ describe("AppException", () => {
       const expectedString = "ERROR_NAME (HTTP_STATUS 400)"
       expect(appException.toString()).toEqual(expectedString)
     })
+
+    it("should set the errorName to the HttpStatus name if not provided", () => {
+      const exception = new AppException(HttpStatus.AMBIGUOUS, undefined)
+      const expectedString = `${HttpStatus[HttpStatus.AMBIGUOUS]} (HTTP_STATUS 300)`
+      expect(exception.toString()).toEqual(expectedString)
+    })
   })
 
-  describe("addInnerError()", () => {
+  describe("setInnerError()", () => {
     it("should add the innerError to the exception", () => {
       const innerError = new Error("Inner error message")
       const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").setInnerError(innerError)
@@ -56,7 +62,7 @@ describe("AppException", () => {
     })
   })
 
-  describe("addContextData()", () => {
+  describe("setContextData()", () => {
     it("should add the contextData to the exception", () => {
       const contextData = { key: "value" }
       const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").setContextData(contextData)

@@ -4,7 +4,7 @@ import { HttpException, HttpStatus } from "@nestjs/common"
 interface AppExceptionResponse {
   statusCode: number
   errorName: string
-  message?: string
+  message?: string | object
   contextData?: Record<string, any>
   innerError?: Error
 }
@@ -18,9 +18,7 @@ export class AppException extends HttpException {
     public innerError?: Error
   ) {
     super(errorName ?? HttpStatus[httpStatus], httpStatus)
-    if (!errorName) {
-      this.errorName = HttpStatus[httpStatus]
-    }
+    this.errorName = errorName ?? HttpStatus[httpStatus]
   }
 
   override toString(): string {
