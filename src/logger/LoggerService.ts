@@ -1,4 +1,3 @@
-import { HttpException } from "./HttpException"
 import { UDPTransport } from "udp-transport-winston"
 import * as winston from "winston"
 import { ApmHelper } from "../apm/ApmHelper"
@@ -6,12 +5,25 @@ const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ecsFormat = require("@elastic/ecs-winston-format")
 import { Injectable, Scope } from "@nestjs/common"
+import { AppException } from "../errorHandling/AppException"
+import { LogContext } from "../common/LogContext"
 
 export const enum LogLevel {
   info = "info",
   debug = "debug",
   error = "error",
   warn = "warn",
+}
+
+interface LogMessage {
+  filename: string
+  system: string
+  component: string
+  env: string
+  systemEnv: string
+  logType: LogLevel
+  message: string
+  [key: string]: any
 }
 
 export interface ConfigOptions {
@@ -52,68 +64,39 @@ export class LoggerService {
     })
   }
 
-  info(filename: string, message: string) {
-    this.logger.info({
-      message: message,
-      logType: LogLevel.info,
-      ...this.formatMessage(filename),
-    })
+  info(fileName: string, message: string) {
+    this.logger.info(this.formatMessage(fileName, LogLevel.info, message))
   }
 
-  debug(filename: string, message: any, data?: any) {
-    const logMessage = {
-      ...data,
-      message,
-      ...this.formatMessage(filename),
-    }
-
-    this.logger.debug(logMessage)
+  debug(fileName: string, message: any) {
+    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message))
   }
 
   warn(fileName: string, message: string) {
-    this.logger.warn({
-      ...this.formatMessage(fileName, LogLevel.warn),
-      message,
-    })
+    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message))
   }
 
   /**
-   * logError Overloading with type Error
+   * logError Overloading with type AppException
    * logError method -> where you have caught an error and only want to log
-   * @param innerError
+   * @param appException
    * @param data
-   * @param detailedMessage
    */
-  logError(innerError: HttpException, data?: Record<string, any>, detailedMessage?: string): void
+  logError(appException: AppException, data?: LogContext): void
   /**
-   * logError Overloading by name
-   * where you have not caught an error, but you have a business error, and you want to log it but not throw it
-   * @param name
+   * logError Overloading with type AppError
+   * @param appError
    * @param data
-   * @param detailedMessage
-   */
-  logError(name: string, data?: Record<any, any>, detailedMessage?: string): void
-  logError(innerError: string | Error, data?: Record<string, any>, detailedMessage?: string) {
-    let error: HttpException
-    if (typeof innerError === "string") {
-      error = new HttpException(500, innerError, detailedMessage, data)
-    } else {
-      error = <HttpException>innerError
-    }
+=   */
+  logError(appError: Error, data?: Record<string, any>): void
+  logError(error: AppException | Error, contextData?: LogContext) {
+    ApmHelper.captureError(error, contextData)
+    const fileName = LoggerService._getCallerFile()
 
-    ApmHelper.captureError(error)
-    const logMessage = {
-      ...data,
-      ...this.formatMessage(LoggerService._getCallerFile(), LogLevel.error),
-      message: error.message,
-      context: {
-        error: JSON.stringify(error),
-      },
-    }
-    this.logger.error(logMessage)
+    this.logger.error(this.formatMessage(fileName, LogLevel.error, error.toString(), contextData))
   }
 
-  private formatMessage(fileName: string, logLevel: LogLevel = LogLevel.info) {
+  formatMessage(fileName: string, logLevel: LogLevel, message: string, data?: Record<string, any>): LogMessage {
     return {
       filename: fileName,
       system: this.config.serviceName,
@@ -121,12 +104,11 @@ export class LoggerService {
       env: this.config.env,
       systemEnv: `${this.config.env}-${this.config.serviceName}`,
       logType: logLevel,
+      message: message,
+      ...data,
     }
   }
 
-  /*
-    This method for getting file caller info, it should be used when someone directly calls logError method
-   */
   private static _getCallerFile(error?: Error) {
     const _pst = Error.prepareStackTrace
     const stackTraceLimit = Error.stackTraceLimit

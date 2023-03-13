@@ -26,7 +26,7 @@ In Your local machine
 
 
 ```bash 
-$ npm i nest-logger
+$ npm i filter-logger
 ```
 
 <h3 style="color:#3788c3;">Configuration interface</h3>

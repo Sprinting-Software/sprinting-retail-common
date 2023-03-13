@@ -1,4 +1,6 @@
 import { ApmConfig, ApmHelper } from "./ApmHelper"
+import { AppException } from "../errorHandling/AppException"
+import { LogContext } from "../common/LogContext"
 
 describe("ApmHelper", () => {
   const mockConfig: ApmConfig = {
@@ -103,45 +105,91 @@ describe("ApmHelper", () => {
   })
 
   describe("captureError", () => {
+    const mockException = new AppException(500, "Test error", "Something went wrong")
+    const mockLogContext: LogContext = { userId: "123", tenantId: 1 }
+
     beforeEach(() => {
-      jest.spyOn(console, "log").mockImplementation(() => {
-        // Do nothing
-      })
-      jest.resetModules()
-      ApmHelper["apm"] = undefined
+      ApmHelper["apm"] = {
+        captureError: jest.fn(),
+      } as any
+      ApmHelper["config"] = {
+        labels: { environment: "test" },
+      } as any
     })
 
     afterEach(() => {
-      jest.restoreAllMocks()
+      jest.clearAllMocks()
     })
 
-    it("should not capture error if APM is not initialized", () => {
-      const exception = new Error("test error")
+    it("should not capture error if apm is not initialized", () => {
+      const spy = jest.spyOn(ApmHelper["apm"], "captureError")
+      ApmHelper["apm"] = null
+      ApmHelper.captureError(mockException)
 
-      ApmHelper.captureError(exception)
-
-      // eslint-disable-next-line no-console
-      expect(console.log).not.toHaveBeenCalled()
+      expect(spy).not.toHaveBeenCalled()
     })
 
-    it("should capture error with correct parameters if APM is initialized", () => {
-      const exception = new Error("test error")
-      const apmMock = {
-        captureError: jest.fn(),
-      }
-      ApmHelper["apm"] = apmMock
-
-      // Act
-      ApmHelper.captureError(exception, "testTenantId")
-
-      expect(apmMock.captureError).toHaveBeenCalledWith(exception, {
+    it("should capture error with default error labels and details", () => {
+      const spy = jest.spyOn(ApmHelper["apm"], "captureError")
+      ApmHelper.captureError(mockException)
+      expect(spy).toHaveBeenCalledWith(mockException, {
         handled: false,
-        labels: { errorName: "Error", tenantId: "testTenantId" },
-        message: "test error",
-        custom: {
-          errorName: "Error",
-          errorString: "Error: test error",
+        labels: {
+          errorName: "Test error",
+          errorDescription: "Something went wrong",
+          environment: "test",
         },
+        captureAttributes: false,
+        message: mockException.toString(),
+        custom: undefined,
+      })
+    })
+
+    it("should capture error with error labels from config and context", () => {
+      ApmHelper.captureError(mockException, mockLogContext)
+      expect(ApmHelper["apm"]?.captureError).toHaveBeenCalledWith(mockException, {
+        handled: false,
+        labels: {
+          errorName: "Test error",
+          errorDescription: "Something went wrong",
+          environment: "test",
+          tenantId: "tid1",
+          userId: "123",
+        },
+        captureAttributes: false,
+        message: mockException.toString(),
+        custom: mockException.contextData,
+      })
+    })
+
+    it("should capture error with custom error details for AppException", () => {
+      const mockAppException = new AppException(500, "Test error", "Something went wrong", { customProp: true })
+      ApmHelper.captureError(mockAppException)
+      expect(ApmHelper["apm"]?.captureError).toHaveBeenCalledWith(mockAppException, {
+        handled: false,
+        labels: {
+          errorName: "Test error",
+          errorDescription: "Something went wrong",
+          environment: "test",
+        },
+        captureAttributes: false,
+        message: mockAppException.toString(),
+        custom: { customProp: true },
+      })
+    })
+
+    it("should capture error with handled flag", () => {
+      ApmHelper.captureError(mockException, undefined, true)
+      expect(ApmHelper["apm"]?.captureError).toHaveBeenCalledWith(mockException, {
+        handled: true,
+        labels: {
+          errorName: "Test error",
+          errorDescription: "Something went wrong",
+          environment: "test",
+        },
+        captureAttributes: false,
+        message: mockException.toString(),
+        custom: mockException.contextData,
       })
     })
   })

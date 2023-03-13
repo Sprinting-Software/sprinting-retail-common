@@ -1,6 +1,7 @@
-export type IApmSpan = { end: () => void }
 import { LogContext } from "../common/LogContext"
-import { CommonException } from "../errorHandling/CommonException"
+import { AppException } from "../errorHandling/AppException"
+
+export type IApmSpan = { end: () => void }
 
 export interface ApmConfig {
   enableLogs: boolean
@@ -73,39 +74,31 @@ export class ApmHelper {
     }
   }
 
-  public static captureError(exception: Error, tenantId?: string) {
+  public static captureError(exception: Error | AppException, logContext?: LogContext, handled = false) {
     if (!ApmHelper.apm) return
-    ApmHelper.apm.captureError(exception, {
-      handled: false,
-      labels: { errorName: exception.name, tenantId },
-      message: exception.message.toString(),
-      custom: {
-        errorName: exception.name,
-        errorString: exception.toString(),
-      },
-    })
+
+    const errorLabels = {
+      errorName: this.isAppException(exception) ? exception.errorName : exception.name,
+      errorDescription: this.isAppException(exception) ? exception.description : exception.message,
+      ...ApmHelper.config?.labels,
+    }
+
+    if (logContext?.tenantId) errorLabels.tenantId = `tid${logContext.tenantId}`
+    if (logContext?.userId) errorLabels.userId = logContext.userId
+
+    const errorDetails = {
+      handled,
+      labels: errorLabels,
+      captureAttributes: false,
+      message: exception.toString(),
+      custom: this.isAppException(exception) ? exception.contextData : {},
+    }
+
+    ApmHelper.apm.captureError(exception, errorDetails)
   }
 
-  public static captureErrorV2(exception: CommonException, logContext: LogContext, handled?: boolean) {
-    if (!ApmHelper.apm) return
-    const tenantId = logContext?.tenantContext?.tenantId
-    const userId = logContext?.userIdContext?.userId
-    const myLabels = {
-      errorName: exception.errorName,
-      errorDescription: exception.description,
-      ...ApmHelper.config.labels,
-    }
-    if (tenantId) myLabels.tenant = `tid${tenantId}`
-    if (userId) myLabels.userId = userId
-
-    ApmHelper.apm.captureError(exception, {
-      handled: handled,
-      labels: myLabels,
-      captureAttributes: false,
-      custom: { ...exception.contextData },
-      message: exception.toPrintFriendlyString(),
-      "user.id": userId,
-    })
+  static isAppException(exception: Error | AppException): exception is AppException {
+    return (exception as AppException).errorName !== undefined
   }
 
   /**
