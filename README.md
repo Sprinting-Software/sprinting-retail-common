@@ -26,7 +26,7 @@ In Your local machine
 
 
 ```bash 
-$ npm i filter-logger
+$ npm i sprinting-retail-common
 ```
 
 <h3 style="color:#3788c3;">Configuration interface</h3>
@@ -35,30 +35,34 @@ https://www.npmjs.com/package/convict
 
 `config.ts`
 ```javascript
-const convictSchema = convict({elk: {
-    enableApm: {
-      doc: 'Set to true if transaction data should be sent to APM',
+import convict from 'convict';
+
+const conf = {
+  elk: {
+    enableLogs: {
+      env: 'ENABLE_LOGS',
       format: Boolean,
       default: true,
-      env: 'ENABLE_APM',
     },
-    serviceUrl: {
-      doc: 'The name of the service in ELK',
-      format: String,
-      default: 'SERVICE_URL',
-      env: 'ELK_SERVICE_URL',
-    },
-    serviceSecret: {
-      doc: 'The name of the service in ELK',
-      format: String,
-      default: 'loyaltyBE',
-      env: 'ELK_SERVICE_SECRET',
-    },
-    apmSamplingRate: {
-      doc: 'The percentage of transactions that will be sent to ELK. 1 means 100%.',
-      format: Number,
-      default: 1,
-      env: 'ELK_APM_SAMPLINGRATE',
+    apm: {
+      serviceUrl: {
+        doc: 'The name of the service in ELK',
+        format: String,
+        default: 'http://10.0.0.170:8200',
+        env: 'ELK_APM_SERVICE_URL',
+      },
+      serviceSecret: {
+        doc: 'The name of the service in ELK',
+        format: String,
+        default: '',
+        env: 'ELK_APM_SERVICE_SECRET',
+      },
+      apmSamplingRate: {
+        doc: 'The percentage of transactions that will be sent to ELK. 1 means 100%.',
+        format: Number,
+        default: 1,
+        env: 'ELK_APM_SAMPLINGRATE',
+      },
     },
     logstash: {
       enableUDP: {
@@ -78,16 +82,15 @@ const convictSchema = convict({elk: {
         default: 51420,
       },
     },
-  }});
+  },
+}
 ```
 
-Create the logger module. It will enable APM as well. 
+Create the logger module, which will contain APM and logger services.
 `logger/logger.module.ts`
-```javascript
-import { Module } from '@nestjs/common';
-import { ApmHelper, ConfigOptions, LoggerService } from 'sprinting-retail-common';
 import conf from '../../config/configuration';
 
+```javascript
 @Module({
   imports: [],
   providers: [
@@ -122,6 +125,7 @@ import conf from '../../config/configuration';
 })
 export class LoggerModule {}
 
+
 ```
 
 
@@ -141,17 +145,27 @@ import { LoggerModule } from "../logger/logger.module";
 export class DevSupportModule {}
 ```
 
-Example of Dev support controller and usage of all logs functions. 
+**AppException** is a custom exception class which extends HttpException.
+**CustomBadRequestException** is a custom exception class which extends 
+**AppException** and converts **BadRequestException** to **AppException**.
+**ServerErrorException** is a custom exception class which extends AppException, use it for internal server errors.
+
+LogError function will log the error to the logstash and will send the error to the APM server.
+
+    this.logger.logError(new ForbiddenException('Access denied'), {});
+
+More detailed example of the usage of the logger service:
 
 ```typescript
-import { ConflictException, Controller, Get, Header } from '@nestjs/common';
+import { ConflictException, Controller, Get, Header, NotFoundException } from "@nestjs/common";
 import { ApiTags } from '@nestjs/swagger';
 import { LoggerService, HttpException, ErrorFactory } from 'sprinting-retail-common';
 
 @Controller('api/devSupport')
 @ApiTags('DevSupport')
 export class DevSupportController {
-  constructor(private readonly logger: LoggerService) {}
+  constructor(private readonly logger: LoggerService) {
+  }
   
   @Get('trigger-logstash')
   @Header('content-type', 'application/json')
@@ -159,7 +173,8 @@ export class DevSupportController {
     this.logger.info(__filename, 'Check if logstash sends the INFO request using the configs');
     this.logger.debug(__filename, 'Check if logstash sends the DEBUG request using the configs');
     this.logger.warn(__filename, 'Check if logstash sends the  WARN request using the configs');
-    throw new ConflictException();
+    this.logger.logError(new ForbiddenException('Access denied'), {});
+    throw new NotFoundException({ name: 'Tenant', id: 123 });
   }
   
   @Get('trigger-errors')
@@ -175,24 +190,16 @@ export class DevSupportController {
       message: 'Some event message',
     });
     
-    const firstError = ErrorFactory.createError(
-      new Error('Some inner error'),
-      {
-        someKey: 'someValue',
-        anotherKey: 123,
-      },
-      'some detailed message',
-    );
-    
+    const firstError = new AppException(HttpStatus.FORBIDDEN, 'Forbidden', 'Forbidden error description');
     this.logger.logError(firstError);
     
-    const secondError = new HttpException(
-      400,
-      'ForbiddenExceptionDevSupportError',
-      new Error('inner error'),
-      {},
-      'some detailed message',
-    );
+    const secondError = new AppException(400, 'SomeException', 'Some inner business error description')
+      .setContextData({
+        someKey: 'someValue',
+        anotherKey: 123,
+      })
+      .setInnerError(new Error('Some inner error'));
+    
     this.logger.logError(secondError, {
       someKey: 'someValue',
       anotherKey: 123,
@@ -211,9 +218,11 @@ export class DevSupportController {
 ```
 
 <h3 style="color:#3788c3;">Http Exceptions</h3>
-The logger uses a custom-created interface for the Exceptions. 
+
 The Logger provides `GlobalErrorFilter` for filtering exceptions
-Enable it from AppModule.
+It takes parameter LogContext which contains tenantId and userId.
+Enable filter in the app module:
+
 ```typescript
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
@@ -224,7 +233,13 @@ import { GlobalErrorFilter } from 'sprinting-retail-common';
   providers: [
     {
       provide: APP_FILTER,
-      useClass: GlobalErrorFilter,
+      useFactory: (loggerService: LoggerService, userContext: UserContext) =>
+        new GlobalErrorFilter(loggerService, {
+          tenantId: userContext.user?.tenantId,
+          userId: userContext.user?.userId,
+        }),
+      scope: Scope.REQUEST,
+      inject: [LoggerService, UserContext],
     },
   ],
   exports: [],
@@ -233,49 +248,7 @@ export class AppModule {}
 ```
 
 
-<h3 style="color:#3788c3;">Create errors methods signatures </h3>
 
-```
-/**
-   * where you have not caught an error, but you have a business error, and want to throw it as a new error
-   * @param name
-   * @param contextData
-   * @param detailedMessage
-   */
-  static createError(name: string, contextData?: Record<string, any>, detailedMessage?: string): HttpException;
-  /**
-   *  where you have caught an error and want to throw a new error
-   * @param innerError
-   * @param contextData
-   * @param detailedMessage
-   */
-  static createError(
-    innerError: Error | DefaultDefaultHttpException,
-    contextData?: Record<string, any>,
-    detailedMessage?: string,
-  ): HttpException;
-  
-```
-
-<h3 style="color:#3788c3;">Log errors methods signatures </h3>
-```
-  /**
-   * logError Overloading with type Error
-   * logError method -> where you have caught an error and only want to log
-   * @param innerError
-   * @param data
-   * @param detailedMessage
-   */
-  logError(innerError: HttpException, data?: Record<string, any>, detailedMessage?: string): void;
-  /**
-   * logError Overloading by name
-   * where you have not caught an error, but you have a business error, and you want to log it but not throw it
-   * @param name
-   * @param data
-   * @param detailedMessage
-   */
-  logError(name: string, data?: Record<any, any>, detailedMessage?: string): void;
-```
 
 <h3 style="color:#3788c3;">Useful information</h3>
 For the sending logs the module using Logstash UDP transport.
@@ -290,6 +263,7 @@ $ nc -v -u -z -w 3 10.0.0.170 51420
 
 <ul>
 <li>Use Logstash to collect log data from various sources in real-time</li>
+<li>Use APM to collect log error data check transactins and error stack</li>
 <li>Search and analyze log data using Elasticsearch and Kibana for troubleshooting and problem-solving</li>
 <li>Use the alerting system to stay informed of potential issues or errors</li>
 <li>Utilize customized dashboards and reports in Kibana for in-depth analysis of log data</li>
