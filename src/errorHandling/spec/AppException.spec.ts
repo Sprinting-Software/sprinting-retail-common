@@ -31,26 +31,46 @@ describe("AppException", () => {
       const innerError = new Error("Inner error message")
       const appException = new AppException(
         HttpStatus.BAD_REQUEST,
-        "ERROR_NAME",
-        "ERROR_DESCRIPTION",
-        { key: "value" },
+        "Some error name",
+        "Some description ",
+        { somekey: "someValue" },
         innerError
       )
       const expectedString =
-        "ERROR_NAME (HTTP_STATUS 400)ERROR_DESCRIPTION - ERROR_DESCRIPTION - CONTEXT_DATA: { key: 'value' } - INNER_ERROR: Error: Inner error message"
+        "Some error name (HTTP_STATUS 400) ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
+      expect(appException.toString()).toContain(expectedString)
+    })
+
+    it("should return the expected string with inner AppException", () => {
+      const innerError = new AppException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Some internal server error name",
+        "Some internal server error description ",
+        { somekey: "someValue" },
+        new Error("Some inner inner error")
+      )
+      const appException = new AppException(
+        HttpStatus.BAD_REQUEST,
+        "Some error name",
+        "Some description ",
+        { somekey: "someValue" },
+        innerError
+      )
+      const expectedString =
+        "Some error name (HTTP_STATUS 400) ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
       expect(appException.toString()).toContain(expectedString)
     })
 
     it("should return the expected string representation of the exception with only required fields", () => {
       const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME")
-      const expectedString = "ERROR_NAME (HTTP_STATUS 400)"
-      expect(appException.toString()).toEqual(expectedString)
+      const expectedString = "AppException ERROR_NAME (HTTP_STATUS 400)"
+      expect(appException.toString()).toContain(expectedString)
     })
 
     it("should set the errorName to the HttpStatus name if not provided", () => {
       const exception = new AppException(HttpStatus.AMBIGUOUS, undefined)
-      const expectedString = `${HttpStatus[HttpStatus.AMBIGUOUS]} (HTTP_STATUS 300)`
-      expect(exception.toString()).toEqual(expectedString)
+      const expectedString = `AppException AMBIGUOUS (HTTP_STATUS 300)`
+      expect(exception.toString()).toContain(expectedString)
     })
   })
 

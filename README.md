@@ -1,5 +1,8 @@
 <h3 style="color:#ad206e;">Logger monitoring system ELK
-
+<h3 style="color:#3788c3;">Release letters</h3>
+<h4>Release letter for version 1.0.4</h4>
+Breaking changes: 
+- apmSamplingRate has changed name to transactionSampleRate
 
 <h3 style="color:#3788c3;">Introduction:</h3>
 <p>

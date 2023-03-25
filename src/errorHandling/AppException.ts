@@ -23,10 +23,19 @@ export class AppException extends HttpException {
 
   override toString(): string {
     const { errorName, httpStatus, description, contextData, innerError } = this
-    let message = `${errorName} (HTTP_STATUS ${httpStatus})`
+    let message = `${this.constructor.name} ${errorName} (HTTP_STATUS ${httpStatus}) `
     if (description) message += `ERROR_DESCRIPTION - ${description}`
     if (contextData) message += ` - CONTEXT_DATA: ${util.inspect(contextData)}`
-    if (innerError) message += ` - INNER_ERROR: ${util.inspect(innerError)}`
+    if (this.stack) message += `\n ${this.stack.split("\n").slice(1).join("\n")}`
+    if (innerError) {
+      message += "\nINNER_ERROR:\n"
+      if (innerError instanceof AppException) {
+        message += innerError.toString()
+      } else {
+        const e0 = util.inspect(innerError)
+        message += e0
+      }
+    }
 
     return message
   }

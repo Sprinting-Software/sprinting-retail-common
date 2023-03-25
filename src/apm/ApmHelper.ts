@@ -8,8 +8,21 @@ export interface ApmConfig {
   serviceName: string
   serverUrl: string
   secretToken?: string
-  apmSamplingRate?: number
+  transactionSampleRate?: number
   labels?: Record<string, string>
+  captureErrorLogStackTraces?: boolean
+  captureExceptions?: boolean
+  centralConfig?: boolean
+  metricsInterval?: number
+}
+
+const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
+  transactionSampleRate: 1,
+  captureExceptions: false,
+  centralConfig: false,
+  metricsInterval: 0,
+  captureErrorLogStackTraces: true,
+  enableLogs: false,
 }
 
 export class ApmHelper {
@@ -17,7 +30,7 @@ export class ApmHelper {
   private static config
 
   constructor(private readonly config?: ApmConfig) {
-    ApmHelper.config = config
+    ApmHelper.config = { ...DEFAULT_APM_CONFIG, ...config }
     ApmHelper.init()
   }
 
@@ -25,21 +38,18 @@ export class ApmHelper {
     return ApmHelper.getAPMClient()
   }
 
-  static getConfig(): ApmConfig {
-    if (ApmHelper.config !== undefined) {
-      return ApmHelper.config
-    }
-
-    return {
-      enableLogs: Boolean(process.env.ENABLE_LOGS === "true"),
-      serverUrl: process.env.ELK_SERVICE_URL,
-      secretToken: process.env.ELK_SERVICE_SECRET,
-      serviceName: process.env.ELK_SERVICE_NAME,
-      apmSamplingRate: Number(process.env.ELK_APM_SAMPLINGRATE),
-    }
+  static getConfigWithEnvironmentVariablesOverriding(): ApmConfig {
+    const effectiveConfig = { ...ApmHelper.config }
+    if (process.env.ENABLE_LOGS !== undefined) effectiveConfig.enableLogs = process.env.ENABLE_LOGS === "true"
+    if (process.env.ELK_SERVICE_URL !== undefined) effectiveConfig.serverUrl = process.env.ELK_SERVICE_URL
+    if (process.env.ELK_SERVICE_SECRET !== undefined) effectiveConfig.secretToken = process.env.ELK_SERVICE_SECRET
+    if (process.env.ELK_SERVICE_NAME !== undefined) effectiveConfig.serviceName = process.env.ELK_SERVICE_NAME
+    if (process.env.ELK_APM_SAMPLINGRATE !== undefined)
+      effectiveConfig.transactionSampleRate = Number(process.env.ELK_APM_SAMPLINGRATE)
+    return effectiveConfig
   }
   static init() {
-    const config = ApmHelper.getConfig()
+    const config = ApmHelper.getConfigWithEnvironmentVariablesOverriding()
     const enableApm = Boolean(config.enableLogs) === true
     if (!enableApm) {
       ApmHelper.myConsole(
@@ -50,20 +60,10 @@ export class ApmHelper {
     if (ApmHelper.apm) return ApmHelper.apm
 
     ApmHelper.apm = require("elastic-apm-node")
-    const devConfig = {
-      serviceName: config.serviceName,
-      centralConfig: false,
-      captureExceptions: false,
-      metricsInterval: 0,
-      transactionSampleRate: config.apmSamplingRate,
-      serverUrl: config.serverUrl,
-      secretToken: config.secretToken,
-    }
-
-    ApmHelper.apm.start(devConfig)
-    ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(devConfig.serverUrl)}`)
+    ApmHelper.apm.start(config)
+    ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(config.serverUrl)}`)
     ApmHelper.myConsole(
-      `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${devConfig.serviceName}.`
+      `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${config.serviceName}.`
     )
   }
 
@@ -86,11 +86,15 @@ export class ApmHelper {
     if (logContext?.tenantId) errorLabels.tenantId = `tid${logContext.tenantId}`
     if (logContext?.userId) errorLabels.userId = logContext.userId
 
+    if (this.isAppException(exception)) {
+      // By adding this it will show up in Kibana in the field called error.exception.message.
+      exception.message = exception.toString()
+    }
     const errorDetails = {
       handled,
       labels: errorLabels,
       captureAttributes: false,
-      message: exception.toString(),
+      message: (exception as AppException).errorName,
       custom: this.isAppException(exception) ? exception.contextData : {},
     }
 
