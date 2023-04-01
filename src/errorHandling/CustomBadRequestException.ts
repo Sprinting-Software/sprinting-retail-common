@@ -21,12 +21,5 @@ export class CustomBadRequestException extends AppException {
 
     return message
   }
-
-  override getResponse() {
-    return {
-      statusCode: this.httpStatus,
-      errorName: this.errorName,
-      message: this.errors,
-    }
-  }
+  
 }

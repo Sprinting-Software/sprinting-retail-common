@@ -1,8 +1,16 @@
 import util from "util"
 import { HttpException, HttpStatus } from "@nestjs/common"
+import { LibraryVersioning } from "../LibraryVersioning"
 
 interface AppExceptionResponse {
   statusCode: number
+  errorName: string
+  message?: string | object
+  contextData?: Record<string, any>
+  innerError?: Error
+}
+interface AppExceptionResponseV2 {
+  httpStatus: number
   errorName: string
   message?: string | object
   contextData?: Record<string, any>
@@ -77,12 +85,21 @@ export class AppException extends HttpException {
    * Returns the response object that will be sent to the client.
    * Please do not change the method name as it matches with the NestJS built-in error interface.
    */
-  getResponse(): AppExceptionResponse {
-    return {
-      statusCode: this.httpStatus,
-      errorName: this.errorName,
-      message: this.description,
-      contextData: this.contextData,
+  getResponse(): AppExceptionResponse | AppExceptionResponseV2 {
+    if (LibraryVersioning.ACTIVE_API_VERSION === LibraryVersioning.API_VERSIONS.v1) {
+      return {
+        statusCode: this.httpStatus,
+        errorName: this.errorName,
+        message: this.description,
+        contextData: this.contextData,
+      }
+    } else {
+      return {
+        httpStatus: this.httpStatus,
+        errorName: this.errorName,
+        message: this.description,
+        contextData: this.contextData,
+      }
     }
   }
 }

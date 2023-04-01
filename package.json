@@ -30,6 +30,7 @@
     "build": "rimraf dist && npm run lint && tsc",
     "test": "jest",
     "prepublishOnly": "npm run build",
+    "publish:full": "npm ci;npm run build;npm publish",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
