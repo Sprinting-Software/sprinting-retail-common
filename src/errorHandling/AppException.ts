@@ -2,14 +2,14 @@ import util from "util"
 import { HttpException, HttpStatus } from "@nestjs/common"
 import { LibraryVersioning } from "../LibraryVersioning"
 
-interface AppExceptionResponse {
+export interface AppExceptionResponse {
   statusCode: number
   errorName: string
   message?: string | object
   contextData?: Record<string, any>
   innerError?: Error
 }
-interface AppExceptionResponseV2 {
+export interface AppExceptionResponseV2 {
   httpStatus: number
   errorName: string
   message?: string | object
@@ -86,16 +86,16 @@ export class AppException extends HttpException {
    * Please do not change the method name as it matches with the NestJS built-in error interface.
    */
   getResponse(): AppExceptionResponse | AppExceptionResponseV2 {
-    if (LibraryVersioning.ACTIVE_API_VERSION === LibraryVersioning.API_VERSIONS.v1) {
+    if (LibraryVersioning.v2IsActive()) {
       return {
-        statusCode: this.httpStatus,
+        httpStatus: this.httpStatus,
         errorName: this.errorName,
         message: this.description,
         contextData: this.contextData,
       }
     } else {
       return {
-        httpStatus: this.httpStatus,
+        statusCode: this.httpStatus,
         errorName: this.errorName,
         message: this.description,
         contextData: this.contextData,

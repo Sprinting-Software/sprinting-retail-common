@@ -1,5 +1,6 @@
 import { BadRequestException } from "@nestjs/common"
-import { AppException } from "./AppException"
+import { AppException, AppExceptionResponse, AppExceptionResponseV2 } from "./AppException"
+import { LibraryVersioning } from "../LibraryVersioning"
 
 export class CustomBadRequestException extends AppException {
   public readonly errors: Record<string, string[]> = {}
@@ -21,5 +22,20 @@ export class CustomBadRequestException extends AppException {
 
     return message
   }
-  
+
+  override getResponse() {
+    if (LibraryVersioning.v2IsActive()) {
+      return {
+        httpStatus: this.httpStatus,
+        errorName: this.errorName,
+        message: this.errors,
+      } as AppExceptionResponseV2
+    } else {
+      return {
+        statusCode: this.httpStatus,
+        errorName: this.errorName,
+        message: this.errors,
+      } as AppExceptionResponse
+    }
+  }
 }
