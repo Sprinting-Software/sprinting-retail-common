@@ -31,6 +31,7 @@ describe("ErrorParser", () => {
     const e = new Error("ERROR_NAME")
     const e2 = ErrorParser.parse(e)
     expect(e2).toBeInstanceOf(AppException)
-    expect(e2.errorName).toEqual("ERROR_NAME")
+    expect(e2.errorName).toEqual("Error")
+    expect(e2.description).toEqual("ERROR_NAME")
   })
 })

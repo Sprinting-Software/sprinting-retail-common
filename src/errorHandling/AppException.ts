@@ -1,6 +1,6 @@
 import util from "util"
 import { HttpException, HttpStatus } from "@nestjs/common"
-import { LibraryVersioning } from "../LibraryVersioning"
+import { LibraryVersioning } from "../libVersioning/LibraryVersioning"
 
 export interface AppExceptionResponse {
   statusCode: number

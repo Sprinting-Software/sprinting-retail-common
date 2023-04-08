@@ -1,3 +1,5 @@
+import { CommonAppModule } from "./src/nestModulesAndServices/CommonAppModule"
+
 export * from "./src/logger/LoggerService"
 export * from "./src/errorHandling/AppException"
 export * from "./src/errorHandling/ServerException"
@@ -7,4 +9,6 @@ export * from "./src/apm/ApmHelper"
 export * from "./src/common/LogContext"
 export * from "./src/errorHandling/AppException"
 export * from "./src/errorHandling/DbError"
-export * from "./src/LibraryVersioning"
+export * from "./src/libVersioning/LibraryVersioning"
+export * from "./src/nestModulesAndServices/CommonAppModule"
+export * from "./src/nestModulesAndServices/PrepareNestAppModule"
