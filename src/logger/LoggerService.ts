@@ -26,7 +26,7 @@ interface LogMessage {
   [key: string]: any
 }
 
-export interface ConfigOptions {
+export interface LoggerConfig {
   env: string
   serviceName: string
   enableLogs: boolean
@@ -37,11 +37,13 @@ export interface ConfigOptions {
   }
 }
 
+export type ConfigOptions = LoggerConfig
+
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerService {
   private readonly logger: winston.Logger
 
-  constructor(private readonly config: ConfigOptions, transports: any[] = []) {
+  constructor(private readonly config: LoggerConfig, transports: any[] = []) {
     const conf = {
       systemName: config.serviceName,
       host: config.logstash.host,
