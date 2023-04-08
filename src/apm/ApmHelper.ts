@@ -1,20 +1,8 @@
-import { LogContext } from "../common/LogContext"
-import { AppException } from "../errorHandling/AppException"
+import { LogContext } from "../common/LogContext";
+import { AppException } from "../errorHandling/AppException";
+import { ApmConfig } from "../config/configFormats/ApmConfig";
 
 export type IApmSpan = { end: () => void }
-
-export interface ApmConfig {
-  enableLogs: boolean
-  serviceName: string
-  serverUrl: string
-  secretToken?: string
-  transactionSampleRate?: number
-  labels?: Record<string, string>
-  captureErrorLogStackTraces?: boolean
-  captureExceptions?: boolean
-  centralConfig?: boolean
-  metricsInterval?: number
-}
 
 const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
   transactionSampleRate: 1,

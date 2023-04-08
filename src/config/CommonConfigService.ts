@@ -1,14 +1,20 @@
 import { Injectable } from "@nestjs/common"
-import { IConfigElk } from "./IConfigElk"
-import { IConfigRoot } from "./IConfigRoot"
+import { ElkConfig } from "./configFormats/ElkConfig"
+import { AppConfig } from "./configFormats/AppConfig"
 import { IConfigProvider } from "./IConfigProvider"
 
 @Injectable()
-export class CommonConfigService implements IConfigRoot {
-  constructor(private configService: IConfigProvider) {}
+export class CommonConfigService implements AppConfig {
+  getRawConfig(): any {
+    return this.config
+  }
+  private config: IConfigProvider
+  constructor(config: IConfigProvider) {
+    this.config = config
+  }
 
   public get env(): string {
-    return process.env.NODE_ENV // this.configService.get('NODE_ENV');
+    return process.env.NODE_ENV // this.config.get('NODE_ENV');
   }
 
   public get envPrefix(): string {
@@ -16,14 +22,14 @@ export class CommonConfigService implements IConfigRoot {
   }
 
   private getProp<T>(field: string): T {
-    if (this.configService.has) {
+    if (this.config.has) {
       // If we rely on the node config module we need to guard like this
-      return this.configService.has(field) ? this.configService.get<T>(field) : undefined
+      return this.config.has(field) ? this.config.get<T>(field) : undefined
     } else {
-      return this.configService.get<T>(field)
+      return this.config.get<T>(field)
     }
   }
-  public get elkConfig(): IConfigElk {
-    return this.getProp<IConfigElk>("elk") as IConfigElk
+  public get elkConfig(): ElkConfig {
+    return this.getProp<ElkConfig>("elk") as ElkConfig
   }
 }

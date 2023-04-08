@@ -1,9 +1,9 @@
-import { LoggerConfig } from "../logger/LoggerService"
-import { ApmConfig } from "../apm/ApmHelper"
-import { IConfigRoot } from "./IConfigRoot"
+import { LoggerConfig } from "../../logger/LoggerService"
+import { AppConfig } from "./AppConfig"
+import { ApmConfig } from "./ApmConfig";
 
 export class ConfigMapper {
-  public static mapToLoggerConfig(appConfig: IConfigRoot): LoggerConfig {
+  public static mapToLoggerConfig(appConfig: AppConfig): LoggerConfig {
     const elkConfig = appConfig.elkConfig
     return {
       env: appConfig.envPrefix,
@@ -17,7 +17,7 @@ export class ConfigMapper {
     }
   }
 
-  static mapToApmConfig(appConfig: IConfigRoot): ApmConfig {
+  static mapToApmConfig(appConfig: AppConfig): ApmConfig {
     const elkConfig = appConfig.elkConfig
     return {
       serviceName: elkConfig.serviceName,

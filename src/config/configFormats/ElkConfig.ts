@@ -1,4 +1,4 @@
-export interface IConfigElk {
+export interface ElkConfig {
   serviceName: string
   hostname: string
   port: number

@@ -1,4 +1,5 @@
 import { CommonAppModule } from "./src/nestModulesAndServices/CommonAppModule"
+import { CommonConfigSingleton } from "./src/config/CommonConfigSingleton";
 
 export * from "./src/logger/LoggerService"
 export * from "./src/errorHandling/AppException"
@@ -11,4 +12,7 @@ export * from "./src/errorHandling/AppException"
 export * from "./src/errorHandling/DbError"
 export * from "./src/libVersioning/LibraryVersioning"
 export * from "./src/nestModulesAndServices/CommonAppModule"
+export * from "./src/nestModulesAndServices/ConfigModule"
+export * from "./src/nestModulesAndServices/LoggerModule"
 export * from "./src/nestModulesAndServices/PrepareNestAppModule"
+export * from "./src/config/CommonConfigSingleton"

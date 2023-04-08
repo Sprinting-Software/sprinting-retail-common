@@ -1,25 +1,28 @@
 import { LoggerConfig, LoggerService } from "../logger/LoggerService"
-import { ConfigMapper } from "../config/ConfigMapper"
+import { ConfigMapper } from "../config/configFormats/ConfigMapper"
 import { ApmHelper } from "../apm/ApmHelper"
 import { Module } from "@nestjs/common"
-import { IConfigRoot } from "../config/IConfigRoot"
+import { ConfigModule } from "./ConfigModule";
+import { CommonConfigService } from "../config/CommonConfigService";
 
 @Module({
-  imports: [],
+  imports: [ConfigModule],
   providers: [
     {
       provide: LoggerService,
-      useFactory: (config: IConfigRoot) => {
+      useFactory: (config: CommonConfigService) => {
         const loggerConfig: LoggerConfig = ConfigMapper.mapToLoggerConfig(config)
         return new LoggerService(loggerConfig)
       },
+      inject: [CommonConfigService],
     },
     {
       provide: ApmHelper,
-      useFactory: (config: IConfigRoot) => {
-        const apmConfig = ConfigMapper.mapToApmConfig(config)
+      useFactory: (configProvider: CommonConfigService) => {
+        const apmConfig = ConfigMapper.mapToApmConfig(configProvider)
         return new ApmHelper(apmConfig)
       },
+      inject: [CommonConfigService],
     },
   ],
   exports: [LoggerService],

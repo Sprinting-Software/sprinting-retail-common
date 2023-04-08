@@ -1,9 +1,12 @@
 import { Module } from "@nestjs/common"
 import { HttpAdapterHost } from "@nestjs/core"
 import { LoadBalancingTimeoutBootstrap } from "./LoadBalancingTimeoutBootstrap"
+import { ConfigModule } from "./ConfigModule";
+import { LoggerModule } from "./LoggerModule";
 
 @Module({
-  imports: [],
+  imports: [ConfigModule, LoggerModule],
+  exports: [LoggerModule],
   controllers: [],
   providers: [
     HttpAdapterHost,
