@@ -1,4 +1,4 @@
-import TenantContext from "./TenantContext";
+import TenantContext from "./TenantContext"
 
 export class TenantContextFactory {
   public static getTenantContext(request: Request) {

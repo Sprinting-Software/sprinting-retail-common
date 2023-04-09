@@ -1,41 +1,30 @@
 import { LoggerService } from "./LoggerService"
-import { ConfigMapper } from "../config/configFormats/ConfigMapper"
+import { ConfigMapper } from "../config/legacyInterfaces/ConfigMapper"
 import { ApmHelper } from "../apm/ApmHelper"
 import { Module } from "@nestjs/common"
-import { ConfigModule } from "../config/ConfigModule";
-import { CommonConfigService } from "../config/CommonConfigService";
-import { LoggerConfig } from "./LoggerConfig";
+import { ConfigModule } from "../config/ConfigModule"
+import { LoggerConfig } from "./LoggerConfig"
+import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
 
 @Module({
   imports: [ConfigModule],
   providers: [
     {
       provide: LoggerService,
-      useFactory: (config: CommonConfigService) => {
-        const loggerConfig: LoggerConfig = ConfigMapper.mapToLoggerConfig(config)
+      useFactory: (provider: RetailCommonConfigProvider) => {
+        const loggerConfig: LoggerConfig = ConfigMapper.mapToLoggerConfig(provider.config)
         return new LoggerService(loggerConfig)
       },
-      inject: [CommonConfigService],
-    },
-    {
-      provide: LoggerService,
-      useFactory: (config: CommonConfigService) => {
-        const loggerConfig: LoggerConfig = ConfigMapper.mapToLoggerConfig(config)
-        return new LoggerService(loggerConfig)
-      },
-      inject: [CommonConfigService],
+      inject: [RetailCommonConfigProvider],
     },
     {
       provide: ApmHelper,
-      useFactory: (configProvider: CommonConfigService) => {
-        const apmConfig = ConfigMapper.mapToElkConfig(configProvider)
-        return new ApmHelper(apmConfig)
+      useFactory: (provider: RetailCommonConfigProvider) => {
+        return new ApmHelper(provider.config.elk.apm)
       },
-      inject: [CommonConfigService],
+      inject: [RetailCommonConfigProvider],
     },
   ],
-  exports: [LoggerService],
+  exports: [LoggerService, ApmHelper],
 })
-export class LoggerModule {
-  constructor() {}
-}
+export class LoggerModule {}

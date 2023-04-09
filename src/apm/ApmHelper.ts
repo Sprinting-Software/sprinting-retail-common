@@ -1,10 +1,10 @@
-import { LogContext } from "../logger/LogContext";
-import { AppException } from "../errorHandling/AppException";
-import { ElkConfig } from "../config/configFormats/ElkConfig";
+import { LogContext } from "../logger/LogContext"
+import { AppException } from "../errorHandling/AppException"
+import { ApmConfig } from "../config/interface/ApmConfig"
 
 export type IApmSpan = { end: () => void }
 
-const DEFAULT_APM_CONFIG: Partial<ElkConfig> = {
+const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
   transactionSampleRate: 1,
   captureExceptions: false,
   centralConfig: false,
@@ -17,7 +17,7 @@ export class ApmHelper {
   private static apm
   private static config
 
-  constructor(private readonly config?: ElkConfig) {
+  constructor(private readonly config?: ApmConfig) {
     ApmHelper.config = { ...DEFAULT_APM_CONFIG, ...config }
     ApmHelper.init()
   }
@@ -26,7 +26,7 @@ export class ApmHelper {
     return ApmHelper.getAPMClient()
   }
 
-  static getConfigWithEnvironmentVariablesOverriding(): ElkConfig {
+  static getConfigWithEnvironmentVariablesOverriding(): ApmConfig {
     const effectiveConfig = { ...ApmHelper.config }
     if (process.env.ENABLE_LOGS !== undefined) effectiveConfig.enableLogs = process.env.ENABLE_LOGS === "true"
     if (process.env.ELK_SERVICE_URL !== undefined) effectiveConfig.serverUrl = process.env.ELK_SERVICE_URL

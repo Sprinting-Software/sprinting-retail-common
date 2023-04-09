@@ -33,6 +33,26 @@ $ npm i sprinting-retail-common
 ```
 
 <h3 style="color:#3788c3;">Configuration interface</h3>
+
+You must have this in your AppModule to connect your NestJS app 
+to the functionalities of the sprinting-retail-common library.
+```
+...
+import { CommonAppModule, PrepareNestAppModule } from "sprinting-retail-common"
+...
+@Module(
+  PrepareNestAppModule({
+    imports: [
+      CommonAppModule.register(config),
+      ...
+    ],
+    ...
+  })
+)
+export class AppModule {}
+```
+
+<h3 style="color:#3788c3;">Configuration interface - prior to version 2</h3>
 Use configurations libraries like convict, or any other alternative which will allow getting params easily.
 https://www.npmjs.com/package/convict
 

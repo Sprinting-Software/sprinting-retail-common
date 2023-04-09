@@ -1,23 +1,20 @@
 import { DynamicModule, Global, Module } from "@nestjs/common"
-import { CommonConfigService, CONFIG_PROVIDER_TOKEN } from "./CommonConfigService"
-import { IConfigProvider } from "./IConfigProvider"
+import { RetailCommonConfig } from "./interface/RetailCommonConfig"
+import { RetailCommonConfigProvider } from "./RetailCommonConfigProvider"
 
-/**
- * This is used for internal configuration of sprinting-retail-common
- */
-@Global()
 @Module({})
+@Global()
 export class ConfigModule {
-  static register(config: IConfigProvider): DynamicModule {
+  static forRoot(retailCommonConfig: RetailCommonConfig): DynamicModule {
     return {
       module: ConfigModule,
       providers: [
         {
-          provide: CommonConfigService,
-          useFactory: () => new CommonConfigService(config),
+          provide: RetailCommonConfigProvider,
+          useFactory: () => new RetailCommonConfigProvider(retailCommonConfig),
         },
       ],
-      exports: [CommonConfigService],
+      exports: [RetailCommonConfigProvider],
     }
   }
 }

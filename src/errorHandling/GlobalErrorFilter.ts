@@ -1,7 +1,5 @@
-import { ArgumentsHost, BadRequestException, Catch, ExceptionFilter, Injectable } from "@nestjs/common"
+import { ArgumentsHost, Catch, ExceptionFilter, Injectable } from "@nestjs/common"
 import { LoggerService } from "../logger/LoggerService"
-import { AppException } from "./AppException"
-import { CustomBadRequestException } from "./CustomBadRequestException"
 import { LogContext } from "../logger/LogContext"
 import { ErrorParser } from "./ErrorParser"
 

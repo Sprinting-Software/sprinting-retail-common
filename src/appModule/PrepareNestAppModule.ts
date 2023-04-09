@@ -2,12 +2,6 @@ import { HttpAdapterHost } from "@nestjs/core"
 import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBootstrap"
 
 export function PrepareNestAppModule(param: any) {
-  const NestScope = {
-    REQUEST: 2,
-  }
-  const NestConstants = {
-    APP_FILTER: "APP_FILTER",
-  }
   return {
     imports: param.imports,
     controllers: param.controllers,

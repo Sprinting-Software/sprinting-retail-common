@@ -1,4 +1,4 @@
-import { DynamicModule, Global, Module, Scope } from "@nestjs/common";
+import { DynamicModule, Global, Module, Scope } from "@nestjs/common"
 import { ConfigModule } from "../config/ConfigModule"
 import { LoggerModule } from "../logger/LoggerModule"
 import { APP_FILTER, REQUEST } from "@nestjs/core"
@@ -6,7 +6,7 @@ import { LoggerService } from "../logger/LoggerService"
 import TenantContext from "../context/TenantContext"
 import { GlobalErrorFilter } from "../errorHandling/GlobalErrorFilter"
 import { TenantContextFactory } from "../context/TenantContextFactory"
-import { IConfigProvider } from "../config/IConfigProvider"
+import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -16,31 +16,26 @@ import { IConfigProvider } from "../config/IConfigProvider"
 @Global()
 @Module({})
 export class CommonAppModule {
-  static register(config: IConfigProvider): DynamicModule {
-    return this.registerUtil(config)
-  }
-
-  private static registerUtil(config: IConfigProvider) {
+  static forRoot(config: RetailCommonConfig): DynamicModule {
     return {
-      module: CommonAppModule,
-      imports: [ConfigModule.register(config), LoggerModule],
-      exports: [LoggerModule, TenantContext],
-      controllers: [],
+      module: CommonAppModule, // needed for dynamic modules
+      imports: [ConfigModule.forRoot(config), LoggerModule],
       providers: [
         {
           provide: TenantContext,
           scope: Scope.REQUEST,
           useFactory: (request: Request) => TenantContextFactory.getTenantContext(request),
-          inject: [REQUEST]
+          inject: [REQUEST],
         },
         {
           provide: APP_FILTER,
           useFactory: (logger: LoggerService, tenantContext: TenantContext) =>
             new GlobalErrorFilter(logger, { tenantId: tenantContext.tenantIdOrUndefined }),
           inject: [LoggerService, TenantContext],
-          scope: Scope.REQUEST
-        }
-      ]
-    };
+          scope: Scope.REQUEST,
+        },
+      ],
+      exports: [LoggerModule, TenantContext],
+    }
   }
 }

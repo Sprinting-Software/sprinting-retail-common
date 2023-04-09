@@ -1,5 +1,4 @@
-import { Injectable, Module, OnApplicationBootstrap } from "@nestjs/common"
-import { HttpAdapterHost } from "@nestjs/core"
+import { OnApplicationBootstrap } from "@nestjs/common"
 
 export class LoadBalancingTimeoutBootstrap implements OnApplicationBootstrap {
   constructor(private readonly serverGetter: any) {}
