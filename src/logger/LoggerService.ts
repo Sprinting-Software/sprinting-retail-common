@@ -1,12 +1,14 @@
-import { UDPTransport } from "udp-transport-winston"
-import * as winston from "winston"
-import { ApmHelper } from "../apm/ApmHelper"
+import { UDPTransport } from "udp-transport-winston";
+import * as winston from "winston";
+import { ApmHelper } from "../apm/ApmHelper";
+import { Injectable, Scope } from "@nestjs/common";
+import { AppException } from "../errorHandling/AppException";
+import { LogContext } from "./LogContext";
+import { LoggerConfig } from "./LoggerConfig";
+
 const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ecsFormat = require("@elastic/ecs-winston-format")
-import { Injectable, Scope } from "@nestjs/common"
-import { AppException } from "../errorHandling/AppException"
-import { LogContext } from "../common/LogContext"
 
 export const enum LogLevel {
   info = "info",
@@ -24,17 +26,6 @@ interface LogMessage {
   logType: LogLevel
   message: string
   [key: string]: any
-}
-
-export interface LoggerConfig {
-  env: string
-  serviceName: string
-  enableLogs: boolean
-  logstash: {
-    isUDPEnabled: boolean
-    host: string
-    port: number
-  }
 }
 
 export type ConfigOptions = LoggerConfig

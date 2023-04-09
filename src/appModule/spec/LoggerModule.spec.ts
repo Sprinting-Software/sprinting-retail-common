@@ -1,9 +1,7 @@
 import { Test } from "@nestjs/testing"
-import { ConfigModule } from "../ConfigModule"
-import { CommonConfigService } from "../../config/CommonConfigService"
-import { CommonConfigSingleton } from "../../config/CommonConfigSingleton"
+import { ConfigModule } from "../../config/ConfigModule"
 import config from "config"
-import { LoggerModule } from "../LoggerModule";
+import { LoggerModule } from "../../logger/LoggerModule";
 import { LoggerService } from "../../logger/LoggerService";
 import { ApmHelper } from "../../apm/ApmHelper";
 
@@ -14,9 +12,8 @@ describe("LoggerModule", () => {
 
   describe("LoggerModule", () => {
     it("should provide an instance of LoggerService and ApmHelper", async () => {
-      CommonConfigSingleton.Init(myconfig)
       const app = await Test.createTestingModule({
-        imports: [LoggerModule],
+        imports: [ConfigModule.register(myconfig), LoggerModule],
       }).compile()
       const loggerService = app.get<LoggerService>(LoggerService)
       expect(loggerService).toBeDefined()
@@ -25,7 +22,6 @@ describe("LoggerModule", () => {
       const apmHelper = app.get<ApmHelper>(ApmHelper)
       expect(apmHelper).toBeDefined()
       expect(apmHelper).toBeInstanceOf(ApmHelper)
-      CommonConfigSingleton.reset()
     })
   })
 })

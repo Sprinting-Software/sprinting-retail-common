@@ -1,6 +1,6 @@
-import { AppException } from "../errorHandling/AppException"
-import { LogContext } from "../common/LogContext"
-import { LoggerService, LogLevel } from "./LoggerService"
+import { AppException } from "../../errorHandling/AppException"
+import { LogContext } from "../LogContext"
+import { LoggerService, LogLevel } from "../LoggerService"
 
 describe("logger", () => {
   let loggerService: LoggerService

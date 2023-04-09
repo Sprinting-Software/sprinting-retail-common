@@ -1,15 +1,20 @@
-import { Injectable } from "@nestjs/common"
-import { ElkConfig } from "./configFormats/ElkConfig"
-import { AppConfig } from "./configFormats/AppConfig"
+import { Inject, Injectable } from "@nestjs/common"
+import { ElkConfigLegacy } from "./configFormats/ElkConfigLegacy"
+import { RetailCommonConfigLegacy } from "./configFormats/RetailCommonConfigLegacy"
 import { IConfigProvider } from "./IConfigProvider"
+import { ClientException } from "../errorHandling/ClientException"
 
+export const CONFIG_PROVIDER_TOKEN = "CONFIG_PROVIDER"
 @Injectable()
-export class CommonConfigService implements AppConfig {
-  getRawConfig(): any {
+export class CommonConfigService implements RetailCommonConfigLegacy {
+  getRawConfig(): IConfigProvider {
     return this.config
   }
   private config: IConfigProvider
-  constructor(config: IConfigProvider) {
+  constructor(@Inject(CONFIG_PROVIDER_TOKEN) config: IConfigProvider) {
+    if (!config) {
+      throw new ClientException("MissingConfiguration", `Configuration must be provided. Found ${config}`)
+    }
     this.config = config
   }
 
@@ -29,7 +34,7 @@ export class CommonConfigService implements AppConfig {
       return this.config.get<T>(field)
     }
   }
-  public get elkConfig(): ElkConfig {
-    return this.getProp<ElkConfig>("elk") as ElkConfig
+  public get elkConfig(): ElkConfigLegacy {
+    return this.getProp<ElkConfigLegacy>("elk") as ElkConfigLegacy
   }
 }

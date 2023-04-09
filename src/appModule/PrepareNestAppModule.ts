@@ -1,5 +1,5 @@
 import { HttpAdapterHost } from "@nestjs/core"
-import { LoadBalancingTimeoutBootstrap } from "./LoadBalancingTimeoutBootstrap"
+import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBootstrap"
 
 export function PrepareNestAppModule(param: any) {
   const NestScope = {
