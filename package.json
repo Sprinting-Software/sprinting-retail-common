@@ -1,6 +1,6 @@
 {
   "name": "sprinting-retail-common",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "Error handling and logging with APM",
   "author": "Nairi Abgaryan",
   "contributors": [
@@ -30,7 +30,7 @@
     "build": "rimraf dist && npm run lint && tsc --emitDecoratorMetadata",
     "test": "jest",
     "prepublishOnly": "npm run build",
-    "publish:full": "npm ci;npm run build;npm publish",
+    "publish:full": "npm ci;npm run build;npm run test;npm publish",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
