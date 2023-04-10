@@ -1,12 +1,13 @@
 import { DynamicModule, Global, Module, Scope } from "@nestjs/common"
 import { ConfigModule } from "../config/ConfigModule"
 import { LoggerModule } from "../logger/LoggerModule"
-import { APP_FILTER, REQUEST } from "@nestjs/core"
+import { APP_FILTER, HttpAdapterHost, REQUEST } from "@nestjs/core"
 import { LoggerService } from "../logger/LoggerService"
 import TenantContext from "../context/TenantContext"
 import { GlobalErrorFilter } from "../errorHandling/GlobalErrorFilter"
 import { TenantContextFactory } from "../context/TenantContextFactory"
 import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
+import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBootstrap"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -34,8 +35,14 @@ export class CommonAppModule {
           inject: [LoggerService, TenantContext],
           scope: Scope.REQUEST,
         },
+        {
+          provide: LoadBalancingTimeoutBootstrap,
+          useFactory: (refHost: HttpAdapterHost<any>, logger: LoggerService) =>
+            new LoadBalancingTimeoutBootstrap(refHost, logger),
+          inject: [HttpAdapterHost, LoggerService],
+        },
       ],
-      exports: [LoggerModule, TenantContext],
+      exports: [ConfigModule, LoggerModule, TenantContext],
     }
   }
 }

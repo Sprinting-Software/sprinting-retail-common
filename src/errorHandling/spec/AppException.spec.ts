@@ -36,9 +36,10 @@ describe("AppException", () => {
         { somekey: "someValue" },
         innerError
       )
-      const expectedString =
-        "Some error name (HTTP_STATUS 400) ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
+      const expectedString = "Some error name (HTTP_STATUS 400)"
+      const expectedString2 = "ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
       expect(appException.toString()).toContain(expectedString)
+      expect(appException.toString()).toContain(expectedString2)
     })
 
     it("should return the expected string with inner AppException", () => {
@@ -56,9 +57,10 @@ describe("AppException", () => {
         { somekey: "someValue" },
         innerError
       )
-      const expectedString =
-        "Some error name (HTTP_STATUS 400) ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
+      const expectedString = "Some error name (HTTP_STATUS 400)"
+      const expectedString2 = "ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
       expect(appException.toString()).toContain(expectedString)
+      expect(appException.toString()).toContain(expectedString2)
     })
 
     it("should return the expected string representation of the exception with only required fields", () => {

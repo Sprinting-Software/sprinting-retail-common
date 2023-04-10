@@ -39,6 +39,10 @@ export class ApmHelper {
   static init() {
     const config = ApmHelper.getConfigWithEnvironmentVariablesOverriding()
     const enableApm = Boolean(config.enableLogs) === true
+    // config2 has secretToken removed
+    const config2 = { ...config }
+    if (config2.secretToken) config2.secretToken = "********"
+    ApmHelper.myConsole(`ApmHelper.init() called with config: ${JSON.stringify(config2)}`)
     if (!enableApm) {
       ApmHelper.myConsole(
         "Transaction data ARE NOT SENT to APM because ENABLE_APM is overridden and set to false in the environment"
@@ -67,17 +71,17 @@ export class ApmHelper {
 
     const errorLabels = {
       errorName: this.isAppException(exception) ? exception.errorName : exception.name,
-      errorDescription: this.isAppException(exception) ? exception.description : exception.message,
+      errorDescription: this.isAppException(exception) ? exception.description : "",
       ...ApmHelper.config?.labels,
     }
 
     if (logContext?.tenantId) errorLabels.tenantId = `tid${logContext.tenantId}`
     if (logContext?.userId) errorLabels.userId = logContext.userId
 
-    if (this.isAppException(exception)) {
+    /*if (this.isAppException(exception)) {
       // By adding this it will show up in Kibana in the field called error.exception.message.
       exception.message = exception.toString()
-    }
+    }*/
     const errorDetails = {
       handled,
       labels: errorLabels,

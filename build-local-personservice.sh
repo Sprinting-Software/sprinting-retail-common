@@ -1,1 +1,1 @@
- tsc --emitDecoratorMetadata && npm pack && cd ../sprinting_personservice/PersonServiceApi && npm install ../../sprinting-retail-common/sprinting-retail-common-1.2.1.tgz && cd ../../sprinting-retail-common
+ tsc --emitDecoratorMetadata && npm pack && cd ../sprinting_personservice/PersonServiceApi && npm install ../../sprinting-retail-common/sprinting-retail-common-2.0.1.tgz && cd ../../sprinting-retail-common

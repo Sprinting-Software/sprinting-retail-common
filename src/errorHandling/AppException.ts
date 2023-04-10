@@ -17,7 +17,12 @@ export interface AppExceptionResponseV2 {
   innerError?: Error
 }
 
+const INSPECT_DEPTH = 7
+const INSPECT_SHOW_HIDDEN = false
+
 export class AppException extends HttpException {
+  public readonly errorTraceId: string
+  private _message: string
   constructor(
     public readonly httpStatus: number = HttpStatus.BAD_REQUEST,
     public errorName: string,
@@ -27,25 +32,46 @@ export class AppException extends HttpException {
   ) {
     super(errorName ?? HttpStatus[httpStatus], httpStatus)
     this.errorName = errorName ?? HttpStatus[httpStatus]
+    this.errorTraceId = AppException.generateErrorTraceId()
   }
 
   override toString(): string {
-    const { errorName, httpStatus, description, contextData, innerError } = this
-    let message = `${this.constructor.name} ${errorName} (HTTP_STATUS ${httpStatus}) `
-    if (description) message += `ERROR_DESCRIPTION - ${description}`
-    if (contextData) message += ` - CONTEXT_DATA: ${util.inspect(contextData)}`
-    if (this.stack) message += `\n ${this.stack.split("\n").slice(1).join("\n")}`
-    if (innerError) {
-      message += "\nINNER_ERROR:\n"
-      if (innerError instanceof AppException) {
-        message += innerError.toString()
-      } else {
-        const e0 = util.inspect(innerError)
-        message += e0
+    try {
+      let msg = `${this.constructor.name} ${this.toStringPreparedForMessageField()}`
+      if (this.stack) msg += `\n ${this.stack.split("\n").slice(1).join("\n")}`
+      if (this.innerError) {
+        msg += "\nINNER_ERROR:\n"
+        if (this.innerError instanceof AppException) {
+          msg += this.innerError.toString()
+        } else {
+          const e0 = util.inspect(this.innerError)
+          msg += e0
+        }
       }
+      return msg
+    } catch (e) {
+      return "ERROR_IN_TO_STRING"
     }
+  }
 
-    return message
+  private toStringPreparedForMessageField() {
+    const { errorName, httpStatus, description, contextData } = this
+    let msg = `${errorName} (HTTP_STATUS ${httpStatus}) (${this.errorTraceId}) `
+    if (description) msg += `ERROR_DESCRIPTION - ${description}`
+    if (contextData) msg += ` - CONTEXT_DATA: ${util.inspect(contextData, INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)}`
+    if (this._message && this._message !== this.errorName) msg += ` - ADDITIONAL_MESSAGE: ${this._message}`
+    return msg
+  }
+
+  /**
+   * In order to make the error print nicely during development, we need to override the message property like this.
+   */
+  public override get message() {
+    return this.toStringPreparedForMessageField()
+  }
+
+  public override set message(m: string) {
+    this._message = m
   }
 
   /**
@@ -101,5 +127,22 @@ export class AppException extends HttpException {
         contextData: this.contextData,
       }
     }
+  }
+
+  /**
+   * Generates a random string that can be used as an error trace id.
+   * Should only contain upper case letters that cannot be confused with numbers.
+   * @private
+   */
+  private static generateErrorTraceId() {
+    const charsAndNumber = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    const result = new Array(6)
+    function getRandom(cs: string = charsAndNumber) {
+      return cs.charAt(Math.floor(Math.random() * cs.length))
+    }
+    for (let i = 0; i < 6; i++) {
+      result[i] = getRandom(charsAndNumber)
+    }
+    return `ERR-${result.join("")}`
   }
 }

@@ -1,58 +1,77 @@
-<h3 style="color:#ad206e;">Logger monitoring system ELK
-<h3 style="color:#3788c3;">Release letters</h3>
-<h4>Release letter for version 1.0.4</h4>
-Breaking changes: 
-- apmSamplingRate has changed name to transactionSampleRate
+<h1>Sprinting Retail Comon</h1>
 
-<h3 style="color:#3788c3;">Introduction:</h3>
-<p>
-This service is designed to provide real-time monitoring and analysis of log data from various sources using the ELK (Elasticsearch, Logstash, Kibana) stack. It allows users to collect, store, and search through log data in a centralized location for easier troubleshooting and problem-solving.
-<p>
-
-_Note: It is recommended that you have some knowledge of ELK stack and its components for better usage of the service._
-
-<h3 style="color:#3788c3;">Features:</h3>
+<h2>Introduction</h2>
+This library provides: 
 <ul>
-    <li>Real-time log data collection from various sources such as servers, applications, and devices using Logstash</li>
-    <li>Centralized storage and search functionality using Elasticsearch</li>
-    <li>Visualization and analysis of log data using Kibana</li>
+    <li>Error handling</li>
+    <li>Logging to ELK - both logs and APM</li>
 </ul>
 
-<h3 style="color:#3788c3;">Setup</h3>
-In Your local machine
-<ul>
-    <li>Install the ELK stack on a server or host machine </li>
-    <li>Configure Logstash to collect log data from your desired sources</li>
-    <li>Set up Elasticsearch and Kibana</li>
-    <li>Set up alerts and customized dashboards/reports as needed</li>
-</ul>
+[Check out the RELEASE_LETTERS here](RELEASE_LETTERS.md)
 
+<h2>Setup</h2>
 
+1. Install in your project
 ```bash 
 $ npm i sprinting-retail-common
 ```
-
-<h3 style="color:#3788c3;">Configuration interface</h3>
-
-You must have this in your AppModule to connect your NestJS app 
-to the functionalities of the sprinting-retail-common library.
+2. Add CommonAppModule to your AppModule using forRoot to pass config which must implement the RetailCommonConfig interface.
 ```
-...
 import { CommonAppModule, PrepareNestAppModule } from "sprinting-retail-common"
 ...
 @Module(
-  PrepareNestAppModule({
+  {
     imports: [
-      CommonAppModule.register(config),
+      CommonAppModule.forRoot(config),
       ...
     ],
     ...
-  })
+  }
 )
 export class AppModule {}
 ```
 
-<h3 style="color:#3788c3;">Configuration interface - prior to version 2</h3>
+<h2>Using the logger module</h2>
+
+Import logger module wherever you need it:
+
+```javascript
+import { LoggerModule } from "../logger/logger.module";
+
+@Module({
+  imports: [LoggerModule],
+  controllers: [DevSupportController],
+  providers: [],
+  exports: [],
+})
+export class DevSupportModule {}
+```
+
+<h2>Using the error classes</h2>
+**AppException** is a custom exception class which extends HttpException.
+**CustomBadRequestException** is a custom exception class which extends 
+**AppException** and converts **BadRequestException** to **AppException**.
+**ServerErrorException** is a custom exception class which extends AppException, use it for internal server errors.
+
+LogError function will log the error to the logstash and will send the error to the APM server.
+
+    this.logger.logError(new ForbiddenException('Access denied'), {});
+
+<h3>Global error handler</h3>
+
+This library provides the `GlobalErrorFilter` for filtering exceptions. 
+It is automatically setup once you have imported the `CommonAppModule` in your AppModule.
+
+<h2>Useful information</h2>
+
+For the sending logs the module using Logstash UDP transport.
+To test if udp port is responding, use netcat.
+
+`
+$ nc -v -u -z -w 3 10.0.0.170 51420
+`
+<h2>Setup - prior to version 2</h2>
+
 Use configurations libraries like convict, or any other alternative which will allow getting params easily.
 https://www.npmjs.com/package/convict
 
@@ -150,150 +169,3 @@ export class LoggerModule {}
 
 
 ```
-
-
-<h3 style="color:#3788c3;">Using the logger module</h3>
-
-Import logger module wherever you need it:
-
-```javascript
-import { LoggerModule } from "../logger/logger.module";
-
-@Module({
-  imports: [LoggerModule],
-  controllers: [DevSupportController],
-  providers: [],
-  exports: [],
-})
-export class DevSupportModule {}
-```
-
-**AppException** is a custom exception class which extends HttpException.
-**CustomBadRequestException** is a custom exception class which extends 
-**AppException** and converts **BadRequestException** to **AppException**.
-**ServerErrorException** is a custom exception class which extends AppException, use it for internal server errors.
-
-LogError function will log the error to the logstash and will send the error to the APM server.
-
-    this.logger.logError(new ForbiddenException('Access denied'), {});
-
-More detailed example of the usage of the logger service:
-
-```typescript
-import { ConflictException, Controller, Get, Header, NotFoundException } from "@nestjs/common";
-import { ApiTags } from '@nestjs/swagger';
-import { LoggerService, HttpException, ErrorFactory } from 'sprinting-retail-common';
-
-@Controller('api/devSupport')
-@ApiTags('DevSupport')
-export class DevSupportController {
-  constructor(private readonly logger: LoggerService) {
-  }
-  
-  @Get('trigger-logstash')
-  @Header('content-type', 'application/json')
-  public async triggerLogStash() {
-    this.logger.info(__filename, 'Check if logstash sends the INFO request using the configs');
-    this.logger.debug(__filename, 'Check if logstash sends the DEBUG request using the configs');
-    this.logger.warn(__filename, 'Check if logstash sends the  WARN request using the configs');
-    this.logger.logError(new ForbiddenException('Access denied'), {});
-    throw new NotFoundException({ name: 'Tenant', id: 123 });
-  }
-  
-  @Get('trigger-errors')
-  @Header('content-type', 'application/json')
-  public async triggerErrors(): Promise<void> {
-    this.startEmptyLoop();
-    const span = ApmHelper.startSpan('SomeHardWork', 'Some message');
-    this.startEmptyLoop();
-    
-    span?.end();
-    
-    ApmHelper.logSpanEvent(__filename, 'SomeEvent', {
-      message: 'Some event message',
-    });
-    
-    const firstError = new AppException(HttpStatus.FORBIDDEN, 'Forbidden', 'Forbidden error description');
-    this.logger.logError(firstError);
-    
-    const secondError = new AppException(400, 'SomeException', 'Some inner business error description')
-      .setContextData({
-        someKey: 'someValue',
-        anotherKey: 123,
-      })
-      .setInnerError(new Error('Some inner error'));
-    
-    this.logger.logError(secondError, {
-      someKey: 'someValue',
-      anotherKey: 123,
-    });
-    
-    throw firstError;
-  }
-  
-  startEmptyLoop() {
-    for (let i = 0; i < 1000000000; i++) {
-      // do nothing
-    }
-  }
-}
-
-```
-
-<h3 style="color:#3788c3;">Http Exceptions</h3>
-
-The Logger provides `GlobalErrorFilter` for filtering exceptions
-It takes parameter LogContext which contains tenantId and userId.
-Enable filter in the app module:
-
-```typescript
-import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
-import { GlobalErrorFilter } from 'sprinting-retail-common';
-
-@Module({
-  imports: [],
-  providers: [
-    {
-      provide: APP_FILTER,
-      useFactory: (loggerService: LoggerService, userContext: UserContext) =>
-        new GlobalErrorFilter(loggerService, {
-          tenantId: userContext.user?.tenantId,
-          userId: userContext.user?.userId,
-        }),
-      scope: Scope.REQUEST,
-      inject: [LoggerService, UserContext],
-    },
-  ],
-  exports: [],
-})
-export class AppModule {}
-```
-
-
-
-
-<h3 style="color:#3788c3;">Useful information</h3>
-For the sending logs the module using Logstash UDP transport.
-To test if udp port is responding, use netcat.
-
-`
-$ nc -v -u -z -w 3 10.0.0.170 51420
-`
-
-
-<h3 style="color:#3788c3;">Usage</h3>
-
-<ul>
-<li>Use Logstash to collect log data from various sources in real-time</li>
-<li>Use APM to collect log error data check transactins and error stack</li>
-<li>Search and analyze log data using Elasticsearch and Kibana for troubleshooting and problem-solving</li>
-<li>Use the alerting system to stay informed of potential issues or errors</li>
-<li>Utilize customized dashboards and reports in Kibana for in-depth analysis of log data</li>
-</ul>
-
-For APM click the link and choose the service.
-https://kibana.io/app/apm/services
-
-For the Logstash
-https://kibana.io/app/discover#
