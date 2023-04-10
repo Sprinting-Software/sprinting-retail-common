@@ -8,6 +8,7 @@ import { GlobalErrorFilter } from "../errorHandling/GlobalErrorFilter"
 import { TenantContextFactory } from "../context/TenantContextFactory"
 import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
 import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBootstrap"
+import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -18,10 +19,17 @@ import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBo
 @Module({})
 export class CommonAppModule {
   static forRoot(config: RetailCommonConfig): DynamicModule {
+    const configProvider = new RetailCommonConfigProvider(config)
     return {
       module: CommonAppModule, // needed for dynamic modules
-      imports: [ConfigModule.forRoot(config), LoggerModule],
+      imports: [ConfigModule.forRoot(configProvider), LoggerModule.forRoot(configProvider)],
       providers: [
+        {
+          provide: LoadBalancingTimeoutBootstrap,
+          useFactory: (refHost: HttpAdapterHost<any>, logger: LoggerService) =>
+            new LoadBalancingTimeoutBootstrap(refHost, logger),
+          inject: [HttpAdapterHost, LoggerService],
+        },
         {
           provide: TenantContext,
           scope: Scope.REQUEST,
@@ -34,12 +42,6 @@ export class CommonAppModule {
             new GlobalErrorFilter(logger, { tenantId: tenantContext.tenantIdOrUndefined }),
           inject: [LoggerService, TenantContext],
           scope: Scope.REQUEST,
-        },
-        {
-          provide: LoadBalancingTimeoutBootstrap,
-          useFactory: (refHost: HttpAdapterHost<any>, logger: LoggerService) =>
-            new LoadBalancingTimeoutBootstrap(refHost, logger),
-          inject: [HttpAdapterHost, LoggerService],
         },
       ],
       exports: [ConfigModule, LoggerModule, TenantContext],

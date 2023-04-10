@@ -1,7 +1,7 @@
-import { RetailCommonConfig } from "../interface/RetailCommonConfig"
+import { RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
 
 const SYSTEM_NAME = "testSystemName"
-export const TestConfig: RetailCommonConfig = {
+export const TestConfigRaw = {
   systemName: SYSTEM_NAME,
   envPrefix: "",
   elk: {
@@ -17,4 +17,5 @@ export const TestConfig: RetailCommonConfig = {
     },
     logstash: { host: "", isEnabled: false, port: 0 },
   },
-}
+};
+export const TestConfig: RetailCommonConfigProvider = new RetailCommonConfigProvider(TestConfigRaw)

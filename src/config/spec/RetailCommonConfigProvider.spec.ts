@@ -1,4 +1,4 @@
-import { TestConfig } from "./TestConfig"
+import { TestConfigRaw } from "./TestConfig";
 
 import { RetailCommonConfigConvict } from "../interface/RetailCommonConfigConvict"
 
@@ -11,7 +11,7 @@ describe("RetailCommonConfigProvider.spec", () => {
   })
 
   it("RetailCommonConfigConvict can validate TestConfig ", async () => {
-    const config = TestConfig
+    const config = TestConfigRaw
     RetailCommonConfigConvict.validate(config)
   })
 })

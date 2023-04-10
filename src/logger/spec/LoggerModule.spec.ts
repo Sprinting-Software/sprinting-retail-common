@@ -5,6 +5,7 @@ import { LoggerModule } from "../LoggerModule"
 import { LoggerService } from "../LoggerService"
 import { ApmHelper } from "../../apm/ApmHelper"
 import { TestConfig } from "../../config/spec/TestConfig"
+import { RetailCommonConfigProvider } from "../../config/RetailCommonConfigProvider";
 
 describe("LoggerModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -13,7 +14,7 @@ describe("LoggerModule", () => {
   describe("LoggerModule", () => {
     it("should provide an instance of LoggerService and ApmHelper", async () => {
       const app = await Test.createTestingModule({
-        imports: [ConfigModule.forRoot(TestConfig), LoggerModule],
+        imports: [ConfigModule.forRoot(TestConfig), LoggerModule.forRoot(TestConfig)],
       }).compile()
       const loggerService = app.get<LoggerService>(LoggerService)
       expect(loggerService).toBeDefined()

@@ -2,7 +2,7 @@ import { Test } from "@nestjs/testing"
 
 import { LoggerService } from "../../logger/LoggerService"
 import { ApmHelper } from "../../apm/ApmHelper"
-import { TestConfig } from "../../config/spec/TestConfig"
+import { TestConfigRaw } from "../../config/spec/TestConfig"
 import { CommonAppModule } from "../CommonAppModule"
 
 describe("CommonAppModule", () => {
@@ -11,7 +11,7 @@ describe("CommonAppModule", () => {
 
   it("should provide an instance of CommonAppModule", async () => {
     const app = await Test.createTestingModule({
-      imports: [CommonAppModule.forRoot(TestConfig)],
+      imports: [CommonAppModule.forRoot(TestConfigRaw)],
     }).compile()
     const loggerService = app.get<LoggerService>(LoggerService)
     expect(loggerService).toBeInstanceOf(LoggerService)

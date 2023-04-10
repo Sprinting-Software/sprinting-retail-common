@@ -51,6 +51,7 @@ export class ApmHelper {
     }
     if (ApmHelper.apm) return ApmHelper.apm
 
+    // APM is a little special with respect to how it is imported. For this reason we need to use require() instead of import.
     ApmHelper.apm = require("elastic-apm-node")
     ApmHelper.apm.start(config)
     ApmHelper.myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(config.serverUrl)}`)
@@ -62,7 +63,7 @@ export class ApmHelper {
   private static myConsole(msg: string) {
     if (process.env.NODE_ENV !== "test") {
       // eslint-disable-next-line no-console
-      console.log(__filename, msg)
+      console.log(msg)
     }
   }
 
