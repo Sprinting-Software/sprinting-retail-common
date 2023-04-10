@@ -17,5 +17,5 @@ export const TestConfigRaw = {
     },
     logstash: { host: "", isEnabled: false, port: 0 },
   },
-};
+}
 export const TestConfig: RetailCommonConfigProvider = new RetailCommonConfigProvider(TestConfigRaw)

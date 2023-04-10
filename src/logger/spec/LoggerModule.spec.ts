@@ -5,7 +5,7 @@ import { LoggerModule } from "../LoggerModule"
 import { LoggerService } from "../LoggerService"
 import { ApmHelper } from "../../apm/ApmHelper"
 import { TestConfig } from "../../config/spec/TestConfig"
-import { RetailCommonConfigProvider } from "../../config/RetailCommonConfigProvider";
+import { RetailCommonConfigProvider } from "../../config/RetailCommonConfigProvider"
 
 describe("LoggerModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function

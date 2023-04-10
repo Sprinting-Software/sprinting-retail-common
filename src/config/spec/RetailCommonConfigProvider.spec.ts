@@ -1,4 +1,4 @@
-import { TestConfigRaw } from "./TestConfig";
+import { TestConfigRaw } from "./TestConfig"
 
 import { RetailCommonConfigConvict } from "../interface/RetailCommonConfigConvict"
 
