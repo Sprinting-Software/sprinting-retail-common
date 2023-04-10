@@ -5,6 +5,7 @@ import { LibraryVersioning } from "../libVersioning/LibraryVersioning"
 export interface AppExceptionResponse {
   statusCode: number
   errorName: string
+  errorTraceId: string
   message?: string | object
   contextData?: Record<string, any>
   innerError?: Error
@@ -12,6 +13,7 @@ export interface AppExceptionResponse {
 export interface AppExceptionResponseV2 {
   httpStatus: number
   errorName: string
+  errorTraceId: string
   message?: string | object
   contextData?: Record<string, any>
   innerError?: Error
@@ -118,6 +120,7 @@ export class AppException extends HttpException {
         errorName: this.errorName,
         message: this.description,
         contextData: this.contextData,
+        errorTraceId: this.errorTraceId,
       }
     } else {
       return {
@@ -125,6 +128,7 @@ export class AppException extends HttpException {
         errorName: this.errorName,
         message: this.description,
         contextData: this.contextData,
+        errorTraceId: this.errorTraceId,
       }
     }
   }
@@ -143,6 +147,6 @@ export class AppException extends HttpException {
     for (let i = 0; i < 6; i++) {
       result[i] = getRandom(charsAndNumber)
     }
-    return `ERR-${result.join("")}`
+    return `ERR${result.join("")}`
   }
 }

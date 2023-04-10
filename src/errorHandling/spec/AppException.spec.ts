@@ -6,6 +6,8 @@ describe("AppException", () => {
     it("should return the expected response object", () => {
       const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME", "ERROR_DESCRIPTION", { key: "value" })
       const response = appException.getResponse()
+      expect(response.errorTraceId).toBeDefined()
+      delete response.errorTraceId
       expect(response).toEqual({
         statusCode: HttpStatus.BAD_REQUEST,
         errorName: "ERROR_NAME",
@@ -17,6 +19,8 @@ describe("AppException", () => {
     it("should return the expected response object without message and contextData", () => {
       const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME")
       const response = appException.getResponse()
+      expect(response.errorTraceId).toBeDefined()
+      delete response.errorTraceId
       expect(response).toEqual({
         statusCode: HttpStatus.BAD_REQUEST,
         errorName: "ERROR_NAME",

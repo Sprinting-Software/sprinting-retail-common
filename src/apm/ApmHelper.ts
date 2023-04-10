@@ -1,6 +1,7 @@
 import { LogContext } from "../logger/LogContext"
 import { AppException } from "../errorHandling/AppException"
 import { ApmConfig } from "../config/interface/ApmConfig"
+import { ErrorParser } from "../errorHandling/ErrorParser"
 
 export type IApmSpan = { end: () => void }
 
@@ -67,12 +68,14 @@ export class ApmHelper {
     }
   }
 
-  public static captureError(exception: Error | AppException, logContext?: LogContext, handled = false) {
+  public static captureError(exception0: Error | AppException, logContext?: LogContext, handled = false) {
     if (!ApmHelper.apm) return
 
+    const exception = ErrorParser.parse(exception0)
     const errorLabels = {
-      errorName: this.isAppException(exception) ? exception.errorName : exception.name,
-      errorDescription: this.isAppException(exception) ? exception.description : "",
+      errorName: exception.errorName,
+      errorDescription: exception.description,
+      errorTraceId: exception.errorTraceId,
       ...ApmHelper.config?.labels,
     }
 
@@ -87,10 +90,10 @@ export class ApmHelper {
       handled,
       labels: errorLabels,
       captureAttributes: false,
-      message: (exception as AppException).errorName,
-      custom: this.isAppException(exception) ? exception.contextData : {},
+      message: `${exception.errorName} (${exception.errorTraceId})`,
+      custom: exception.contextData,
     }
-
+    ApmHelper.setLabelOnCurrentTransaction("errorTraceId", exception.errorTraceId)
     ApmHelper.apm.captureError(exception, errorDetails)
   }
 
@@ -119,12 +122,16 @@ export class ApmHelper {
     ApmHelper.apm.setCustomContext({ [fileName]: msg })
   }
 
-  public static setLabel(field: string, value: string) {
+  /**
+   * Sets a label on the current transaction. If no transaction exists, nothing happens.
+   * @param field
+   * @param value
+   */
+  public static setLabelOnCurrentTransaction(field: string, value: string) {
     if (!ApmHelper.apm) return
     if (!ApmHelper.apm.currentTransaction) {
       return
     }
-
     ApmHelper.apm.currentTransaction.setLabel(field, value)
   }
 
