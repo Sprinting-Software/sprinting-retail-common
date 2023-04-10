@@ -9,7 +9,7 @@ describe("AppException", () => {
       expect(response.errorTraceId).toBeDefined()
       delete response.errorTraceId
       expect(response).toEqual({
-        statusCode: HttpStatus.BAD_REQUEST,
+        httpStatus: HttpStatus.BAD_REQUEST,
         errorName: "ERROR_NAME",
         message: "ERROR_DESCRIPTION",
         contextData: { key: "value" },
@@ -22,7 +22,7 @@ describe("AppException", () => {
       expect(response.errorTraceId).toBeDefined()
       delete response.errorTraceId
       expect(response).toEqual({
-        statusCode: HttpStatus.BAD_REQUEST,
+        httpStatus: HttpStatus.BAD_REQUEST,
         errorName: "ERROR_NAME",
         message: undefined,
         contextData: undefined,
