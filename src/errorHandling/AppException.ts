@@ -25,6 +25,7 @@ const INSPECT_SHOW_HIDDEN = false
 export class AppException extends HttpException {
   public readonly errorTraceId: string
   private _message: string
+  private _useVerboseMessageField = false
   constructor(
     public readonly httpStatus: number = HttpStatus.BAD_REQUEST,
     public errorName: string,
@@ -69,7 +70,8 @@ export class AppException extends HttpException {
    * In order to make the error print nicely during development, we need to override the message property like this.
    */
   public override get message() {
-    return this.toStringPreparedForMessageField()
+    if (this._useVerboseMessageField) return this.toString()
+    else return this.toStringPreparedForMessageField()
   }
 
   public override set message(m: string) {
@@ -148,5 +150,15 @@ export class AppException extends HttpException {
       result[i] = getRandom(charsAndNumber)
     }
     return `ERR${result.join("")}`
+  }
+
+  /**
+   * This is needed to adjust how the error is logged in ELK vs how the error is printed in the IDE console
+   * and test output. For the IDE console and test-output we need a shorter output, for ELK we need a more
+   * verbose output.
+   * @param b
+   */
+  useVerboseMessageField(b: boolean) {
+    this._useVerboseMessageField = b
   }
 }

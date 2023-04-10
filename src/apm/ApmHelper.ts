@@ -74,7 +74,6 @@ export class ApmHelper {
     const exception = ErrorParser.parse(exception0)
     const errorLabels = {
       errorName: exception.errorName,
-      errorDescription: exception.description,
       errorTraceId: exception.errorTraceId,
       ...ApmHelper.config?.labels,
     }
@@ -82,10 +81,6 @@ export class ApmHelper {
     if (logContext?.tenantId) errorLabels.tenantId = `tid${logContext.tenantId}`
     if (logContext?.userId) errorLabels.userId = logContext.userId
 
-    /*if (this.isAppException(exception)) {
-      // By adding this it will show up in Kibana in the field called error.exception.message.
-      exception.message = exception.toString()
-    }*/
     const errorDetails = {
       handled,
       labels: errorLabels,
@@ -94,6 +89,7 @@ export class ApmHelper {
       custom: exception.contextData,
     }
     ApmHelper.setLabelOnCurrentTransaction("errorTraceId", exception.errorTraceId)
+    exception.useVerboseMessageField(true)
     ApmHelper.apm.captureError(exception, errorDetails)
   }
 
