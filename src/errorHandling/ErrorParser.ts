@@ -20,6 +20,6 @@ export class ErrorParser {
       return new AppException(error.getStatus(), error.name, error.message).setInnerError(error)
     }
 
-    return new AppException(500, error.name, error.message, error)
+    return new AppException(500, error.name, error.message, undefined, error)
   }
 }
