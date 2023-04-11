@@ -55,32 +55,11 @@ export class AppException extends HttpException {
       return "ERROR_IN_TO_STRING"
     }
   }
-
   public generateStacktrace(): string {
     try {
-      const lines = this.stack.split("\n").slice(1)
-      const lines2 = lines.map((line) => {
-        return this.truncateStackLine(line, ["/src/", "/node_modules/"])
-      })
-      return lines2.join("\n")
+      return this.stack?.split("\n").slice(1).join("\n")
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e)
       return "STACKTRACE_GENERATION_FAILED"
-    }
-  }
-
-  private truncateStackLine(line, tokens: string[]) {
-    let result
-    tokens.forEach((tok: string) => {
-      if (line.indexOf(tok) > -1) {
-        result = `.${line.substring(line.indexOf(tok))}`
-      }
-    })
-    if (result) {
-      return result.replace(")", "")
-    } else {
-      return line
     }
   }
 
