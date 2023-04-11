@@ -2,21 +2,13 @@ import { LogContext } from "../logger/LogContext"
 import { AppException } from "../errorHandling/AppException"
 import { ApmConfig } from "../config/interface/ApmConfig"
 import { ErrorParser } from "../errorHandling/ErrorParser"
+import { DEFAULT_APM_CONFIG } from "../config/interface/RetailCommonConfigConvict"
 
 export type IApmSpan = { end: () => void }
 
-const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
-  transactionSampleRate: 1,
-  captureExceptions: false,
-  centralConfig: false,
-  metricsInterval: 0,
-  captureErrorLogStackTraces: true,
-  enableLogs: false,
-}
-
 export class ApmHelper {
   private static apm
-  private static config
+  private static config: ApmConfig
 
   constructor(private readonly config?: ApmConfig) {
     ApmHelper.config = { ...DEFAULT_APM_CONFIG, ...config }
@@ -27,18 +19,11 @@ export class ApmHelper {
     return ApmHelper.getAPMClient()
   }
 
-  static getConfigWithEnvironmentVariablesOverriding(): ApmConfig {
-    const effectiveConfig = { ...ApmHelper.config }
-    if (process.env.ENABLE_LOGS !== undefined) effectiveConfig.enableLogs = process.env.ENABLE_LOGS === "true"
-    if (process.env.ELK_SERVICE_URL !== undefined) effectiveConfig.serverUrl = process.env.ELK_SERVICE_URL
-    if (process.env.ELK_SERVICE_SECRET !== undefined) effectiveConfig.secretToken = process.env.ELK_SERVICE_SECRET
-    if (process.env.ELK_SERVICE_NAME !== undefined) effectiveConfig.serviceName = process.env.ELK_SERVICE_NAME
-    if (process.env.ELK_APM_SAMPLINGRATE !== undefined)
-      effectiveConfig.transactionSampleRate = Number(process.env.ELK_APM_SAMPLINGRATE)
-    return effectiveConfig
+  static getConfig(): ApmConfig {
+    return ApmHelper.config
   }
   static init() {
-    const config = ApmHelper.getConfigWithEnvironmentVariablesOverriding()
+    const config = { ...ApmHelper.config }
     const enableApm = Boolean(config.enableLogs) === true
     // config2 has secretToken removed
     const config2 = { ...config }
@@ -72,7 +57,7 @@ export class ApmHelper {
     if (!ApmHelper.apm) return
 
     const exception = ErrorParser.parse(exception0)
-    const errorLabels = {
+    const errorLabels: any = {
       errorName: exception.errorName,
       errorTraceId: exception.errorTraceId,
       ...ApmHelper.config?.labels,
@@ -84,12 +69,12 @@ export class ApmHelper {
     const errorDetails = {
       handled,
       labels: errorLabels,
-      captureAttributes: false,
+      captureAttributes: true,
       message: `${exception.errorName} (${exception.errorTraceId})`,
-      custom: exception.contextData,
+      // For some reason custom data doesn't work in our ELK so we will comment it out.
+      custom: { ...exception.contextData, stacktraceFull: exception.toString() },
     }
     ApmHelper.setLabelOnCurrentTransaction("errorTraceId", exception.errorTraceId)
-    exception.useVerboseMessageField(true)
     ApmHelper.apm.captureError(exception, errorDetails)
   }
 

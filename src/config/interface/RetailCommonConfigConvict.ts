@@ -1,7 +1,17 @@
 import convict from "convict"
 import { ClientException } from "../../errorHandling/ClientException"
 import * as validators from "convict-format-with-validator"
+import { ApmConfig } from "./ApmConfig"
 convict.addFormat(validators.url)
+
+export const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
+  transactionSampleRate: 1,
+  captureExceptions: false,
+  centralConfig: false,
+  metricsInterval: 0,
+  captureErrorLogStackTraces: true,
+  enableLogs: false,
+}
 
 // Define the schema for the RetailCommonConfig object
 const schema = {
@@ -22,7 +32,8 @@ const schema = {
       enableLogs: {
         doc: "Whether to enable APM logs",
         format: Boolean,
-        default: true,
+        default: DEFAULT_APM_CONFIG.enableLogs,
+        env: "APM_ENABLE_LOGS",
       },
       serviceName: {
         doc: "Name of the APM service",
@@ -45,7 +56,7 @@ const schema = {
       transactionSampleRate: {
         doc: "Sample rate for APM transactions",
         format: Number,
-        default: 1,
+        default: DEFAULT_APM_CONFIG.transactionSampleRate,
         env: "APM_TRANSACTION_SAMPLE_RATE",
       },
       labels: {
@@ -57,25 +68,25 @@ const schema = {
       captureErrorLogStackTraces: {
         doc: "Whether to capture stack traces for APM error logs",
         format: Boolean,
-        default: false,
+        default: DEFAULT_APM_CONFIG.captureErrorLogStackTraces,
         env: "APM_CAPTURE_ERROR_LOG_STACK_TRACES",
       },
       captureExceptions: {
         doc: "Whether to capture unhandled exceptions for APM",
         format: Boolean,
-        default: false,
+        default: DEFAULT_APM_CONFIG.captureExceptions,
         env: "APM_CAPTURE_EXCEPTIONS",
       },
       centralConfig: {
         doc: "Whether to use central config for APM",
         format: Boolean,
-        default: false,
+        default: DEFAULT_APM_CONFIG.centralConfig,
         env: "APM_CENTRAL_CONFIG",
       },
       metricsInterval: {
         doc: "Interval for APM metrics",
         format: Number,
-        default: undefined,
+        default: DEFAULT_APM_CONFIG.metricsInterval,
         env: "APM_METRICS_INTERVAL",
       },
     },

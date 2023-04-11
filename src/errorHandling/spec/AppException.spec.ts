@@ -65,6 +65,8 @@ describe("AppException", () => {
       const expectedString2 = "ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
       expect(appException.toString()).toContain(expectedString)
       expect(appException.toString()).toContain(expectedString2)
+      expect(appException.message).toContain("Some error name")
+      expect(appException.stack).toContain("Some error name")
     })
 
     it("should return the expected string representation of the exception with only required fields", () => {

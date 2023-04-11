@@ -1,5 +1,6 @@
 import { ApmHelper } from "./ApmHelper"
 import { AppException } from "../errorHandling/AppException"
+import { TestConfigRaw } from "../config/spec/TestConfig"
 
 describe("ApmHelper", () => {
   const mockConfig: any = {
@@ -41,31 +42,10 @@ describe("ApmHelper", () => {
   })
 
   describe("getConfig", () => {
-    it("should return config from class property if it exists", () => {
-      ApmHelper["config"] = mockConfig
-      const result = ApmHelper.getConfigWithEnvironmentVariablesOverriding()
-
-      expect(result).toEqual(mockConfig)
-    })
-
-    it("should return config from environment variables if class property is undefined", () => {
-      new ApmHelper()
-      process.env.ENABLE_LOGS = "true"
-      process.env.ELK_SERVICE_URL = "http://localhost:8200"
-      process.env.ELK_SERVICE_SECRET = "test-secret-token"
-      process.env.ELK_SERVICE_NAME = "test-service"
-      process.env.ELK_APM_SAMPLINGRATE = "1.0"
-
-      const result = ApmHelper.getConfigWithEnvironmentVariablesOverriding()
-
-      expect(result).toEqual(mockConfig)
-    })
-
     it("should return default config if environment variables are undefined", () => {
       process.env = {}
       new ApmHelper()
-      const result = ApmHelper.getConfigWithEnvironmentVariablesOverriding()
-
+      const result = ApmHelper.getConfig()
       expect(result.enableLogs).toBe(false)
       expect(result.serverUrl).toBeUndefined()
       expect(result.secretToken).toBeUndefined()
@@ -90,6 +70,9 @@ describe("ApmHelper", () => {
       process.env.ENABLE_LOGS = "true"
       const startMock = jest.fn()
       jest.doMock("elastic-apm-node", () => ({ start: startMock }))
+      const config = TestConfigRaw.elk.apm
+      config.enableLogs = true
+      new ApmHelper(config)
       ApmHelper.init()
       ApmHelper.init()
       expect(startMock).toHaveBeenCalledTimes(1)

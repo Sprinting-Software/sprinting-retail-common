@@ -24,8 +24,6 @@ const INSPECT_SHOW_HIDDEN = false
 
 export class AppException extends HttpException {
   public readonly errorTraceId: string
-  private _message: string
-  private _useVerboseMessageField = false
   constructor(
     public readonly httpStatus: number = HttpStatus.BAD_REQUEST,
     public errorName: string,
@@ -36,12 +34,13 @@ export class AppException extends HttpException {
     super(errorName ?? HttpStatus[httpStatus], httpStatus)
     this.errorName = errorName ?? HttpStatus[httpStatus]
     this.errorTraceId = AppException.generateErrorTraceId()
+    this.refreshMessageField()
   }
 
   override toString(): string {
     try {
-      let msg = `${this.constructor.name} ${this.toStringPreparedForMessageField()}`
-      if (this.stack) msg += `\n ${this.stack.split("\n").slice(1).join("\n")}`
+      let msg = `${this.constructor.name} ${this.concatAllRelevantInfo()}`
+      if (this.stack) msg += `\n ${this.generateStacktrace()}`
       if (this.innerError) {
         msg += "\nINNER_ERROR:\n"
         if (this.innerError instanceof AppException) {
@@ -57,25 +56,53 @@ export class AppException extends HttpException {
     }
   }
 
-  private toStringPreparedForMessageField() {
+  public generateStacktrace(): string {
+    try {
+      const lines = this.stack.split("\n").slice(1)
+      const lines2 = lines.map((line) => {
+        return this.truncateStackLine(line, ["/src/", "/node_modules/"])
+      })
+      return lines2.join("\n")
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e)
+      return "STACKTRACE_GENERATION_FAILED"
+    }
+  }
+
+  private truncateStackLine(line, tokens: string[]) {
+    let result
+    tokens.forEach((tok: string) => {
+      if (line.indexOf(tok) > -1) {
+        result = `.${line.substring(line.indexOf(tok))}`
+      }
+    })
+    if (result) {
+      return result.replace(")", "")
+    } else {
+      return line
+    }
+  }
+
+  /**
+   * Used to generate a string that can be used as a message field in ELK and in console output
+   * @private
+   */
+  private concatAllRelevantInfo() {
     const { errorName, httpStatus, description, contextData } = this
     let msg = `${errorName} (HTTP_STATUS ${httpStatus}) (${this.errorTraceId}) `
     if (description) msg += `ERROR_DESCRIPTION - ${description}`
     if (contextData) msg += ` - CONTEXT_DATA: ${util.inspect(contextData, INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)}`
-    if (this._message && this._message !== this.errorName) msg += ` - ADDITIONAL_MESSAGE: ${this._message}`
     return msg
   }
 
   /**
-   * In order to make the error print nicely during development, we need to override the message property like this.
+   * We need to refresh the message field because we have to support the fluent API
+   * where not all fields are necessarily passed in the constructor.
+   * @private
    */
-  public override get message() {
-    if (this._useVerboseMessageField) return this.toString()
-    else return this.toStringPreparedForMessageField()
-  }
-
-  public override set message(m: string) {
-    this._message = m
+  private refreshMessageField() {
+    this.message = this.concatAllRelevantInfo()
   }
 
   /**
@@ -87,7 +114,7 @@ export class AppException extends HttpException {
    */
   setInnerError(innerError: Error): AppException {
     this.innerError = innerError
-
+    this.refreshMessageField()
     return this
   }
 
@@ -98,6 +125,7 @@ export class AppException extends HttpException {
    */
   setContextData(contextData: Record<string, any>) {
     this.contextData = contextData
+    this.refreshMessageField()
     return this
   }
 
@@ -108,6 +136,7 @@ export class AppException extends HttpException {
    */
   setDescription(description: string) {
     this.description = description
+    this.refreshMessageField()
     return this
   }
 
@@ -150,15 +179,5 @@ export class AppException extends HttpException {
       result[i] = getRandom(charsAndNumber)
     }
     return `ERR${result.join("")}`
-  }
-
-  /**
-   * This is needed to adjust how the error is logged in ELK vs how the error is printed in the IDE console
-   * and test output. For the IDE console and test-output we need a shorter output, for ELK we need a more
-   * verbose output.
-   * @param b
-   */
-  useVerboseMessageField(b: boolean) {
-    this._useVerboseMessageField = b
   }
 }
