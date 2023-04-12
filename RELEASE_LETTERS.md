@@ -1,5 +1,14 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 2.6.0</h2>
+
+- Adding support for context data in logs. 
+- Adding support of custom events in logs.
+
+<h2>Release letter for version 2.5.0</h2>
+- 
+- Simplify stacktrace generation to make sure stacktraces are clickable in the IDEs	
+
 <h2>Release letter for version 2.4.0</h2>
     
 1. The environment variables have been normalized to be consistent with the underlying property names.
