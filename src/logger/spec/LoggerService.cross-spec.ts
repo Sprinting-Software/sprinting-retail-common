@@ -1,6 +1,4 @@
-import { AppException } from "../../errorHandling/exceptions/AppException"
-import { LogContext } from "../LogContext"
-import { LoggerService, LogLevel } from "../LoggerService"
+import { LoggerService } from "../LoggerService"
 import { ClientException } from "../../errorHandling/exceptions/ClientException"
 
 /**

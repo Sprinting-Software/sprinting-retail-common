@@ -87,7 +87,6 @@ describe("logger", () => {
   describe("logError", () => {
     it("should log an AppException with context data", () => {
       const appException = new AppException(404, "Test error", "Test error message")
-      const spy = jest.spyOn(loggerService["logger"], "error")
 
       const contextData: LogContext = {
         userId: "123",
