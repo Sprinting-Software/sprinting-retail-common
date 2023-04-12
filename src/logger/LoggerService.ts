@@ -5,6 +5,7 @@ import { Injectable, Scope } from "@nestjs/common"
 import { AppException } from "../errorHandling/AppException"
 import { LogContext } from "./LogContext"
 import { LoggerConfig } from "./LoggerConfig"
+import util from "util"
 
 const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -12,6 +13,7 @@ const ecsFormat = require("@elastic/ecs-winston-format")
 
 export const enum LogLevel {
   info = "info",
+  event = "event",
   debug = "debug",
   error = "error",
   warn = "warn",
@@ -25,14 +27,22 @@ interface LogMessage {
   systemEnv: string
   logType: LogLevel
   message: string
-  [key: string]: any
+  event: Record<string, any>
 }
 
 export type ConfigOptions = LoggerConfig
 
+interface CustomEventLog {
+  eventName: string
+  eventCategory?: string
+  eventTs: Date
+  eventData: any
+}
+
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerService {
   private readonly logger: winston.Logger
+  // private readonly logstashClient: Logstash
 
   constructor(private readonly config: LoggerConfig, transports: any[] = []) {
     const conf = {
@@ -57,16 +67,30 @@ export class LoggerService {
     })
   }
 
-  info(fileName: string, message: string) {
-    this.logger.info(this.formatMessage(fileName, LogLevel.info, message))
+  info(fileName: string, message: string, contextData?: Record<string, any>) {
+    this.logger.info(this.formatMessage(fileName, LogLevel.info, message, contextData))
   }
 
-  debug(fileName: string, message: any) {
-    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message))
+  debug(fileName: string, message: any, contextData?: Record<string, any>) {
+    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, contextData))
   }
 
-  warn(fileName: string, message: string) {
-    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message))
+  warn(fileName: string, message: string, contextData?: Record<string, any>) {
+    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, contextData))
+  }
+
+  event(fileName: string, event: CustomEventLog) {
+    this.logger.info(
+      this.formatMessage(fileName, LogLevel.event, this.eventToString(event), undefined, event.eventData)
+    )
+  }
+
+  private eventToString(event: CustomEventLog) {
+    return `EVENT ${event.eventName} ${event.eventCategory ? ` (${event.eventCategory})` : ""} ${util.inspect(
+      event.eventData,
+      false,
+      10
+    )}`
   }
 
   /**
@@ -89,7 +113,13 @@ export class LoggerService {
     this.logger.error(this.formatMessage(fileName, LogLevel.error, error.toString(), contextData))
   }
 
-  formatMessage(fileName: string, logLevel: LogLevel, message: string, data?: Record<string, any>): LogMessage {
+  formatMessage(
+    fileName: string,
+    logLevel: LogLevel,
+    message: string,
+    data?: Record<string, any>,
+    eventData?: Record<string, any>
+  ): LogMessage {
     return {
       filename: fileName,
       system: this.config.serviceName,
@@ -97,8 +127,8 @@ export class LoggerService {
       env: this.config.env,
       systemEnv: `${this.config.env}-${this.config.serviceName}`,
       logType: logLevel,
-      message: message,
-      ...data,
+      message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
+      event: eventData,
     }
   }
 
