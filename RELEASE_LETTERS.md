@@ -5,11 +5,12 @@
 1. The environment variables have been normalized to be consistent with the underlying property names.
 
 This means that the following names have changed: 
-process.env.ENABLE_LOGS -> APM_ENABLE_LOGS
-process.env.ELK_SERVICE_URL -> APM_SERVER_URL
-process.env.ELK_SERVICE_SECRET -> APM_SECRET_TOKEN
-process.env.ELK_SERVICE_NAME -> APM_SERVICE_NAME
-process.env.ELK_APM_SAMPLINGRATE -> APM_TRANSACTION_SAMPLE_RATE
+
+- process.env.ENABLE_LOGS -> APM_ENABLE_LOGS
+- process.env.ELK_SERVICE_URL -> APM_SERVER_URL
+- process.env.ELK_SERVICE_SECRET -> APM_SECRET_TOKEN
+- process.env.ELK_SERVICE_NAME -> APM_SERVICE_NAME
+- process.env.ELK_APM_SAMPLINGRATE -> APM_TRANSACTION_SAMPLE_RATE
 
 The logic is done inside the class RetailCommonConfigConvict
 
