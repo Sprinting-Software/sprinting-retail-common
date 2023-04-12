@@ -2,10 +2,11 @@ import { UDPTransport } from "udp-transport-winston"
 import * as winston from "winston"
 import { ApmHelper } from "../apm/ApmHelper"
 import { Injectable, Scope } from "@nestjs/common"
-import { AppException } from "../errorHandling/AppException"
+import { AppException } from "../errorHandling/exceptions/AppException"
 import { LogContext } from "./LogContext"
 import { LoggerConfig } from "./LoggerConfig"
 import util from "util"
+import { ErrorParser } from "../errorHandling/ErrorParser"
 
 const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -35,7 +36,6 @@ export type ConfigOptions = LoggerConfig
 interface CustomEventLog {
   eventName: string
   eventCategory?: string
-  eventTs: Date
   eventData: any
 }
 
@@ -79,9 +79,15 @@ export class LoggerService {
     this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, contextData))
   }
 
-  event(fileName: string, event: CustomEventLog) {
+  event(fileName: string, eventName: string, eventData: any, eventCategory?: string) {
     this.logger.info(
-      this.formatMessage(fileName, LogLevel.event, this.eventToString(event), undefined, event.eventData)
+      this.formatMessage(
+        fileName,
+        LogLevel.event,
+        this.eventToString({ eventName, eventData, eventCategory }),
+        undefined,
+        eventData
+      )
     )
   }
 
@@ -94,23 +100,16 @@ export class LoggerService {
   }
 
   /**
-   * logError Overloading with type AppException
-   * logError method -> where you have caught an error and only want to log
-   * @param appException
-   * @param data
+   * Log an AppException or any kind of Error. If you log an Error, it will be parsed to an AppException.
+   * @param error
+   * @param contextData For some additional data relevant to the error
    */
-  logError(appException: AppException, data?: LogContext): void
-  /**
-   * logError Overloading with type AppError
-   * @param appError
-   * @param data
-=   */
-  logError(appError: Error, data?: Record<string, any>): void
-  logError(error: AppException | Error, contextData?: LogContext) {
-    ApmHelper.captureError(error, contextData)
+  logError(error: AppException | Error, contextData?: Record<string, any>) {
+    const exception = ErrorParser.parse(error)
+    if (contextData) exception.setContextData(contextData)
+    ApmHelper.captureError(exception)
     const fileName = LoggerService._getCallerFile()
-
-    this.logger.error(this.formatMessage(fileName, LogLevel.error, error.toString(), contextData))
+    this.logger.error(this.formatMessage(fileName, LogLevel.error, exception.toString()))
   }
 
   formatMessage(

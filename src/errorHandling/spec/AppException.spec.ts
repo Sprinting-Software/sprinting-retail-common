@@ -1,4 +1,4 @@
-import { AppException } from "../AppException"
+import { AppException } from "../exceptions/AppException"
 import { HttpStatus } from "@nestjs/common"
 
 describe("AppException", () => {
@@ -25,7 +25,7 @@ describe("AppException", () => {
         httpStatus: HttpStatus.BAD_REQUEST,
         errorName: "ERROR_NAME",
         message: undefined,
-        contextData: undefined,
+        contextData: {},
       })
     })
   })

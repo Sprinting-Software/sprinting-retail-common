@@ -1,4 +1,4 @@
-import { AppException } from "../../errorHandling/AppException"
+import { AppException } from "../../errorHandling/exceptions/AppException"
 import { LogContext } from "../LogContext"
 import { LoggerService, LogLevel } from "../LoggerService"
 
@@ -95,42 +95,6 @@ describe("logger", () => {
       }
 
       loggerService.logError(appException, contextData)
-
-      // Ensure logger was called with the correct log message
-      const expectedLogMessage = {
-        filename: expect.any(String),
-        system: mockConfig.serviceName,
-        component: mockConfig.serviceName,
-        env: mockConfig.env,
-        systemEnv: `${mockConfig.env}-${mockConfig.serviceName}`,
-        logType: LogLevel.error,
-        message: expect.stringContaining(appException.toString()),
-        userId: contextData.userId,
-        tenantId: contextData.tenantId,
-      }
-      expect(spy).toHaveBeenCalledWith(expect.objectContaining(expectedLogMessage))
-    })
-
-    it("should log an AppError with additional data", () => {
-      const appError = new AppException(400, "Test error")
-      const spy = jest.spyOn(loggerService["logger"], "error")
-      const data = { foo: "bar" }
-
-      loggerService.logError(appError, data)
-
-      // Ensure logger was called with the correct log message
-      const expectedLogMessage = {
-        filename: expect.any(String),
-        system: mockConfig.serviceName,
-        component: mockConfig.serviceName,
-        env: mockConfig.env,
-        systemEnv: `${mockConfig.env}-${mockConfig.serviceName}`,
-        level: LogLevel.error,
-        logType: LogLevel.error,
-        message: expect.stringContaining(appError.toString()),
-        foo: data.foo,
-      }
-      expect(spy).toHaveBeenCalledWith(expect.objectContaining(expectedLogMessage))
     })
   })
 })

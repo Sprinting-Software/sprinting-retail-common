@@ -1,5 +1,10 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 2.6.1</h2>
+
+- Removing eventTs (event timestamp) from the log.event interface as it complicates things
+- BREAKING CHANGE: Simplify the signature of the logError method. You can no longer pass in LogContext, only ContextData.  
+
 <h2>Release letter for version 2.6.0</h2>
 
 - Adding support for context data in logs. 

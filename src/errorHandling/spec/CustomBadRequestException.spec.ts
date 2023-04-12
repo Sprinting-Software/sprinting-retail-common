@@ -1,6 +1,6 @@
 import { BadRequestException } from "@nestjs/common"
-import { CustomBadRequestException } from "../CustomBadRequestException"
-import { AppExceptionResponseV2 } from "../AppException"
+import { CustomBadRequestException } from "../exceptions/CustomBadRequestException"
+import { AppExceptionResponseV2 } from "../exceptions/AppException"
 
 describe("CustomBadRequestException", () => {
   describe("constructor", () => {

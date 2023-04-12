@@ -1,5 +1,5 @@
-import { AppException } from "./AppException"
-import { CustomBadRequestException } from "./CustomBadRequestException"
+import { AppException } from "./exceptions/AppException"
+import { CustomBadRequestException } from "./exceptions/CustomBadRequestException"
 import { BadRequestException } from "@nestjs/common"
 
 export class ErrorParser {

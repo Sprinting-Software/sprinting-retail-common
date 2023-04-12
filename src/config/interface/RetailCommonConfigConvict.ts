@@ -1,5 +1,5 @@
 import convict from "convict"
-import { ClientException } from "../../errorHandling/ClientException"
+import { ClientException } from "../../errorHandling/exceptions/ClientException"
 import * as validators from "convict-format-with-validator"
 import { ApmConfig } from "./ApmConfig"
 convict.addFormat(validators.url)

@@ -1,5 +1,5 @@
 import { LogContext } from "../logger/LogContext"
-import { AppException } from "../errorHandling/AppException"
+import { AppException } from "../errorHandling/exceptions/AppException"
 import { ApmConfig } from "../config/interface/ApmConfig"
 import { ErrorParser } from "../errorHandling/ErrorParser"
 import { DEFAULT_APM_CONFIG } from "../config/interface/RetailCommonConfigConvict"

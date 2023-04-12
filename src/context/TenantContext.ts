@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common"
-import { ClientException } from "../errorHandling/ClientException"
+import { ClientException } from "../errorHandling/exceptions/ClientException"
 
 @Injectable()
 export default class TenantContext {

@@ -33,27 +33,58 @@ export class AppModule {}
 
 <h2>Using the logger module</h2>
 
-Import logger module wherever you need it:
+Once you have imported CommonAppModule in your AppModule, 
+you can import the LoggerModule in all other modules.
 
 ```javascript
 import { LoggerModule } from "../logger/logger.module";
 
 @Module({
   imports: [LoggerModule],
-  controllers: [DevSupportController],
-  providers: [],
+  controllers: [SomeController],
+  providers: [SomeProvider],
   exports: [],
 })
-export class DevSupportModule {}
+export class SomeModule {}
 ```
 
-<h2>Using the error classes</h2>
-**AppException** is a custom exception class which extends HttpException.
-**CustomBadRequestException** is a custom exception class which extends 
-**AppException** and converts **BadRequestException** to **AppException**.
-**ServerErrorException** is a custom exception class which extends AppException, use it for internal server errors.
+Next, you inject the LoggerService in the constructor of your controllers or providers like here: 
+With this you can log messages, events and errors as shown below. 
+```javascript
+export class DevSupportController {
+  constructor(private readonly logger: LoggerService) {}
+    @Get("trigger-logs")
+    async triggerLogs() {
+      const contextData = {a: 1, b: 2}
+      this.logger.info(__filename, "my message info", contextData )
+      this.logger.debug(__filename, "my message info", contextData)
+      this.logger.warn(__filename, "my message info", contextData)
+      this.logger.logError(new AppException("SomeError", "Some description", contextData, innerError))
+      this.logger.event(__fileName, "SomeEvent", {someKey: "someValue"}, "SomeCategory")
+    )
+  } 
+}
+```
 
-LogError function will log the error to the logstash and will send the error to the APM server.
+Please notice: 
+- You have three normal log methods: info, debug and warn, each taking a message and contextData. ContextData will be serialized and concatenated to the message field in ELK. 
+- You have a special method logError for error handling. You have to create an AppException or one of the derived classes to invoke it. 
+- You have a special method event for logging custom events. You have to pass an eventName, eventData and eventCategory.
+
+<h2>Using the error classes</h2>
+
+You should preferably use the following error classes for error handling:
+- **AppException** is a custom exception class which extends HttpException. You need to provide a http status for this exception. 
+- **ServerException** is a custom exception class which extends AppException, use it for internal server errors. It has http status 500.
+- **ClientException** is a custom exception class which extends AppException, use it for errors that you assume to be caused by the clients calling your API. It has http status 400
+
+We have these additional exception classes: 
+- CustomBadRequestException
+- DbError
+
+If needed you can create your own exception classes by extending the AppException class - although it should not be necessary under normal circumstances. 
+
+The LogError function will log the error to the logstash and will send the error to the APM server.
 
     this.logger.logError(new ForbiddenException('Access denied'), {});
 
@@ -68,7 +99,7 @@ For the sending logs the module using Logstash UDP transport.
 To test if udp port is responding, use netcat.
 
 `
-$ nc -v -u -z -w 3 10.0.0.170 51420
+$ nc -v -u -z -w 3 10.0.0.xxx 5xxx
 `
 <h2>Setup - prior to version 2</h2>
 

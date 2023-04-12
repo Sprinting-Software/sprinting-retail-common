@@ -1,7 +1,7 @@
-import { AppException } from "../../errorHandling/AppException"
+import { AppException } from "../../errorHandling/exceptions/AppException"
 import { LogContext } from "../LogContext"
 import { LoggerService, LogLevel } from "../LoggerService"
-import { ClientException } from "../../errorHandling/ClientException"
+import { ClientException } from "../../errorHandling/exceptions/ClientException"
 
 /**
  * To run this test, you have to edit the environment variables LOGSTASH_PORT and LOGSTASH_HOST in the file .run/Run all cross tests.run.xml
@@ -49,11 +49,6 @@ describe("logger", () => {
   })
 
   it("should log events", () => {
-    loggerService.event(__filename, {
-      eventName: "TestEvent",
-      eventCategory: "TestCategory",
-      eventTs: new Date(),
-      eventData: { tenant: "tid100", tenantId: 100 },
-    })
+    loggerService.event(__filename, "TestEvent", { tenant: "tid100", tenantId: 100 }, "TestCategory")
   })
 })

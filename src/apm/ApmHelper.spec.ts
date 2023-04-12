@@ -1,5 +1,5 @@
 import { ApmHelper } from "./ApmHelper"
-import { AppException } from "../errorHandling/AppException"
+import { AppException } from "../errorHandling/exceptions/AppException"
 import { TestConfigRaw } from "../config/spec/TestConfig"
 
 describe("ApmHelper", () => {

@@ -1,8 +1,8 @@
-import { AppException } from "../AppException"
+import { AppException } from "../exceptions/AppException"
 import { HttpStatus } from "@nestjs/common"
-import { ClientException } from "../ClientException"
+import { ClientException } from "../exceptions/ClientException"
 import { ErrorParser } from "../ErrorParser"
-import { ServerException } from "../ServerException"
+import { ServerException } from "../exceptions/ServerException"
 
 describe("ErrorParser", () => {
   it("should parse ClientException", () => {
