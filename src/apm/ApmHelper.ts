@@ -30,10 +30,7 @@ export class ApmHelper {
     if (config2.secretToken) config2.secretToken = "********"
     ApmHelper.myConsole(`ApmHelper.init() called with config: ${JSON.stringify(config2)}`)
     if (!enableApm) {
-      ApmHelper.myConsole(
-        "Transaction data ARE NOT SENT to APM because ENABLE_APM is overridden and set to false in the environment"
-      )
-      return
+      return;
     }
     if (ApmHelper.apm) return ApmHelper.apm
 
