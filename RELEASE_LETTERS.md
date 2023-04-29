@@ -1,5 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 2.6.2</h2>
+
+- Moving some dependencies from dependencies to devDependencies and removing unused ones
+
 <h2>Release letter for version 2.6.1</h2>
 
 - Removing eventTs (event timestamp) from the log.event interface as it complicates things
