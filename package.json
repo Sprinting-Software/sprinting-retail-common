@@ -31,7 +31,7 @@
     "build": "rimraf dist && npm run lint && tsc --emitDecoratorMetadata",
     "test": "jest",
     "prepublishOnly": "npm run build",
-    "publish:full": "rm sprinting-retail-common-*.tgz && npm ci && npm run build && npm run test && npm publish",
+    "publish:full": "rimraf sprinting-retail-common-*.tgz >/dev/null 2>&1 && npm ci && npm run build && npm run test && npm publish",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
