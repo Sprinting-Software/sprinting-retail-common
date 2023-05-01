@@ -1,4 +1,4 @@
-import { AppException } from "../../errorHandling/exceptions/AppException"
+import { Exception } from "../../errorHandling/exceptions/Exception"
 import { LogContext } from "../LogContext"
 import { LoggerService, LogLevel } from "../LoggerService"
 
@@ -86,7 +86,7 @@ describe("logger", () => {
 
   describe("logError", () => {
     it("should log an AppException with context data", () => {
-      const appException = new AppException(404, "Test error", "Test error message")
+      const appException = new Exception(404, "Test error", "Test error message")
 
       const contextData: LogContext = {
         userId: "123",

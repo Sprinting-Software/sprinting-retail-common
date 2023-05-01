@@ -1,10 +1,10 @@
-import { AppException } from "../exceptions/AppException"
+import { Exception } from "../Exception"
 import { HttpStatus } from "@nestjs/common"
 
 describe("AppException", () => {
   describe("getResponse()", () => {
     it("should return the expected response object", () => {
-      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME", "ERROR_DESCRIPTION", { key: "value" })
+      const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME", "ERROR_DESCRIPTION", { key: "value" })
       const response = appException.getResponse()
       expect(response.errorTraceId).toBeDefined()
       delete response.errorTraceId
@@ -17,7 +17,7 @@ describe("AppException", () => {
     })
 
     it("should return the expected response object without message and contextData", () => {
-      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME")
+      const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME")
       const response = appException.getResponse()
       expect(response.errorTraceId).toBeDefined()
       delete response.errorTraceId
@@ -33,7 +33,7 @@ describe("AppException", () => {
   describe("toString()", () => {
     it("should return the expected string representation of the exception with all optional fields", () => {
       const innerError = new Error("Inner error message")
-      const appException = new AppException(
+      const appException = new Exception(
         HttpStatus.BAD_REQUEST,
         "Some error name",
         "Some description ",
@@ -47,14 +47,14 @@ describe("AppException", () => {
     })
 
     it("should return the expected string with inner AppException", () => {
-      const innerError = new AppException(
+      const innerError = new Exception(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "Some internal server error name",
         "Some internal server error description ",
         { somekey: "someValue" },
         new Error("Some inner inner error")
       )
-      const appException = new AppException(
+      const appException = new Exception(
         HttpStatus.BAD_REQUEST,
         "Some error name",
         "Some description ",
@@ -70,14 +70,14 @@ describe("AppException", () => {
     })
 
     it("should return the expected string representation of the exception with only required fields", () => {
-      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME")
-      const expectedString = "AppException ERROR_NAME (HTTP_STATUS 400)"
+      const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME")
+      const expectedString = "Exception ERROR_NAME (HTTP_STATUS 400)"
       expect(appException.toString()).toContain(expectedString)
     })
 
     it("should set the errorName to the HttpStatus name if not provided", () => {
-      const exception = new AppException(HttpStatus.AMBIGUOUS, undefined)
-      const expectedString = `AppException AMBIGUOUS (HTTP_STATUS 300)`
+      const exception = new Exception(HttpStatus.AMBIGUOUS, undefined)
+      const expectedString = `Exception AMBIGUOUS (HTTP_STATUS 300)`
       expect(exception.toString()).toContain(expectedString)
     })
   })
@@ -85,7 +85,7 @@ describe("AppException", () => {
   describe("setInnerError()", () => {
     it("should add the innerError to the exception", () => {
       const innerError = new Error("Inner error message")
-      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").setInnerError(innerError)
+      const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME").setInnerError(innerError)
       expect(appException.innerError).toEqual(innerError)
     })
   })
@@ -93,7 +93,7 @@ describe("AppException", () => {
   describe("setContextData()", () => {
     it("should add the contextData to the exception", () => {
       const contextData = { key: "value" }
-      const appException = new AppException(HttpStatus.BAD_REQUEST, "ERROR_NAME").setContextData(contextData)
+      const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME").setContextData(contextData)
       expect(appException.contextData).toEqual(contextData)
     })
   })

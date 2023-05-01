@@ -1,8 +1,8 @@
 import { BadRequestException } from "@nestjs/common"
-import { AppException, AppExceptionResponse, AppExceptionResponseV2 } from "./AppException"
+import { Exception, AppExceptionResponse, AppExceptionResponseV2 } from "./Exception"
 import { LibraryVersioning } from "../../libVersioning/LibraryVersioning"
 
-export class CustomBadRequestException extends AppException {
+export class CustomBadRequestException extends Exception {
   public readonly errors: Record<string, string[]> = {}
 
   constructor(private readonly badRequestException: BadRequestException) {

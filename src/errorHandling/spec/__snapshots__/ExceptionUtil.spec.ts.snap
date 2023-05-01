@@ -1,0 +1,160 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ExceptionUtil should create plain objects from AssertionException 1`] = `
+{
+  "contextData": {
+    "key": "value",
+  },
+  "description": "ERROR_DESCRIPTION",
+  "errorName": "AssertionException",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 502,
+  "innerError": {
+    "description": "Some Inner Error",
+    "errorName": "Error",
+  },
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from ClientException 1`] = `
+{
+  "contextData": {
+    "key": "value",
+  },
+  "description": "ERROR_DESCRIPTION",
+  "errorName": "SOME_ERROR_NAME",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 400,
+  "innerError": {
+    "description": "Some Inner Error",
+    "errorName": "Error",
+  },
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from SecurityException 1`] = `
+{
+  "contextData": {
+    "key": "value",
+  },
+  "description": "ERROR_DESCRIPTION",
+  "errorName": "SecurityException",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 403,
+  "innerError": {
+    "description": "Some Inner Error",
+    "errorName": "Error",
+  },
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from ServerException 1`] = `
+{
+  "contextData": {
+    "key": "value",
+  },
+  "description": "ERROR_DESCRIPTION",
+  "errorName": "SOME_ERROR_NAME",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 500,
+  "innerError": {
+    "description": "Some Inner Error",
+    "errorName": "Error",
+  },
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from complex error 1 1`] = `
+{
+  "contextData": {
+    "key": "value",
+  },
+  "description": "ERROR_DESCRIPTION",
+  "errorName": "ERROR_NAME",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 500,
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from complex error 2 1`] = `
+{
+  "contextData": {
+    "key": "value",
+  },
+  "description": "ERROR_DESCRIPTION",
+  "errorName": "ERROR_NAME",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 500,
+  "innerError": {
+    "description": "Some Inner Error",
+    "errorName": "Error",
+  },
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from complex error 3 1`] = `
+{
+  "contextData": {
+    "key": "value",
+  },
+  "description": "ERROR_DESCRIPTION",
+  "errorName": "ERROR_NAME",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 500,
+  "innerError": {
+    "contextData": {
+      "key": "value",
+    },
+    "description": "ERROR_DESCRIPTION",
+    "errorName": "ERROR_NAME",
+    "errorTraceId": "REDACTED",
+    "httpStatus": 500,
+    "innerError": {
+      "description": "Some Inner Error",
+      "errorName": "Error",
+    },
+  },
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from false error 1`] = `
+{
+  "description": "Found this error: false",
+  "errorName": "UndefinedError",
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from irregularError 1`] = `
+{
+  "description": "Found this error: 'Some error as string'",
+  "errorName": "UnknownError",
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from irregularError2 1`] = `
+{
+  "description": "Found this error: { errorName: 'Some error as object' }",
+  "errorName": "UnknownError",
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from normal error 1`] = `
+{
+  "description": "Some normal error",
+  "errorName": "Error",
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from null error 1`] = `
+{
+  "description": "Found this error: null",
+  "errorName": "UndefinedError",
+}
+`;
+
+exports[`ExceptionUtil should create plain objects from undefined error 1`] = `
+{
+  "description": "Found this error: undefined",
+  "errorName": "UndefinedError",
+}
+`;

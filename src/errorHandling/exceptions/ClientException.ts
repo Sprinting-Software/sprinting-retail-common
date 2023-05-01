@@ -1,10 +1,10 @@
-import { AppException } from "./AppException"
+import { Exception } from "./Exception"
 import { HttpStatus } from "@nestjs/common"
 
 /**
  * An exception using HTTP status code 500 InternalServerError.
  */
-export class ClientException extends AppException {
+export class ClientException extends Exception {
   constructor(
     public readonly errorName: string,
     public readonly description?: string,

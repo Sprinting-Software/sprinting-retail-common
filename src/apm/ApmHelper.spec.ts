@@ -1,5 +1,5 @@
 import { ApmHelper } from "./ApmHelper"
-import { AppException } from "../errorHandling/exceptions/AppException"
+import { Exception } from "../errorHandling/exceptions/Exception"
 import { TestConfigRaw } from "../config/spec/TestConfig"
 
 describe("ApmHelper", () => {
@@ -79,7 +79,7 @@ describe("ApmHelper", () => {
     })
 
     describe("captureError", () => {
-      const mockException = new AppException(500, "Test error", "Something went wrong")
+      const mockException = new Exception(500, "Test error", "Something went wrong")
       beforeEach(() => {
         ApmHelper["apm"] = {
           captureError: jest.fn(),

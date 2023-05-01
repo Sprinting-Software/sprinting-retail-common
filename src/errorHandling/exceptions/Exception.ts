@@ -1,5 +1,5 @@
 import util from "util"
-import { HttpException, HttpStatus } from "@nestjs/common"
+import { HttpStatus } from "@nestjs/common"
 import { LibraryVersioning } from "../../libVersioning/LibraryVersioning"
 
 export interface AppExceptionResponse {
@@ -22,7 +22,7 @@ export interface AppExceptionResponseV2 {
 const INSPECT_DEPTH = 7
 const INSPECT_SHOW_HIDDEN = false
 
-export class AppException extends HttpException {
+export class Exception extends Error {
   public readonly errorTraceId: string
   constructor(
     public readonly httpStatus: number = HttpStatus.BAD_REQUEST,
@@ -31,19 +31,23 @@ export class AppException extends HttpException {
     public contextData: Record<string, any> = {},
     public innerError?: Error
   ) {
-    super(errorName ?? HttpStatus[httpStatus], httpStatus)
+    super(errorName ?? HttpStatus[httpStatus])
     this.errorName = errorName ?? HttpStatus[httpStatus]
-    this.errorTraceId = AppException.generateErrorTraceId()
+    this.errorTraceId = Exception.generateErrorTraceId()
     this.refreshMessageField()
+    Object.setPrototypeOf(this, Exception.prototype)
   }
 
+  public getStatus(): number {
+    return this.httpStatus
+  }
   override toString(): string {
     try {
       let msg = `${this.constructor.name} ${this.concatAllRelevantInfo()}`
       if (this.stack) msg += `\n ${this.generateStacktrace()}`
       if (this.innerError) {
         msg += "\nINNER_ERROR:\n"
-        if (this.innerError instanceof AppException) {
+        if (this.innerError instanceof Exception) {
           msg += this.innerError.toString()
         } else {
           const e0 = util.inspect(this.innerError)
@@ -89,9 +93,9 @@ export class AppException extends HttpException {
    * An inner error is an error that caused the current error to occur.
    *
    * @param {Error} innerError - The inner error to add to the AppException object.
-   * @returns {AppException} - The modified AppException object with the new inner error.
+   * @returns {Exception} - The modified AppException object with the new inner error.
    */
-  setInnerError(innerError: Error): AppException {
+  setInnerError(innerError: Error): Exception {
     this.innerError = innerError
     this.refreshMessageField()
     return this
@@ -104,17 +108,6 @@ export class AppException extends HttpException {
    */
   setContextData(contextData: Record<string, any>) {
     this.contextData = { ...this.contextData, ...contextData }
-    this.refreshMessageField()
-    return this
-  }
-
-  /*
-   * Sets a description for the error.
-   * @param {string} description - The description to be included with the error.
-   * @returns {AppException} - The modified AppException object with the description set.
-   */
-  setDescription(description: string) {
-    this.description = description
     this.refreshMessageField()
     return this
   }
@@ -149,14 +142,14 @@ export class AppException extends HttpException {
    * @private
    */
   private static generateErrorTraceId() {
-    const charsAndNumber = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     const result = new Array(6)
-    function getRandom(cs: string = charsAndNumber) {
+    function getRandom(cs: string = CHARS) {
       return cs.charAt(Math.floor(Math.random() * cs.length))
     }
     for (let i = 0; i < 6; i++) {
-      result[i] = getRandom(charsAndNumber)
+      result[i] = getRandom(CHARS)
     }
     return `ERR${result.join("")}`
   }
 }
+const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"

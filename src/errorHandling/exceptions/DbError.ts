@@ -1,6 +1,6 @@
-import { AppException } from "./AppException"
+import { Exception } from "./Exception"
 
-export class DbError extends AppException {
+export class DbError extends Exception {
   public operationName: string
   public args: any[]
 

@@ -49,20 +49,29 @@ export class SomeModule {}
 ```
 
 Next, you inject the LoggerService in the constructor of your controllers or providers like here: 
-With this you can log messages, events and errors as shown below. 
+With this you can log messages, events and errors as shown below.
+
 ```javascript
 export class DevSupportController {
-  constructor(private readonly logger: LoggerService) {}
-    @Get("trigger-logs")
-    async triggerLogs() {
-      const contextData = {a: 1, b: 2}
-      this.logger.info(__filename, "my message info", contextData )
-      this.logger.debug(__filename, "my message info", contextData)
-      this.logger.warn(__filename, "my message info", contextData)
-      this.logger.logError(new AppException("SomeError", "Some description", contextData, innerError))
-      this.logger.event(__fileName, "SomeEvent", {someKey: "someValue"}, "SomeCategory")
-    )
-  } 
+  constructor(private
+
+  readonly
+  logger: LoggerService
+) {
+}
+
+@Get("trigger-logs")
+async
+triggerLogs()
+{
+  const contextData = { a: 1, b: 2 }
+  this.logger.info(__filename, "my message info", contextData)
+  this.logger.debug(__filename, "my message info", contextData)
+  this.logger.warn(__filename, "my message info", contextData)
+  this.logger.logError(new Exception("SomeError", "Some description", contextData, innerError))
+  this.logger.event(__fileName, "SomeEvent", { someKey: "someValue" }, "SomeCategory")
+)
+}
 }
 ```
 

@@ -1,5 +1,10 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 3.0.0</h2>
+
+- Changing name from AppException to Exception. 
+- Adding SecurityException which is special in the way that only the errorName is sent over the wire and the rest needs to be looked up in the error logs. 
+
 <h2>Release letter for version 2.6.2</h2>
 
 - Moving some dependencies from dependencies to devDependencies and removing unused ones

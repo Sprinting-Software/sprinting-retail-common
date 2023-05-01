@@ -1,7 +1,7 @@
 import { LogContext } from "../logger/LogContext"
-import { AppException } from "../errorHandling/exceptions/AppException"
+import { Exception } from "../errorHandling/exceptions/Exception"
 import { ApmConfig } from "../config/interface/ApmConfig"
-import { ErrorParser } from "../errorHandling/ErrorParser"
+import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { DEFAULT_APM_CONFIG } from "../config/interface/RetailCommonConfigConvict"
 
 export type IApmSpan = { end: () => void }
@@ -53,10 +53,10 @@ export class ApmHelper {
     }
   }
 
-  public static captureError(exception0: Error | AppException, logContext?: LogContext, handled = false) {
+  public static captureError(exception0: Error | Exception, logContext?: LogContext, handled = false) {
     if (!ApmHelper.apm) return
 
-    const exception = ErrorParser.parse(exception0)
+    const exception = ExceptionUtil.parse(exception0)
     const errorLabels: any = {
       errorName: exception.errorName,
       errorTraceId: exception.errorTraceId,
@@ -78,8 +78,8 @@ export class ApmHelper {
     ApmHelper.apm.captureError(exception, errorDetails)
   }
 
-  static isAppException(exception: Error | AppException): exception is AppException {
-    return (exception as AppException).errorName !== undefined
+  static isAppException(exception: Error | Exception): exception is Exception {
+    return (exception as Exception).errorName !== undefined
   }
 
   /**

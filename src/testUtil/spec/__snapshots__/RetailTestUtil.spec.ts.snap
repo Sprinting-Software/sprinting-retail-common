@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`JwtHelper basic snapshot-testing 1`] = `
+{
+  "createdAt": Any<Date>,
+  "createdOn": Any<String>,
+  "name": "Bond... James Bond",
+}
+`;
+
+exports[`JwtHelper exceptions and snapshot-testing async 1`] = `
+{
+  "contextData": {
+    "a": 1,
+    "b": "xxx",
+  },
+  "description": "some description",
+  "errorName": "SomeErrorName",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 400,
+  "innerError": {
+    "description": "InnerError",
+    "errorName": "Error",
+  },
+}
+`;
+
+exports[`JwtHelper exceptions and snapshot-testing sync 1`] = `
+{
+  "contextData": {
+    "a": 1,
+    "b": "xxx",
+  },
+  "description": "some description",
+  "errorName": "SomeErrorName",
+  "errorTraceId": "REDACTED",
+  "httpStatus": 400,
+  "innerError": {
+    "description": "InnerError",
+    "errorName": "Error",
+  },
+}
+`;

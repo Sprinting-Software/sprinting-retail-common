@@ -2,10 +2,10 @@ import { UDPTransport } from "udp-transport-winston"
 import * as winston from "winston"
 import { ApmHelper } from "../apm/ApmHelper"
 import { Injectable, Scope } from "@nestjs/common"
-import { AppException } from "../errorHandling/exceptions/AppException"
+import { Exception } from "../errorHandling/exceptions/Exception"
 import { LoggerConfig } from "./LoggerConfig"
 import util from "util"
-import { ErrorParser } from "../errorHandling/ErrorParser"
+import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 
 const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -103,8 +103,8 @@ export class LoggerService {
    * @param error
    * @param contextData For some additional data relevant to the error
    */
-  logError(error: AppException | Error, contextData?: Record<string, any>) {
-    const exception = ErrorParser.parse(error)
+  logError(error: Exception | Error, contextData?: Record<string, any>) {
+    const exception = ExceptionUtil.parse(error)
     if (contextData) exception.setContextData(contextData)
     ApmHelper.captureError(exception)
     const fileName = LoggerService._getCallerFile()
