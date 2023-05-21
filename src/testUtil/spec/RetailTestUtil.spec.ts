@@ -1,4 +1,4 @@
-import { CatchSync, CatchAsync, RetailTestUtil } from "../RetailTestUtil"
+import { CatchSync, CatchAsync } from "../RetailTestUtil"
 import { ClientException } from "../../errorHandling/exceptions/ClientException"
 
 describe("JwtHelper", () => {
@@ -17,11 +17,6 @@ describe("JwtHelper", () => {
   })
 
   it("exceptions and snapshot-testing sync", () => {
-    const user = {
-      createdAt: new Date(),
-      createdOn: `str${new Date()}`,
-      name: "Bond... James Bond",
-    }
     const err = new ClientException("SomeErrorName", "some description", { a: 1, b: "xxx" }, new Error("InnerError"))
 
     function util() {

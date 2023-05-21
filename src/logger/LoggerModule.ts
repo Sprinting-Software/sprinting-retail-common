@@ -1,12 +1,13 @@
 import { LoggerService } from "./LoggerService"
 import { ConfigMapper } from "../config/legacyInterfaces/ConfigMapper"
 import { ApmHelper } from "../apm/ApmHelper"
-import { DynamicModule, Module } from "@nestjs/common"
+import { DynamicModule, Global, Module } from "@nestjs/common"
 import { ConfigModule } from "../config/ConfigModule"
 import { LoggerConfig } from "./LoggerConfig"
 import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
 
 @Module({})
+@Global()
 export class LoggerModule {
   /**
    * We need to use the forRoot pattern here, because we need the ApmHelper to be instantiated via useValue instead of useFactory

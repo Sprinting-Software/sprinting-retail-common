@@ -17,7 +17,11 @@ $ npm i sprinting-retail-common
 ```
 2. Add CommonAppModule to your AppModule using forRoot to pass config which must implement the RetailCommonConfig interface.
 ```
-import { CommonAppModule, PrepareNestAppModule } from "sprinting-retail-common"
+import { CommonAppModule } from "sprinting-retail-common"
+...
+const config: RetailCommonConfig = {
+    ...assign config properties from your AppConfig...
+}
 ...
 @Module(
   {
@@ -31,47 +35,27 @@ import { CommonAppModule, PrepareNestAppModule } from "sprinting-retail-common"
 export class AppModule {}
 ```
 
-<h2>Using the logger module</h2>
+<h2>Using the LoggerService</h2>
 
 Once you have imported CommonAppModule in your AppModule, 
-you can import the LoggerModule in all other modules.
+the LoggerService with be provided globally. 
 
-```javascript
-import { LoggerModule } from "../logger/logger.module";
-
-@Module({
-  imports: [LoggerModule],
-  controllers: [SomeController],
-  providers: [SomeProvider],
-  exports: [],
-})
-export class SomeModule {}
-```
-
-Next, you inject the LoggerService in the constructor of your controllers or providers like here: 
+This means you can inject the LoggerService in the constructor of your controllers or providers like here: 
 With this you can log messages, events and errors as shown below.
 
 ```javascript
 export class DevSupportController {
-  constructor(private
+    constructor(private readonly logger: LoggerService) { }
 
-  readonly
-  logger: LoggerService
-) {
-}
-
-@Get("trigger-logs")
-async
-triggerLogs()
-{
-  const contextData = { a: 1, b: 2 }
-  this.logger.info(__filename, "my message info", contextData)
-  this.logger.debug(__filename, "my message info", contextData)
-  this.logger.warn(__filename, "my message info", contextData)
-  this.logger.logError(new Exception("SomeError", "Some description", contextData, innerError))
-  this.logger.event(__fileName, "SomeEvent", { someKey: "someValue" }, "SomeCategory")
-)
-}
+    @Get("trigger-logs") async triggerLogs()
+    {
+      const contextData = { a: 1, b: 2 }
+      this.logger.info(__filename, "my message info", contextData)
+      this.logger.debug(__filename, "my message info", contextData)
+      this.logger.warn(__filename, "my message info", contextData)
+      this.logger.logError(new Exception("SomeError", "Some description", contextData, innerError))
+      this.logger.event(__fileName, "SomeEvent", { someKey: "someValue" }, "SomeCategory")
+    }
 }
 ```
 
@@ -83,26 +67,34 @@ Please notice:
 <h2>Using the error classes</h2>
 
 You should preferably use the following error classes for error handling:
-- **AppException** is a custom exception class which extends HttpException. You need to provide a http status for this exception. 
-- **ServerException** is a custom exception class which extends AppException, use it for internal server errors. It has http status 500.
-- **ClientException** is a custom exception class which extends AppException, use it for errors that you assume to be caused by the clients calling your API. It has http status 400
+- **Exception** is a custom exception class which extends Error. You need to provide a http status for this exception. 
+- **ServerException** is a custom exception class which extends Exception, use it for internal server errors. It has http status 500.
+- **ClientException** is a custom exception class which extends Exception, use it for errors that you assume to be caused by the clients calling your API. It has http status 400
 
-We have these additional exception classes: 
+We have these additional exception classes for special occasions: 
 - CustomBadRequestException
-- DbError
+- SecurityException
 
 If needed you can create your own exception classes by extending the AppException class - although it should not be necessary under normal circumstances. 
 
-The LogError function will log the error to the logstash and will send the error to the APM server.
+The logError function will both log the error as part of application logs and at the same time send the error to APM
 
+```
     this.logger.logError(new ForbiddenException('Access denied'), {});
+```
 
-<h3>Global error handler</h3>
 
-This library provides the `GlobalErrorFilter` for filtering exceptions. 
-It is automatically setup once you have imported the `CommonAppModule` in your AppModule.
+<h2>Publishing a new version of this library</h2>
 
-<h2>Useful information</h2>
+We publish new versions to npm from a developer machine. It is done like this: 
+- Make sure to update the RELEASE_LETTERS.md file
+- Run `````npm run publish-prepare`````
+- If any final changes were made in the previous step, commit these as well.   
+- Increment the version number in package.json
+- Commit the increment with message "Release version x.y"
+- Run `````npm run publish-complete`````
+
+<h2>Appendix</h2>
 
 For the sending logs the module using Logstash UDP transport.
 To test if udp port is responding, use netcat.
@@ -110,102 +102,3 @@ To test if udp port is responding, use netcat.
 `
 $ nc -v -u -z -w 3 10.0.0.xxx 5xxx
 `
-<h2>Setup - prior to version 2</h2>
-
-Use configurations libraries like convict, or any other alternative which will allow getting params easily.
-https://www.npmjs.com/package/convict
-
-`config.ts`
-```javascript
-import convict from 'convict';
-
-const conf = {
-  elk: {
-    enableLogs: {
-      env: 'ENABLE_LOGS',
-      format: Boolean,
-      default: true,
-    },
-    apm: {
-      serviceUrl: {
-        doc: 'The name of the service in ELK',
-        format: String,
-        default: 'http://10.0.0.170:8200',
-        env: 'ELK_APM_SERVICE_URL',
-      },
-      serviceSecret: {
-        doc: 'The name of the service in ELK',
-        format: String,
-        default: '',
-        env: 'ELK_APM_SERVICE_SECRET',
-      },
-      apmSamplingRate: {
-        doc: 'The percentage of transactions that will be sent to ELK. 1 means 100%.',
-        format: Number,
-        default: 1,
-        env: 'ELK_APM_SAMPLINGRATE',
-      },
-    },
-    logstash: {
-      enableUDP: {
-        doc: 'Enable udo transport for the logstash',
-        format: Boolean,
-        default: true,
-        env: 'ENABLE_UDP',
-      },
-      host: {
-        doc: 'The logstash host',
-        env: 'LOGSTASH_HOST',
-        default: '10.0.0.170',
-      },
-      port: {
-        doc: 'The logstash port',
-        env: '',
-        default: 51420,
-      },
-    },
-  },
-}
-```
-
-Create the logger module, which will contain APM and logger services.
-`logger/logger.module.ts`
-import conf from '../../config/configuration';
-
-```javascript
-@Module({
-  imports: [],
-  providers: [
-    {
-      provide: LoggerService,
-      useFactory: () => {
-        const configOptions: ConfigOptions = {
-          env: conf.env,
-          serviceName: conf.serviceName,
-          enableLogs: conf.elk.enableLogs,
-          logstash: {
-            isUDPEnabled: conf.elk.logstash.enableUDP,
-            host: conf.elk.logstash.host,
-            port: conf.elk.logstash.port,
-          },
-        };
-
-        return new LoggerService(configOptions);
-      },
-    },
-    {
-      provide: ApmHelper,
-      useValue: new ApmHelper({
-        serviceName: conf.serviceName,
-        serverUrl: conf.elk.apm.serviceUrl,
-        secretToken: conf.elk.apm.serviceSecret,
-        enableLogs: conf.elk.enableLogs,
-      }),
-    },
-  ],
-  exports: [LoggerService],
-})
-export class LoggerModule {}
-
-
-```

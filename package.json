@@ -1,6 +1,6 @@
 {
   "name": "sprinting-retail-common",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Error handling and logging with APM",
   "contributors": [
     "Nairi Abgaryan",
@@ -25,12 +25,13 @@
     "dist"
   ],
   "scripts": {
-    "format": "prettier --write \"{src,}/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"{src,}/**/*.ts\"",
     "lint": "eslint \"{src,}/**/*.ts\" --fix",
-    "build": "rimraf dist && npm run lint && tsc --emitDecoratorMetadata",
+    "build": "tsc --emitDecoratorMetadata",
     "test": "jest",
-    "prepublishOnly": "npm run build",
-    "publish:full": "rimraf sprinting-retail-common-*.tgz >/dev/null 2>&1 && npm ci && npm run build && npm run test && npm publish",
+    "clean-install": "rimraf dist && rimraf sprinting-retail-common-*.tgz >/dev/null 2>&1 && npm ci && npm run lint && npm run format",
+    "publish-prepare": "npm run clean-install && npm run build && npm run test",
+    "publish-complete": "npm publish",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },

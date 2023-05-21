@@ -30,7 +30,7 @@ export class ApmHelper {
     if (config2.secretToken) config2.secretToken = "********"
     ApmHelper.myConsole(`ApmHelper.init() called with config: ${JSON.stringify(config2)}`)
     if (!enableApm) {
-      return;
+      return
     }
     if (ApmHelper.apm) return ApmHelper.apm
 

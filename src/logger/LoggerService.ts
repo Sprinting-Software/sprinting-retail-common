@@ -6,6 +6,7 @@ import { Exception } from "../errorHandling/exceptions/Exception"
 import { LoggerConfig } from "./LoggerConfig"
 import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
+import { ServerException } from "../errorHandling/exceptions/ServerException"
 
 const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -99,9 +100,9 @@ export class LoggerService {
   }
 
   /**
-   * Log an AppException or any kind of Error. If you log an Error, it will be parsed to an AppException.
+   * Log an Exception or any kind of Error. If you log an Error, it will be parsed into a ServerException.
    * @param error
-   * @param contextData For some additional data relevant to the error
+   * @param contextData For some additional data relevant to the error. This context data will be added to the exceptions context data.
    */
   logError(error: Exception | Error, contextData?: Record<string, any>) {
     const exception = ExceptionUtil.parse(error)
@@ -109,6 +110,17 @@ export class LoggerService {
     ApmHelper.captureError(exception)
     const fileName = LoggerService._getCallerFile()
     this.logger.error(this.formatMessage(fileName, LogLevel.error, exception.toString()))
+  }
+
+  /**
+   * Convenience function to log a ServerException with a given errorName, description, contextData and innerError
+   * @param errorName
+   * @param description
+   * @param contextData
+   * @param innerError
+   */
+  logException(errorName: string, description?: string, contextData: Record<string, any> = {}, innerError?: Error) {
+    this.logError(new ServerException(errorName, description, contextData, innerError))
   }
 
   formatMessage(

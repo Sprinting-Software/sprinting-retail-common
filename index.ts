@@ -1,4 +1,3 @@
-import { EnvironmentConfig } from "./src/config/interface/EnvironmentConfig"
 export * from "./src/apm/ApmHelper"
 export * from "./src/appModule/CommonAppModule"
 export * from "./src/context/TenantContext"

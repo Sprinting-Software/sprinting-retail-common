@@ -1,5 +1,6 @@
 import { RetailCommonConfig } from "./interface/RetailCommonConfig"
 import { RetailCommonConfigConvict } from "./interface/RetailCommonConfigConvict"
+import { ClientException } from "../errorHandling/exceptions/ClientException"
 
 /**
  * A wrapper around the configuration of sprinting-retail-common that helps with validation.
@@ -9,5 +10,12 @@ import { RetailCommonConfigConvict } from "./interface/RetailCommonConfigConvict
 export class RetailCommonConfigProvider {
   constructor(public readonly config: RetailCommonConfig) {
     RetailCommonConfigConvict.validate(config)
+    if (config.envPrefix.indexOf("-") > -1) {
+      throw new ClientException(
+        "InvalidEnvironment",
+        "You must pass in the environment prefix like d or t, not containing '-env'",
+        config
+      )
+    }
   }
 }

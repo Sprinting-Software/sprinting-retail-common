@@ -3,7 +3,7 @@ import { CustomBadRequestException } from "./exceptions/CustomBadRequestExceptio
 import { BadRequestException } from "@nestjs/common"
 import util from "util"
 import { IExceptionJson } from "./IExceptionJson"
-import { AssertionException } from "./exceptions/AssertionException"
+import { ServerException } from "./exceptions/ServerException"
 
 export class ExceptionUtil {
   /**
@@ -23,7 +23,7 @@ export class ExceptionUtil {
       return new Exception(error.getStatus(), error.name, error.message).setInnerError(error)
     }
 
-    return new Exception(500, error.name, error.message, undefined, error)
+    return new ServerException(error.name, error.message, undefined, error)
   }
 
   /*

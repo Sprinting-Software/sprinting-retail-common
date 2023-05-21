@@ -1,5 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 3.0.1</h2>
+
+- Adding extra convenience method to logException with less cluttered code
+
 <h2>Release letter for version 3.0.0</h2>
 
 - Changing name from AppException to Exception. 
