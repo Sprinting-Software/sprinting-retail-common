@@ -23,21 +23,7 @@ import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider
 export class CommonAppModule {
   static forRoot(config: RetailCommonConfig): DynamicModule {
     const configProvider = new RetailCommonConfigProvider(config)
-    const loggerConfig: LoggerConfig = ConfigMapper.mapToLoggerConfig(configProvider.config)
-    const logger = new LoggerService(loggerConfig)
-
-    if (process.listenerCount("unhandledRejection") > 0) {
-      logger.warn(
-        "CommonAppModule",
-        "There is already an 'unhandledRejection' handler, not adding sprinting-retail-common one."
-      )
-    } else {
-      process.on("unhandledRejection", (reason) => {
-        logger.logError(
-          new ServerException("UnhandledRejectionError", "A Promise rejection was not handled.", null, <Error>reason)
-        )
-      })
-    }
+    this.setupGlobalProcessHandlers(configProvider)
 
     return {
       module: CommonAppModule, // needed for dynamic modules
@@ -64,6 +50,43 @@ export class CommonAppModule {
         },
       ],
       exports: [ConfigModule, LoggerModule, TenantContext],
+    }
+  }
+
+  /**
+   * Assigns the global handler on unhandledRejections
+   * @param configProvider
+   * @private
+   */
+  private static setupGlobalProcessHandlers(configProvider: RetailCommonConfigProvider) {
+    const loggerConfig: LoggerConfig = ConfigMapper.mapToLoggerConfig(configProvider.config)
+    const logger = new LoggerService(loggerConfig)
+
+    if (process.listenerCount("unhandledRejection") > 0) {
+      try {
+        logger.warn(
+          "CommonAppModule",
+          "There is already an 'unhandledRejection' handler, not adding sprinting-retail-common one."
+        )
+      } catch (err) {
+        //Suppress errors in error handling
+        // eslint-disable-next-line no-console
+        console.log("There is already an 'unhandledRejection' handler, not adding sprinting-retail-common one.")
+      }
+    } else {
+      process.on("unhandledRejection", (reason) => {
+        try {
+          logger.logException(
+            "UnhandledRejectionError",
+            "A Promise rejection was not handled.",
+            undefined,
+            <Error>reason
+          )
+        } catch (err) {
+          //Suppress errors in error handling
+          console.log("UnhandledRejectionError", "A Promise rejection was not handled.", reason)
+        }
+      })
     }
   }
 }

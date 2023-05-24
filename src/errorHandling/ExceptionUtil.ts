@@ -15,6 +15,10 @@ export class ExceptionUtil {
       return error
     }
 
+    if (ExceptionUtil.isAxiosError(error)) {
+      return ExceptionUtil.parseAxiosError(error)
+    }
+
     if (error.name === "BadRequestException") {
       return new CustomBadRequestException(<BadRequestException>error)
     }
@@ -24,6 +28,31 @@ export class ExceptionUtil {
     }
 
     return new ServerException(error.name, error.message, undefined, error)
+  }
+
+  /**
+   * Is used to protect logging from overflow in case of axios errors.
+   * This function picks the right stuff from axios errors.
+   * @param err
+   */
+  public static parseAxiosError(err) {
+    const context = {
+      config: err.config,
+      status: err.response.status,
+      statusText: err.response.statusText,
+      ...(err.response.data.error ? err.response.data.error : {}),
+      stackTrace: err.stackTrace,
+    }
+    context.config.auth.password = "REDACTED"
+    return new ServerException("AxiosError").setContextData(context)
+  }
+
+  /**
+   * Determines whether an error is an axios error using some heuristic criteria that we believe are sufficient.
+   * @param err
+   */
+  public static isAxiosError(err) {
+    return err.config && err.response && err.response.data
   }
 
   /*

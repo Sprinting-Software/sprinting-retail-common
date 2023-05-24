@@ -32,6 +32,38 @@ describe("ExceptionUtil", () => {
   it("should create plain objects from complex error 1", () => {
     expect(ExceptionUtil.toPlainJsonForSpec(getComplexError())).toMatchSnapshot()
   })
+
+  it("should handle axios error", () => {
+    const axiosErrorMock = {
+      config: { auth: { password: "secret" } },
+      status: 501,
+      statusText: "SERVERERROR",
+      response: { data: { error: { errorCode: "somecode" } } },
+      stackTrace: "somestack",
+      additional: "xxx",
+    }
+    expect(ExceptionUtil.toPlainJsonForSpec(ExceptionUtil.parse(axiosErrorMock as unknown as Error)))
+      .toMatchInlineSnapshot(`
+      {
+        "contextData": {
+          "config": {
+            "auth": {
+              "password": "REDACTED",
+            },
+          },
+          "errorCode": "somecode",
+          "stackTrace": "somestack",
+          "status": undefined,
+          "statusText": undefined,
+        },
+        "description": undefined,
+        "errorName": "AxiosError",
+        "errorTraceId": "REDACTED",
+        "httpStatus": 500,
+      }
+    `)
+  })
+
   it("should create plain objects from complex error 2", () => {
     expect(ExceptionUtil.toPlainJsonForSpec(getComplexError2())).toMatchSnapshot()
   })

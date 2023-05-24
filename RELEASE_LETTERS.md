@@ -1,5 +1,10 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 3.0.3</h2>
+
+- Small refactoring 
+- Handling of axios errors so they cannot overflow logs
+
 <h2>Release letter for version 3.0.2</h2>
 
 - Adding a default process-level handler for unhandledRejection event, preventing server crash in case of unawaited promises. This handler will log an error in case of such events
