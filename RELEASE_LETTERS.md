@@ -1,5 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 3.0.2</h2>
+
+- Adding a default process-level handler for unhandledRejection event, preventing server crash in case of unawaited promises. This handler will log an error in case of such events
+
 <h2>Release letter for version 3.0.1</h2>
 
 - Adding extra convenience method to logException with less cluttered code
