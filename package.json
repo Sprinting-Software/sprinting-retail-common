@@ -1,10 +1,11 @@
 {
   "name": "sprinting-retail-common",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Error handling and logging with APM",
   "contributors": [
     "Nairi Abgaryan",
-    "Nikola Schou"
+    "Nikola Schou",
+    "Szabolcs Nagy"
   ],
   "license": "MIT",
   "keywords": [
