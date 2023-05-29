@@ -43,7 +43,8 @@ export class ExceptionUtil {
       ...(err.response.data.error ? err.response.data.error : {}),
       stackTrace: err.stackTrace,
     }
-    context.config.auth.password = "REDACTED"
+
+    if (context.config.auth) context.config.auth.password = "REDACTED"
     return new ServerException("AxiosError").setContextData(context)
   }
 

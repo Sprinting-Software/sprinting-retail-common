@@ -2,6 +2,10 @@
 
 <h2>Release letter for version 3.0.3</h2>
 
+- A small fix for axios error handling - prevent "TypeError: Cannot set properties of undefined" when the axios request has no auth config.
+
+<h2>Release letter for version 3.0.3</h2>
+
 - Small refactoring 
 - Handling of axios errors so they cannot overflow logs
 
