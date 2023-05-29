@@ -1,4 +1,4 @@
-import { LoggerService } from "../LoggerService"
+import { ICommonLogContext, LoggerService } from "../LoggerService"
 import { ClientException } from "../../errorHandling/exceptions/ClientException"
 
 /**
@@ -18,6 +18,8 @@ describe("logger", () => {
     },
   }
 
+  console.log(logstashConfig)
+
   beforeEach(() => {
     if (logstashConfig.logstash.host === "xxx" || logstashConfig.logstash.port === 0) {
       throw new Error(
@@ -29,9 +31,10 @@ describe("logger", () => {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   it("should log at all levels", () => {
-    loggerService.info(__filename, "Testing")
-    loggerService.warn(__filename, "Testing")
-    loggerService.debug(__filename, "Testing")
+    const sharedContext: ICommonLogContext = { client: { name: "Bifrost" }, tenantId: 100 }
+    loggerService.info(__filename, "Testing", {}, sharedContext)
+    loggerService.warn(__filename, "Testing", {}, sharedContext)
+    loggerService.debug(__filename, "Testing", {}, sharedContext)
     loggerService.logError(
       new ClientException("LoggerServiceCrossTestError", "Test description", { tenant: "tid100", tenantId: 100 })
     )

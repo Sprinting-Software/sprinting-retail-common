@@ -50,7 +50,8 @@ export class DevSupportController {
     @Get("trigger-logs") async triggerLogs()
     {
       const contextData = { a: 1, b: 2 }
-      this.logger.info(__filename, "my message info", contextData)
+      const sharedContext: ICommonLogContext = { client: { name: "Bifrost" }, tenantId: 100 }
+      this.logger.info(__filename, "my message info", contextData, )
       this.logger.debug(__filename, "my message info", contextData)
       this.logger.warn(__filename, "my message info", contextData)
       this.logger.logError(new Exception("SomeError", "Some description", contextData, innerError))
