@@ -1,6 +1,6 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
-<h2>Release letter for version 3.0.3</h2>
+<h2>Release letter for version 3.0.4</h2>
 
 - A small fix for axios error handling - prevent "TypeError: Cannot set properties of undefined" when the axios request has no auth config.
 
