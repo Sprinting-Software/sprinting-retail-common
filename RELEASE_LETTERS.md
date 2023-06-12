@@ -3,6 +3,7 @@
 <h2>Release letter for version 3.0.4</h2>
 
 - Adding support of common context fields in ELK logs
+- A small fix for axios error handling - prevent "TypeError: Cannot set properties of undefined" when the axios request has no auth config.
 
 <h2>Release letter for version 3.0.3</h2>
 
