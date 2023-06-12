@@ -12,6 +12,17 @@ const { combine, timestamp } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ecsFormat = require("@elastic/ecs-winston-format")
 
+/**
+ * Shared context data for all log records
+ */
+export interface ICommonLogContext {
+  tenantId?: number
+  client?: { traceId?: string; name?: string }
+  userId?: string
+  requestTraceId?: string
+  transactionName?: string
+}
+
 export const enum LogLevel {
   info = "info",
   event = "event",
@@ -67,26 +78,33 @@ export class LoggerService {
     })
   }
 
-  info(fileName: string, message: string, contextData?: Record<string, any>) {
-    this.logger.info(this.formatMessage(fileName, LogLevel.info, message, contextData))
+  info(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
+    this.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext))
   }
 
-  debug(fileName: string, message: any, contextData?: Record<string, any>) {
-    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, contextData))
+  debug(fileName: string, message: any, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
+    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
   }
 
-  warn(fileName: string, message: string, contextData?: Record<string, any>) {
-    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, contextData))
+  warn(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
+    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
   }
 
-  event(fileName: string, eventName: string, eventData: any, eventCategory?: string) {
+  event(
+    fileName: string,
+    eventName: string,
+    eventData: any,
+    eventCategory?: string,
+    commonContext?: ICommonLogContext
+  ) {
     this.logger.info(
       this.formatMessage(
         fileName,
         LogLevel.event,
         this.eventToString({ eventName, eventData, eventCategory }),
         undefined,
-        eventData
+        eventData,
+        commonContext
       )
     )
   }
@@ -128,8 +146,15 @@ export class LoggerService {
     logLevel: LogLevel,
     message: string,
     data?: Record<string, any>,
-    eventData?: Record<string, any>
+    eventData?: Record<string, any>,
+    commonFields?: ICommonLogContext
   ): LogMessage {
+    const commonFields2: any = { ...commonFields }
+    if (commonFields2.tenantId) {
+      // In ELK we don't want integer-based values so we will use the tenant moniker instead.
+      commonFields2.tenant = `tid${commonFields2.tenantId}`
+      delete commonFields2.tenantId
+    }
     return {
       filename: fileName,
       system: this.config.serviceName,
@@ -139,6 +164,7 @@ export class LoggerService {
       logType: logLevel,
       message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
       event: eventData,
+      ...commonFields2,
     }
   }
 
