@@ -11,14 +11,13 @@ describe("logger", () => {
     env: "test",
     serviceName: "sprintingretailcommon",
     enableLogs: true,
+    enableConsoleLogs: true,
     logstash: {
       isUDPEnabled: true,
       host: process.env.LOGSTASH_HOST,
       port: parseInt(process.env.LOGSTASH_PORT),
     },
   }
-
-  console.log(logstashConfig)
 
   beforeEach(() => {
     if (logstashConfig.logstash.host === "xxx" || logstashConfig.logstash.port === 0) {

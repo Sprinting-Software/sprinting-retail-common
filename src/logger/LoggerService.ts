@@ -68,7 +68,7 @@ export class LoggerService {
 
     this.logger = winston.createLogger({
       format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
-      silent: !config.enableLogs,
+      silent: !config.enableConsoleLogs,
       transports: [
         new winston.transports.Console({
           format: winston.format.combine(winston.format.colorize(), winston.format.simple()),

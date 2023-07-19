@@ -6,6 +6,7 @@ import { EnvironmentConfig } from "./EnvironmentConfig"
  */
 export interface RetailCommonConfig extends EnvironmentConfig {
   systemName: string
+  enableConsoleLogs: boolean
   elk: {
     apm: ApmConfig
     logstash: {

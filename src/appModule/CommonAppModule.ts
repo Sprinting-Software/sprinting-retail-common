@@ -5,7 +5,6 @@ import { APP_FILTER, HttpAdapterHost, REQUEST } from "@nestjs/core"
 import { LoggerConfig } from "../logger/LoggerConfig"
 import { LoggerService } from "../logger/LoggerService"
 import TenantContext from "../context/TenantContext"
-import { ServerException } from "../errorHandling/exceptions/ServerException"
 import { GlobalErrorFilter } from "../errorHandling/GlobalErrorFilter"
 import { TenantContextFactory } from "../context/TenantContextFactory"
 import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
@@ -84,6 +83,7 @@ export class CommonAppModule {
           )
         } catch (err) {
           //Suppress errors in error handling
+          // eslint-disable-next-line no-console
           console.log("UnhandledRejectionError", "A Promise rejection was not handled.", reason)
         }
       })

@@ -1,5 +1,10 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 3.0.6</h2>
+
+- Introduced new config "enableConsoleLogs" for determining if winston logger should log errors to console, true by default. 
+- Fixed lint issues.
+
 <h2>Release letter for version 3.0.4</h2>
 
 - Adding support of common context fields in ELK logs

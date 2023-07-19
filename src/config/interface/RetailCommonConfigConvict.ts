@@ -27,6 +27,12 @@ const schema = {
     default: null,
     env: "SYSTEM_NAME",
   },
+  enableConsoleLogs: {
+    doc: "Whether to enable Console logs",
+    format: Boolean,
+    default: true,
+    env: "CONSOLE_ENABLE_LOGS",
+  },
   elk: {
     apm: {
       enableLogs: {

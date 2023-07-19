@@ -3,6 +3,7 @@
  */
 export interface ConfigLegacyV1 {
   envPrefix: string
+  enableConsoleLogs: boolean
   elkConfig: {
     serviceName: string
     hostname: string

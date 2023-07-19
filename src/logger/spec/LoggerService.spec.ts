@@ -9,6 +9,7 @@ describe("logger", () => {
     env: "test",
     serviceName: "test-service",
     enableLogs: true,
+    enableConsoleLogs: true,
     logstash: {
       isUDPEnabled: false,
       host: "localhost",

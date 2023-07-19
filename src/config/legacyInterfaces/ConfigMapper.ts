@@ -8,6 +8,7 @@ export class ConfigMapper {
       env: `${appConfig.envPrefix}-env`,
       serviceName: appConfig.systemName,
       enableLogs: appConfig.elk.logstash.isEnabled,
+      enableConsoleLogs: appConfig.enableConsoleLogs,
       logstash: {
         isUDPEnabled: true,
         host: appConfig.elk.logstash.host,
@@ -20,6 +21,7 @@ export class ConfigMapper {
     return {
       envPrefix: appConfig.envPrefix,
       systemName: appConfig.elkConfig.serviceName,
+      enableConsoleLogs: appConfig.enableConsoleLogs,
       elk: {
         apm: {
           serviceName: appConfig.elkConfig.serviceName,
