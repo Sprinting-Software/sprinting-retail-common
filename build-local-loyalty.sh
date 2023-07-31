@@ -1,0 +1,1 @@
+ tsc --emitDecoratorMetadata && npm pack && cd ../loyalty/LoyaltyBE && npm install ../../sprinting-retail-common/sprinting-retail-common-3.0.6.tgz
