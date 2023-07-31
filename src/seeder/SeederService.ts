@@ -28,18 +28,14 @@ export class SeederService {
       console.log(`Seeding start. System: ${systemName}, Env: ${envName}, Table: ${tableName}`)
 
       if (dryRun) {
-        for (const chunk of chunks) {
-          for (const row of chunk) {
-            this.logEvent(params, row)
-          }
-        }
+        this.dryRun(chunks, params)
         return
       }
 
       await dbConnection.query("BEGIN")
 
       if (params?.resetBy && Object.keys(params?.resetBy).length > 0) {
-        await dbConnection.query(this.deleteQuery(params))
+        await dbConnection.query(this.resetQuery(params))
       }
 
       for (const chunk of chunks) {
@@ -63,6 +59,14 @@ export class SeederService {
         this.logger.logError(error)
       } else {
         this.logger.logError(new Error(String(error)))
+      }
+    }
+  }
+
+  private dryRun(chunks: object[][], params: SeederServiceParams) {
+    for (const chunk of chunks) {
+      for (const row of chunk) {
+        this.logEvent(params, row)
       }
     }
   }
@@ -115,13 +119,32 @@ export class SeederService {
       .join("\n")
   }
 
-  private deleteQuery({ tableName, resetBy }: SeederServiceParams): string {
-    if (!resetBy || Object.keys(resetBy).length === 0) {
+  private resetQuery(params: SeederServiceParams): string {
+    const { tableName, resetBy, jsonData, primaryKeys } = params
+
+    if (!resetBy || Object.keys(resetBy).length === 0 || !primaryKeys || primaryKeys.length === 0) {
       return ""
     }
 
+    const primaryKeysValues = primaryKeys.reduce((acc, key) => {
+      acc[key] = [...new Set(jsonData.map((item) => item[key]))]
+      return acc
+    }, {} as Record<string, any[]>)
+
     const deleteConditions = Object.entries(resetBy)
-      .map(([key, value]) => `"${key}" = ${encodeValue(value)}`)
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          const values = value.map((v) => encodeValue(v)).join(",")
+          return `"${key}" IN (${values})`
+        }
+        return `"${key}" = ${encodeValue(value)}`
+      })
+      .concat(
+        Object.entries(primaryKeysValues).map(([key, values]) => {
+          const encodedValues = values.map((v) => encodeValue(v)).join(",")
+          return `"${key}" NOT IN (${encodedValues})`
+        })
+      )
       .join(" AND ")
 
     return `DELETE FROM "${tableName}" WHERE ${deleteConditions}`

@@ -34,6 +34,11 @@ describe("SeederService", () => {
 
     service = module.get<SeederService>(SeederService)
     loggerService = module.get<LoggerService>(LoggerService)
+
+    // Mock private methods
+    service["dryRun"] = jest.fn()
+    service["resetQuery"] = jest.fn()
+    service["upsertQuery"] = jest.fn()
   })
 
   it("should seed the table successfully", async () => {
@@ -74,5 +79,52 @@ describe("SeederService", () => {
 
     await service.seedTable(params)
     expect(loggerService.logError).toHaveBeenCalled()
+  })
+
+  it("should call dryRun when dryRun is true", async () => {
+    const params: SeederServiceParams = {
+      systemName: "testSystem",
+      envName: "testEnv",
+      jsonData: [],
+      dbConnection: mockDbConnection,
+      tableName: "testTable",
+      primaryKeys: ["id"],
+      dryRun: true,
+    }
+
+    await service.seedTable(params)
+    expect(service["dryRun"]).toHaveBeenCalled()
+  })
+
+  it("should call resetQuery when resetBy is provided", async () => {
+    const params: SeederServiceParams = {
+      systemName: "testSystem",
+      envName: "testEnv",
+      jsonData: [],
+      dbConnection: mockDbConnection,
+      tableName: "testTable",
+      primaryKeys: ["id"],
+      resetBy: { id: 1 },
+    }
+
+    await service.seedTable(params)
+    expect(service["resetQuery"]).toHaveBeenCalled()
+  })
+
+  it("should call upsertQuery when jsonData is provided", async () => {
+    const params: SeederServiceParams = {
+      systemName: "testSystem",
+      envName: "testEnv",
+      jsonData: [
+        { id: 1, name: "Test1" },
+        { id: 2, name: "Test2" },
+      ],
+      dbConnection: mockDbConnection,
+      tableName: "testTable",
+      primaryKeys: ["id"],
+    }
+
+    await service.seedTable(params)
+    expect(service["upsertQuery"]).toHaveBeenCalled()
   })
 })
