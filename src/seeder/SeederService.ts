@@ -11,7 +11,7 @@ export interface SeederServiceParams {
   dbConnection: DbConnection
   tableName: string
   primaryKeys: string[]
-  deleteBy?: Record<string, any>[]
+  resetBy?: Record<string, any>
   dryRun?: boolean
 }
 
@@ -19,34 +19,46 @@ export interface SeederServiceParams {
 export class SeederService {
   constructor(private readonly logger: LoggerService) {}
 
+  private readonly chunkSize = 50
+
   async seedTable(params: SeederServiceParams): Promise<void> {
-    const { dbConnection, dryRun = false } = params
+    const chunks = this.chunkArray(params.jsonData, this.chunkSize)
+    const { dbConnection, tableName, systemName, envName, dryRun = false } = params
     try {
+      console.log(`Seeding start. System: ${systemName}, Env: ${envName}, Table: ${tableName}`)
+
       if (dryRun) {
-        for (const row of params.jsonData) {
-          this.logEvent(params, row)
+        for (const chunk of chunks) {
+          for (const row of chunk) {
+            this.logEvent(params, row)
+          }
         }
         return
       }
 
       await dbConnection.query("BEGIN")
 
-      if (params?.deleteBy && params?.deleteBy?.length > 0) {
-        await dbConnection.query(this.deleteQueries(params))
+      if (params?.resetBy && Object.keys(params?.resetBy).length > 0) {
+        await dbConnection.query(this.deleteQuery(params))
       }
 
-      for (const row of params.jsonData) {
-        const query = this.upsertQuery(params)
+      for (const chunk of chunks) {
+        const query = this.upsertQuery({ ...params, jsonData: chunk })
         await dbConnection.query(query)
-        this.logEvent(params, row)
+        for (const row of chunk) {
+          this.logEvent(params, row)
+        }
       }
 
       await dbConnection.query("COMMIT")
+
+      console.log(`Seeding successfully finished`)
     } catch (error) {
       if (!dryRun) {
         await dbConnection.query("ROLLBACK")
       }
 
+      console.log(error)
       if (error instanceof Error || error instanceof Exception) {
         this.logger.logError(error)
       } else {
@@ -55,53 +67,60 @@ export class SeederService {
     }
   }
 
-  private upsertQuery({ tableName, jsonData, primaryKeys }: SeederServiceParams): string | boolean {
+  private upsertQuery(params: SeederServiceParams): string | boolean {
+    const { tableName, jsonData, primaryKeys } = params
+
     if (!jsonData.length) {
       return ""
     }
 
-    const insertColumns = Object.keys(jsonData[0])
-      .map((columnName) => `"${columnName}"`)
-      .join(",")
-    const insertColumnsString = `INSERT INTO "${tableName}" (${insertColumns})`
-    const insertValues = jsonData
-      .map((object) => {
+    return jsonData
+      .map((object: any) => {
+        const insertColumns = Object.keys(object)
+          .map((columnName) => `"${columnName}"`)
+          .join(",")
+
+        const insertColumnsString = `INSERT INTO "${tableName}" (${insertColumns})`
+
         const singleInsertValue = Object.keys(object)
           .map((columnName) => {
             return encodeValue(object[columnName])
           })
           .join(",")
 
-        return `(${singleInsertValue})`
+        const insertValuesString = `\nVALUES (${singleInsertValue})`
+
+        const conflictString = () => {
+          if (primaryKeys === null) {
+            return ""
+          } else {
+            const conflictKeys = primaryKeys.map((columnName) => `"${columnName}"`).join(",")
+            const conflictValues = Object.keys(object)
+              .filter((columnName) => primaryKeys.indexOf(columnName) === -1)
+              .map((columnName) => {
+                return `"${columnName}" = excluded."${columnName}"`
+              })
+              .join(",")
+
+            if (conflictValues.length > 0) {
+              return `ON CONFLICT (${conflictKeys}) DO UPDATE SET ${conflictValues};`
+            } else {
+              return `ON CONFLICT (${conflictKeys}) DO NOTHING;`
+            }
+          }
+        }
+
+        return `${insertColumnsString} ${insertValuesString} ${conflictString()}`
       })
-      .join(",\n")
-
-    const insertValuesString = `\nVALUES ${insertValues}`
-
-    const conflictString = () => {
-      if (primaryKeys === null) {
-        return ""
-      } else {
-        const conflictKeys = primaryKeys.map((columnName) => `"${columnName}"`).join(",")
-        const conflictValues = Object.keys(jsonData[0])
-          .filter((columnName) => primaryKeys.indexOf(columnName) === -1)
-          .map((columnName) => {
-            return `"${columnName}" = excluded."${columnName}"`
-          })
-          .join(",")
-        return `ON CONFLICT (${conflictKeys}) DO UPDATE SET ${conflictValues};`
-      }
-    }
-
-    return `${insertColumnsString} ${insertValuesString} ${conflictString()}`
+      .join("\n")
   }
 
-  private deleteQueries({ tableName, deleteBy }: SeederServiceParams): string {
-    if (!deleteBy || Object.keys(deleteBy).length === 0) {
+  private deleteQuery({ tableName, resetBy }: SeederServiceParams): string {
+    if (!resetBy || Object.keys(resetBy).length === 0) {
       return ""
     }
 
-    const deleteConditions = Object.entries(deleteBy)
+    const deleteConditions = Object.entries(resetBy)
       .map(([key, value]) => `"${key}" = ${encodeValue(value)}`)
       .join(" AND ")
 
@@ -110,6 +129,13 @@ export class SeederService {
 
   private logEvent(params: SeederServiceParams, row: Record<string, any>): void {
     this.logger.event(__filename, params.envName, row, "seed", { tenantId: row?.tenantId })
-    console.log(`${params.envName} seed - ${JSON.stringify(row)}`)
+  }
+
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks = []
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size))
+    }
+    return chunks
   }
 }

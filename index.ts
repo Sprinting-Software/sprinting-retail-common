@@ -22,5 +22,7 @@ export * from "./src/testUtil/RetailTestUtil"
 export { CatchAsync } from "./src/testUtil/RetailTestUtil"
 export { CatchSync } from "./src/testUtil/RetailTestUtil"
 export { LoggerConfig } from "./src/logger/LoggerConfig"
+export * from "./src/seeder/SeederService"
+export * from "./src/seeder/SeederModule"
 
 export { RetailCommonConfigConvict } from "./src/config/interface/RetailCommonConfigConvict"
