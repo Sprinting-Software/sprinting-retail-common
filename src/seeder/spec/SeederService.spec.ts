@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { SeederService, SeederServiceParams } from "../SeederService"
+import { SeederService, SeedTableParams } from "../SeederService"
 import { LoggerService } from "../../logger/LoggerService"
 
 describe("SeederService", () => {
@@ -9,6 +9,7 @@ describe("SeederService", () => {
 
   const loggerServiceMock = {
     event: jest.fn(),
+    info: jest.fn(),
     logError: jest.fn(),
   }
 
@@ -37,94 +38,123 @@ describe("SeederService", () => {
 
     // Mock private methods
     service["dryRun"] = jest.fn()
-    service["resetQuery"] = jest.fn()
-    service["upsertQuery"] = jest.fn()
+    service["resetQuery"] = jest.fn().mockReturnValue("delete query")
+    service["upsertQuery"] = jest.fn().mockReturnValue("upsert query")
   })
 
   it("should seed the table successfully", async () => {
-    const params: SeederServiceParams = {
+    const params: SeedTableParams = {
       systemName: "testSystem",
       envName: "testEnv",
-      jsonData: [
-        { id: 1, name: "Test1" },
-        { id: 2, name: "Test2" },
-      ],
       dbConnection: mockDbConnection,
-      tableName: "testTable",
-      primaryKeys: ["id"],
+      path: "",
+      seed: {
+        tableName: "testTable",
+        primaryKeys: ["id"],
+        data: [
+          { id: 1, name: "Test1" },
+          { id: 2, name: "Test2" },
+        ],
+      },
       dryRun: false,
     }
     jest.spyOn(mockDbConnection, "query").mockImplementation(async () => true)
 
-    await service.seedTable(params)
-    expect(loggerService.event).toHaveBeenCalledTimes(params.jsonData.length)
+    await service.seedItem(params)
+    expect(loggerService.event).toHaveBeenCalledTimes(params.seed.data.length)
+    expect(mockDbConnection.query).toHaveBeenCalledWith("BEGIN")
+    expect(mockDbConnection.query).toHaveBeenCalledWith("upsert query")
+    expect(mockDbConnection.query).toHaveBeenCalledWith("COMMIT")
   })
 
   it("should rollback if error happens during seeding", async () => {
-    const params: SeederServiceParams = {
+    const params: SeedTableParams = {
       systemName: "testSystem",
       envName: "testEnv",
-      jsonData: [
-        { id: 1, name: "Test1" },
-        { id: 2, name: "Test2" },
-      ],
       dbConnection: mockDbConnection,
-      tableName: "testTable",
-      primaryKeys: ["id"],
+      path: "",
+      seed: {
+        tableName: "testTable",
+        primaryKeys: ["id"],
+        data: [
+          { id: 1, name: "Test1" },
+          { id: 2, name: "Test2" },
+        ],
+      },
       dryRun: false,
     }
+
     jest.spyOn(mockDbConnection, "query").mockImplementationOnce(() => {
       throw new Error("An error occurred")
     })
 
-    await service.seedTable(params)
-    expect(loggerService.logError).toHaveBeenCalled()
+    try {
+      await service.seedItem(params)
+    } catch (error) {
+      expect(loggerService.logError).toHaveBeenCalled()
+      expect(mockDbConnection.query).toHaveBeenCalledWith("ROLLBACK")
+    }
   })
 
   it("should call dryRun when dryRun is true", async () => {
-    const params: SeederServiceParams = {
+    const params: SeedTableParams = {
       systemName: "testSystem",
       envName: "testEnv",
-      jsonData: [],
       dbConnection: mockDbConnection,
-      tableName: "testTable",
-      primaryKeys: ["id"],
+      path: "",
+      seed: {
+        tableName: "testTable",
+        primaryKeys: ["id"],
+        data: [],
+      },
       dryRun: true,
     }
 
-    await service.seedTable(params)
+    await service.seedItem(params)
     expect(service["dryRun"]).toHaveBeenCalled()
   })
 
   it("should call resetQuery when resetBy is provided", async () => {
-    const params: SeederServiceParams = {
+    const params: SeedTableParams = {
       systemName: "testSystem",
       envName: "testEnv",
-      jsonData: [],
       dbConnection: mockDbConnection,
-      tableName: "testTable",
-      primaryKeys: ["id"],
-      resetBy: { id: 1 },
+      path: "",
+      seed: {
+        tableName: "testTable",
+        primaryKeys: ["id"],
+        data: [],
+        resetBy: { id: 1 },
+      },
     }
 
-    await service.seedTable(params)
+    await service.seedItem(params)
     expect(service["resetQuery"]).toHaveBeenCalled()
+    expect(mockDbConnection.query).toHaveBeenCalledWith("BEGIN")
+    expect(mockDbConnection.query).toHaveBeenCalledWith("delete query")
+    expect(mockDbConnection.query).toHaveBeenCalledWith("COMMIT")
   })
 
   it("should call upsertQuery when jsonData is provided", async () => {
-    const params: SeederServiceParams = {
+    const params: SeedTableParams = {
       systemName: "testSystem",
       envName: "testEnv",
-      jsonData: [
-        { id: 1, name: "Test1" },
-        { id: 2, name: "Test2" },
-      ],
       dbConnection: mockDbConnection,
-      tableName: "testTable",
-      primaryKeys: ["id"],
+      path: "",
+      seed: {
+        tableName: "testTable",
+        primaryKeys: ["id"],
+        data: [
+          { id: 1, name: "Test1" },
+          { id: 2, name: "Test2" },
+        ],
+      },
     }
 
-    await service.seedTable(params)
+    await service.seedItem(params)
     expect(service["upsertQuery"]).toHaveBeenCalled()
+    expect(mockDbConnection.query).toHaveBeenCalledWith("BEGIN")
+    expect(mockDbConnection.query).toHaveBeenCalledWith("upsert query")
+    expect(mockDbConnection.query).toHaveBeenCalledWith("COMMIT")
   })
 })
