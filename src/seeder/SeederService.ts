@@ -68,35 +68,9 @@ export class SeederService {
     await this.seedItem({ ...params, seed: seedParams })
   }
 
-  async seeds1(params: SeederServiceParams): Promise<void> {
-    const { path: dirPath, jsonOrders } = params
-
-    if (jsonOrders && jsonOrders.length > 0) {
-      for (const jsonFile of jsonOrders) {
-        const filePath = path.join(dirPath, jsonFile)
-        if (fs.existsSync(filePath)) {
-          const fileContent = fs.readFileSync(filePath, "utf-8")
-          const seedParams: SeedParams = JSON.parse(fileContent)
-          await this.seedItem({ ...params, seed: seedParams })
-        }
-      }
-    } else {
-      const files = fs.readdirSync(dirPath)
-
-      for (const file of files) {
-        if (path.extname(file) === ".json") {
-          const filePath = path.join(dirPath, file)
-          const fileContent = fs.readFileSync(filePath, "utf-8")
-          const seedParams: SeedParams = JSON.parse(fileContent)
-          await this.seedItem({ ...params, seed: seedParams })
-        }
-      }
-    }
-  }
-
   async seedItem(params: SeedTableParams): Promise<void> {
     const chunks = this.chunkArray(params.seed.data, this.chunkSize)
-    const { dbConnection, seed, systemName, envName, dryRun = false } = params
+    const { dbConnection, seed, dryRun = false } = params
     const { tableName, resetBy } = seed
 
     try {
@@ -203,28 +177,26 @@ export class SeederService {
       return ""
     }
 
-    const primaryKeysValues = primaryKeys.reduce((acc, key) => {
-      acc[key] = [...new Set(data.map((item) => item[key]))]
-      return acc
-    }, {} as Record<string, any[]>)
+    const deleteConditions = Object.entries(resetBy).map(([key, value]) => {
+      if (Array.isArray(value)) {
+        const values = value.map((v) => encodeValue(v)).join(",")
+        return `"${key}" IN (${values})`
+      }
+      return `"${key}" = ${encodeValue(value)}`
+    })
 
-    const deleteConditions = Object.entries(resetBy)
-      .map(([key, value]) => {
-        if (Array.isArray(value)) {
-          const values = value.map((v) => encodeValue(v)).join(",")
-          return `"${key}" IN (${values})`
-        }
-        return `"${key}" = ${encodeValue(value)}`
+    const deleteRows = data
+      .map((row) => {
+        const rowConditions = primaryKeys
+          .map((key) => {
+            return `"${key}" != ${encodeValue(row[key])}`
+          })
+          .join(" OR ")
+        return `(${rowConditions})`
       })
-      .concat(
-        Object.entries(primaryKeysValues).map(([key, values]) => {
-          const encodedValues = values.map((v) => encodeValue(v)).join(",")
-          return `"${key}" NOT IN (${encodedValues})`
-        })
-      )
       .join(" AND ")
 
-    return `DELETE FROM "${tableName}" WHERE ${deleteConditions}`
+    return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")} AND ${deleteRows}`
   }
 
   private logEvent(params: SeederServiceParams, row: Record<string, any>): void {
