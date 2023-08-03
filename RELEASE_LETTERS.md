@@ -1,5 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 4.0.0</h2>
+
+- Introduced seeding framework for faster and simpler seeding
+
 <h2>Release letter for version 3.0.6</h2>
 
 - Introduced new config "enableConsoleLogs" for determining if winston logger should log errors to console, true by default. 
