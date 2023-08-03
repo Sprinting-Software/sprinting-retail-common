@@ -19,15 +19,15 @@ export class ExceptionUtil {
       return ExceptionUtil.parseAxiosError(error)
     }
 
-    // if (error.name === "BadRequestException") {
-    //   return new CustomBadRequestException(<BadRequestException>error)
-    // }
-    //
-    // if ("getStatus" in error && typeof error.getStatus === "function") {
-    //   return new Exception(error.getStatus(), error.name, error.message).setInnerError(error)
-    // }
-    //
-    // return new ServerException(error.name, error.message, undefined, error)
+    if (error.name === "BadRequestException") {
+      return new CustomBadRequestException(<BadRequestException>error)
+    }
+
+    if ("getStatus" in error && typeof error.getStatus === "function") {
+      return new Exception(error.getStatus(), error.name, error.message).setInnerError(error)
+    }
+
+    return new ServerException(error.name, error.message, undefined, error)
   }
 
   /**
