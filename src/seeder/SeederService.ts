@@ -177,6 +177,10 @@ export class SeederService {
       return ""
     }
 
+    if (params?.filterByJenkinsParams && params?.filterByJenkinsParams.length > 0 && resetBy?.tenantId) {
+      resetBy.tenantId = params.filterByJenkinsParams
+    }
+
     const deleteConditions = Object.entries(resetBy).map(([key, value]) => {
       if (Array.isArray(value)) {
         const values = value.map((v) => encodeValue(v)).join(",")
@@ -196,7 +200,9 @@ export class SeederService {
       })
       .join(" AND ")
 
-    return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")} AND ${deleteRows}`
+    return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")}${
+      deleteRows.trim() !== "" ? ` AND ${deleteRows}` : ""
+    }`
   }
 
   private logEvent(params: SeederServiceParams, row: Record<string, any>): void {
