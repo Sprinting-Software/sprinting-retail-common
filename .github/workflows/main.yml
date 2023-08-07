@@ -3,10 +3,8 @@
 
 name: Node.js Package
 
-on:
-  push:
-    branches:
-      - version-4.0.1
+on: workflow_dispatch
+
 
 jobs:
   build:
