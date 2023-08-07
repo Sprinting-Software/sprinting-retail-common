@@ -24,6 +24,10 @@ jobs:
 
       - name: Prepare package for publishing
         run: npm run publish-prepare
+      - name: Log in to npm registry
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > ~/.npmrc
+          npm whoami
 
       - name: Publish to npm registry
         run: npm publish
