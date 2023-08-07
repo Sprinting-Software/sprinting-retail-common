@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
       - name: Display Environment Variables
         run: |
-          echo "NPM_AUTH_TOKEN: $NPM_AUTH_TOKEN"
+          echo "NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}"
