@@ -1,5 +1,5 @@
 # GitHub action workflow
-name: Publish npm Package
+name: test vars
 
 on: workflow_dispatch
 
