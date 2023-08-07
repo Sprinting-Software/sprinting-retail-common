@@ -11,3 +11,7 @@ jobs:
       - name: Display Environment Variables
         run: |
           echo "NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}"
+      - name: Set npm token
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > .npmrc
+      - name: read
+        run: cat .npmrc
