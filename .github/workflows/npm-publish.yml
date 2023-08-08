@@ -3,7 +3,7 @@ name: Publish npm Package
 on:
   push:
     tags:
-      - 'release*'  # Trigger on tag names starting with "release"
+      - 'v*'  # Trigger on tag names starting with "release"
 
 jobs:
   build:
