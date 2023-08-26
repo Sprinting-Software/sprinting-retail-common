@@ -1,5 +1,11 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 4.1.0</h2>
+
+- APM configuration extended with all options available in APM as of latest version Aug 2023
+- captureHeaders is set to false in p-envs and true otherwise
+- captureBody is set to errors in p-envs and all otherwise  
+
 <h2>Release letter for version 4.0.0</h2>
 
 - Introduced seeding framework for faster and simpler seeding

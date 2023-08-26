@@ -4,12 +4,18 @@ import * as validators from "convict-format-with-validator"
 import { ApmConfig } from "./ApmConfig"
 convict.addFormat(validators.url)
 
+function isProd() {
+  // We use the convention that all variations of p-, p{number}- and production are considered production environments
+  return process.env.NODE_ENV && process.env.NODE_ENV.charAt(0) === "p"
+}
 export const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
   transactionSampleRate: 1,
   captureExceptions: false,
   centralConfig: false,
-  metricsInterval: 0,
-  captureErrorLogStackTraces: true,
+  metricsInterval: "120s",
+  captureErrorLogStackTraces: "messages",
+  captureBody: isProd() ? "errors" : "all",
+  captureHeaders: !isProd(),
   enableLogs: false,
 }
 

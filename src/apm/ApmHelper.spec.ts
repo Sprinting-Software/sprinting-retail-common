@@ -6,6 +6,8 @@ describe("ApmHelper", () => {
   const mockConfig: any = {
     captureErrorLogStackTraces: true,
     captureExceptions: false,
+    captureBody: "all",
+    captureHeaders: true,
     centralConfig: false,
     enableLogs: true,
     metricsInterval: 0,
@@ -30,11 +32,13 @@ describe("ApmHelper", () => {
     it("should not call init method if config is undefined", () => {
       new ApmHelper()
       expect(ApmHelper["config"]).toEqual({
-        captureErrorLogStackTraces: true,
+        captureErrorLogStackTraces: "messages",
         captureExceptions: false,
+        captureBody: "all",
+        captureHeaders: true,
         enableLogs: false,
         centralConfig: false,
-        metricsInterval: 0,
+        metricsInterval: "120s",
         transactionSampleRate: 1,
       })
       expect(ApmHelper["apm"]).toBeUndefined()

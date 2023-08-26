@@ -17,14 +17,13 @@ describe("ConfigModule", () => {
       expect(myconfig).toEqual({
         elk: {
           apm: {
-            captureErrorLogStackTraces: false,
             captureExceptions: false,
             centralConfig: false,
             enableLogs: false,
             labels: {
               someLabel: "someKey",
             },
-            metricsInterval: 0,
+            metricsInterval: "30s",
             serverUrl: "localhost:8200",
             serviceName: "testSystemName",
           },

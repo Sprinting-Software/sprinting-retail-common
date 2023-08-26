@@ -28,6 +28,7 @@ export class ConfigMapper {
           serverUrl: `${appConfig.elkConfig.hostname}:${appConfig.elkConfig.port}`,
           secretToken: appConfig.elkConfig.serviceSecret,
           enableLogs: appConfig.elkConfig.sendLogsToElk,
+          ...appConfig.elkConfig,
         },
         logstash: {
           isEnabled: true,
