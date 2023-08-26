@@ -6,6 +6,11 @@
 - captureHeaders is set to false in p-envs and true otherwise
 - captureBody is set to errors in p-envs and all otherwise  
 
+<h2>Release letter for version 4.0.2</h2>
+
+- Adding a pipeline to publish to npm with automation. 
+  
+
 <h2>Release letter for version 4.0.0</h2>
 
 - Introduced seeding framework for faster and simpler seeding
