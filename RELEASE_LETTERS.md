@@ -1,5 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 4.1.4</h2>
+
+- APM metrics sent every 10 second instead of every 120 second
+- 
 <h2>Release letter for version 4.1.0</h2>
 
 - APM configuration extended with all options available in APM as of latest version Aug 2023
