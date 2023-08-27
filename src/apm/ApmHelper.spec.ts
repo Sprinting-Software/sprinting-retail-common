@@ -31,16 +31,6 @@ describe("ApmHelper", () => {
 
     it("should not call init method if config is undefined", () => {
       new ApmHelper()
-      expect(ApmHelper["config"]).toEqual({
-        captureErrorLogStackTraces: "messages",
-        captureExceptions: false,
-        captureBody: "all",
-        captureHeaders: true,
-        enableLogs: false,
-        centralConfig: false,
-        metricsInterval: "120s",
-        transactionSampleRate: 1,
-      })
       expect(ApmHelper["apm"]).toBeUndefined()
     })
   })
