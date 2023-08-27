@@ -12,7 +12,7 @@ export const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
   transactionSampleRate: 1,
   captureExceptions: false,
   centralConfig: false,
-  metricsInterval: "120s",
+  metricsInterval: "10s",
   captureErrorLogStackTraces: "messages",
   captureBody: isProd() ? "errors" : "all",
   captureHeaders: !isProd(),
