@@ -12,7 +12,7 @@ export interface SeedParams {
   primaryKeys: string[]
   data: object[]
   resetBy?: Record<string, any>
-  filterByKey?: string
+  filterByTenantId?: string
 }
 
 export interface SeederServiceParams {
@@ -21,8 +21,8 @@ export interface SeederServiceParams {
   dbConnection: DbConnection
   path: string
   dryRun?: boolean
-  jsonOrders?: string[]
-  filterByJenkinsParams?: number[]
+  seedItems?: Array<string | SeedParams>
+  filterByTenantIds?: number[]
 }
 
 export type SeedTableParams = SeederServiceParams & { seed: SeedParams }
@@ -34,15 +34,19 @@ export class SeederService {
   private readonly chunkSize = 50
 
   async seeds(params: SeederServiceParams): Promise<void> {
-    const { systemName, envName, path: dirPath, jsonOrders } = params
+    const { systemName, envName, path: dirPath, seedItems } = params
 
     this.logger.info(__filename, `Seeding started. System: ${systemName}, Env: ${envName}`)
 
-    if (jsonOrders && jsonOrders.length > 0) {
-      for (const jsonFile of jsonOrders) {
-        const filePath = path.join(dirPath, jsonFile)
-        if (fs.existsSync(filePath)) {
-          await this.processJsonFile(params, filePath)
+    if (seedItems && seedItems.length > 0) {
+      for (const item of seedItems) {
+        if (typeof item === "object") {
+          await this.processObject(params, item)
+        } else {
+          const filePath = path.join(dirPath, item)
+          if (fs.existsSync(filePath)) {
+            await this.processJsonFile(params, filePath)
+          }
         }
       }
     } else {
@@ -60,12 +64,20 @@ export class SeederService {
   private async processJsonFile(params: SeederServiceParams, filePath: string): Promise<void> {
     const fileContent = fs.readFileSync(filePath, "utf-8")
     const seedParams: SeedParams = JSON.parse(fileContent)
-    if (params?.filterByJenkinsParams && params?.filterByJenkinsParams.length > 0) {
-      const filterKey = seedParams?.filterByKey || "tenantId"
-      seedParams.data = seedParams.data.filter((item) => params?.filterByJenkinsParams.includes(item[filterKey]))
+    await this.processObject(params, seedParams)
+  }
+
+  private async processObject(params: SeederServiceParams, item: SeedParams): Promise<void> {
+    if (
+      params?.filterByTenantIds &&
+      params?.filterByTenantIds.length > 0 &&
+      (item?.filterByTenantId || item.primaryKeys.includes("tenantId"))
+    ) {
+      const filterKey = item?.filterByTenantId || "tenantId"
+      item.data = item.data.filter((item) => params?.filterByTenantIds.includes(item[filterKey]))
     }
 
-    await this.seedItem({ ...params, seed: seedParams })
+    await this.seedItem({ ...params, seed: item })
   }
 
   async seedItem(params: SeedTableParams): Promise<void> {
@@ -171,14 +183,10 @@ export class SeederService {
 
   private resetQuery(params: SeedTableParams): string {
     const { seed } = params
-    const { tableName, resetBy, data, primaryKeys } = seed
+    const { tableName, resetBy } = seed
 
-    if (!resetBy || Object.keys(resetBy).length === 0 || !primaryKeys || primaryKeys.length === 0) {
+    if (!resetBy || Object.keys(resetBy).length === 0) {
       return ""
-    }
-
-    if (params?.filterByJenkinsParams && params?.filterByJenkinsParams.length > 0 && resetBy?.tenantId) {
-      resetBy.tenantId = params.filterByJenkinsParams
     }
 
     const deleteConditions = Object.entries(resetBy).map(([key, value]) => {
@@ -189,24 +197,26 @@ export class SeederService {
       return `"${key}" = ${encodeValue(value)}`
     })
 
-    const deleteRows = data
-      .map((row) => {
-        const rowConditions = primaryKeys
-          .map((key) => {
-            return `"${key}" != ${encodeValue(row[key])}`
-          })
-          .join(" OR ")
-        return `(${rowConditions})`
-      })
-      .join(" AND ")
+    return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")}`
 
-    return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")}${
-      deleteRows.trim() !== "" ? ` AND ${deleteRows}` : ""
-    }`
+    // const deleteRows = data
+    //   .map((row) => {
+    //     const rowConditions = primaryKeys
+    //       .map((key) => {
+    //         return `"${key}" != ${encodeValue(row[key])}`
+    //       })
+    //       .join(" OR ")
+    //     return `(${rowConditions})`
+    //   })
+    //   .join(" AND ")
+    //
+    // return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")}${
+    //   deleteRows.trim() !== "" ? ` AND ${deleteRows}` : ""
+    // }`
   }
 
   private logEvent(params: SeederServiceParams, row: Record<string, any>): void {
-    this.logger.event(__filename, params.envName, row, "seed", { tenantId: row?.tenantId })
+    // this.logger.event(__filename, params.envName, row, "seed", { tenantId: row?.tenantId })
   }
 
   private chunkArray<T>(array: T[], size: number): T[][] {
