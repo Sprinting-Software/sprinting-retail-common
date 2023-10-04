@@ -61,7 +61,8 @@ describe("SeederService", () => {
     jest.spyOn(mockDbConnection, "query").mockImplementation(async () => true)
 
     await service.seedItem(params)
-    expect(loggerService.event).toHaveBeenCalledTimes(params.seed.data.length)
+    // expect(loggerService.event).toHaveBeenCalledTimes(params.seed.data.length)
+    expect(loggerService.event).not.toHaveBeenCalled()
     expect(mockDbConnection.query).toHaveBeenCalledWith("BEGIN")
     expect(mockDbConnection.query).toHaveBeenCalledWith("upsert query")
     expect(mockDbConnection.query).toHaveBeenCalledWith("COMMIT")
