@@ -1,5 +1,11 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 4.2.0</h2>
+
+- object seeding support
+
+<h1>Release letter for sprinting-retail-common</h1>
+
 <h2>Release letter for version 4.1.4</h2>
 
 - APM metrics sent every 10 second instead of every 120 second
