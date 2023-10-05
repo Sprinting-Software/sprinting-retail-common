@@ -1,6 +1,6 @@
 {
   "name": "sprinting-retail-common",
-  "version": "4.2.2",
+  "version": "4.2.3",
   "description": "Error handling and logging with APM",
   "contributors": [
     "Nairi Abgaryan",
@@ -21,7 +21,7 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Sprinting-Software/sprinting-retail-common"
+    "url": "git+https://github.com/Sprinting-Software/sprinting-retail-common.git"
   },
   "files": [
     "dist"
