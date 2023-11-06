@@ -52,7 +52,7 @@ interface CustomEventLog {
 
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerService {
-  private readonly logger: winston.Logger
+  private static logger: winston.Logger
   // private readonly logstashClient: Logstash
 
   constructor(private readonly config: LoggerConfig, transports: any[] = []) {
@@ -65,29 +65,30 @@ export class LoggerService {
     if (config.logstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf))
     }
-
-    this.logger = winston.createLogger({
-      format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
-      silent: !config.enableConsoleLogs,
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
-        }),
-        ...transports,
-      ],
-    })
+    if (!LoggerService.logger) {
+      LoggerService.logger = winston.createLogger({
+        format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
+        silent: !config.enableConsoleLogs,
+        transports: [
+          new winston.transports.Console({
+            format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+          }),
+          ...transports,
+        ],
+      })
+    }
   }
 
   info(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    this.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext))
+    LoggerService.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext))
   }
 
   debug(fileName: string, message: any, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
+    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
   }
 
   warn(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    this.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
+    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
   }
 
   event(
@@ -97,7 +98,7 @@ export class LoggerService {
     eventCategory?: string,
     commonContext?: ICommonLogContext
   ) {
-    this.logger.info(
+    LoggerService.logger.info(
       this.formatMessage(
         fileName,
         LogLevel.event,
@@ -127,7 +128,7 @@ export class LoggerService {
     if (contextData) exception.setContextData(contextData)
     ApmHelper.captureError(exception)
     const fileName = LoggerService._getCallerFile()
-    this.logger.error(this.formatMessage(fileName, LogLevel.error, exception.toString()))
+    LoggerService.logger.error(this.formatMessage(fileName, LogLevel.error, exception.toString()))
   }
 
   /**
