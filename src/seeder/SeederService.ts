@@ -9,7 +9,7 @@ type DbConnection = any
 
 export interface SeedParams {
   tableName: string
-  primaryKeys: string[]
+  primaryKeys?: string[]
   data: object[]
   resetBy?: Record<string, any>
   filterByTenantId?: string
@@ -19,7 +19,7 @@ export interface SeederServiceParams {
   systemName: string
   envName: string
   dbConnection: DbConnection
-  path: string
+  path?: string
   dryRun?: boolean
   seedItems?: Array<string | SeedParams>
   filterByTenantIds?: number[]
@@ -61,6 +61,18 @@ export class SeederService {
     this.logger.info(__filename, "Seeds are finished")
   }
 
+  async autoSeeds(params: SeederServiceParams): Promise<void> {
+    const { systemName, envName, seedItems } = params
+
+    this.logger.info(__filename, `AutoSeeds started. System: ${systemName}, Env: ${envName}`)
+
+    for (const item of seedItems) {
+      await this.processObject(params, item as SeedParams)
+    }
+
+    this.logger.info(__filename, "AutoSeeds are finished")
+  }
+
   private async processJsonFile(params: SeederServiceParams, filePath: string): Promise<void> {
     const fileContent = fs.readFileSync(filePath, "utf-8")
     const seedParams: SeedParams = JSON.parse(fileContent)
@@ -71,7 +83,7 @@ export class SeederService {
     if (
       params?.filterByTenantIds &&
       params?.filterByTenantIds.length > 0 &&
-      (item?.filterByTenantId || item.primaryKeys.includes("tenantId"))
+      (item?.filterByTenantId || item?.primaryKeys?.includes("tenantId"))
     ) {
       const filterKey = item?.filterByTenantId || "tenantId"
       item.data = item.data.filter((item) => params?.filterByTenantIds.includes(item[filterKey]))
@@ -157,7 +169,7 @@ export class SeederService {
         const insertValuesString = `\nVALUES (${singleInsertValue})`
 
         const conflictString = () => {
-          if (primaryKeys === null) {
+          if (!primaryKeys) {
             return ""
           } else {
             const conflictKeys = primaryKeys.map((columnName) => `"${columnName}"`).join(",")
@@ -169,14 +181,14 @@ export class SeederService {
               .join(",")
 
             if (conflictValues.length > 0) {
-              return `ON CONFLICT (${conflictKeys}) DO UPDATE SET ${conflictValues};`
+              return `ON CONFLICT (${conflictKeys}) DO UPDATE SET ${conflictValues}`
             } else {
-              return `ON CONFLICT (${conflictKeys}) DO NOTHING;`
+              return `ON CONFLICT (${conflictKeys}) DO NOTHING`
             }
           }
         }
 
-        return `${insertColumnsString} ${insertValuesString} ${conflictString()}`
+        return `${insertColumnsString} ${insertValuesString} ${conflictString()};`
       })
       .join("\n")
   }
@@ -198,21 +210,6 @@ export class SeederService {
     })
 
     return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")}`
-
-    // const deleteRows = data
-    //   .map((row) => {
-    //     const rowConditions = primaryKeys
-    //       .map((key) => {
-    //         return `"${key}" != ${encodeValue(row[key])}`
-    //       })
-    //       .join(" OR ")
-    //     return `(${rowConditions})`
-    //   })
-    //   .join(" AND ")
-    //
-    // return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")}${
-    //   deleteRows.trim() !== "" ? ` AND ${deleteRows}` : ""
-    // }`
   }
 
   private logEvent(params: SeederServiceParams, row: Record<string, any>): void {
