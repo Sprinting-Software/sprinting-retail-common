@@ -21,6 +21,7 @@ export interface AppExceptionResponseV2 {
 
 const INSPECT_DEPTH = 7
 const INSPECT_SHOW_HIDDEN = false
+const MSG_LENGTH = 8445 // Max message length for UDP
 
 export class Exception extends Error {
   public readonly errorTraceId: string
@@ -53,6 +54,9 @@ export class Exception extends Error {
           const e0 = util.inspect(this.innerError)
           msg += e0
         }
+      }
+      if (msg.length > MSG_LENGTH) {
+        return msg.substring(0, MSG_LENGTH) + '...TRUNCATED'
       }
       return msg
     } catch (e) {

@@ -74,17 +74,25 @@ export class CommonAppModule {
       }
     } else {
       process.on("unhandledRejection", (reason) => {
-        try {
           logger.logException(
             "UnhandledRejectionError",
             "A Promise rejection was not handled.",
             undefined,
             <Error>reason
           )
+      }).on('uncaughtException', (reason) => {
+        try {
+          logger.logException(
+            "UncaughtException",
+            "An exception was not caught properly.",
+            undefined,
+            <Error>reason
+          )
         } catch (err) {
           //Suppress errors in error handling
           // eslint-disable-next-line no-console
-          console.log("UnhandledRejectionError", "A Promise rejection was not handled.", reason)
+          console.error("UncaughtException", "An exception was not caught properly.", reason)
+          console.error("UncaughtException", "Failed to log UncaughtException.", err)
         }
       })
     }

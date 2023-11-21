@@ -80,6 +80,16 @@ describe("AppException", () => {
       const expectedString = `Exception AMBIGUOUS (HTTP_STATUS 300)`
       expect(exception.toString()).toContain(expectedString)
     })
+
+    it("should truncate messages exceeding max length, and end with truncation note", () => {
+      const maxLength = 8445
+      const errorMessage = Array(maxLength + 1).join('X')
+      const truncateSuffix = '...TRUNCATED'
+      const exception = new Exception(HttpStatus.INTERNAL_SERVER_ERROR, errorMessage)
+      const strException = exception.toString()
+      expect(strException.length).toEqual(maxLength + truncateSuffix.length)
+      expect(strException).toContain(truncateSuffix)
+    })
   })
 
   describe("setInnerError()", () => {
