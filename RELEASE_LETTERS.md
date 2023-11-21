@@ -1,5 +1,11 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 4.4.0</h2>
+
+- Logged messages are now truncated to 8457 characters
+- Logger instance is now static singleton in LoggerService
+- Improved process level uncaughtException handling
+
 <h2>Release letter for version 4.3.0</h2>
 
 - added auto seeding functional
