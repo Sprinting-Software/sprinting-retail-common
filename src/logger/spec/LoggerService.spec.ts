@@ -27,7 +27,7 @@ describe("logger", () => {
 
   describe("info", () => {
     it("should log an info message", () => {
-      const spy = jest.spyOn(loggerService["logger"], "info")
+      const spy = jest.spyOn(LoggerService["logger"], "info")
       loggerService.info("test-file", "test-message")
       expect(spy).toHaveBeenCalledTimes(1)
       expect(spy).toHaveBeenCalledWith(
@@ -47,7 +47,7 @@ describe("logger", () => {
 
   describe("debug", () => {
     it("should log a debug message", () => {
-      const spy = jest.spyOn(loggerService["logger"], "warn")
+      const spy = jest.spyOn(LoggerService["logger"], "warn")
       loggerService.debug("test-file", "test-message")
       expect(spy).toHaveBeenCalledTimes(1)
       expect(spy).toHaveBeenCalledWith(
@@ -67,7 +67,7 @@ describe("logger", () => {
 
   describe("warn", () => {
     it("should log a warn message", () => {
-      const spy = jest.spyOn(loggerService["logger"], "warn")
+      const spy = jest.spyOn(LoggerService["logger"], "warn")
       loggerService.warn("test-file", "test-message")
       expect(spy).toHaveBeenCalledTimes(1)
       expect(spy).toHaveBeenCalledWith(
