@@ -1,5 +1,11 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 4.4.1</h2>
+
+- We now support process.env.NODE_ENV to either include the "-env" or not meaning that both of these will work: 
+  - NODE_ENV=d 
+  - NODE_ENV=d-env
+
 <h2>Release letter for version 4.4.0</h2>
 
 - Logged messages are now truncated to 8457 characters

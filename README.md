@@ -92,8 +92,8 @@ We publish new versions to npm from a developer machine. It is done like this:
 - Run `````npm run publish-prepare`````
 - If any final changes were made in the previous step, commit these as well.   
 - Increment the version number in package.json
-- Commit the increment with message "Release version x.y"
-- Run `````npm run publish-complete`````
+- Commit and push the code to the main branch
+- Follow the process described here: https://sprinting.atlassian.net/wiki/spaces/TH/pages/822607985/About+sprinting-retail-common+library+and+other+open-source+libraries+of+Sprinting#How-to-release-new-versions
 
 <h2>Appendix</h2>
 

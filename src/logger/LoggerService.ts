@@ -80,15 +80,21 @@ export class LoggerService {
   }
 
   info(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext))
+    LoggerService.logger.info(
+      this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext)
+    )
   }
 
   debug(fileName: string, message: any, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
+    LoggerService.logger.warn(
+      this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext)
+    )
   }
 
   warn(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
+    LoggerService.logger.warn(
+      this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext)
+    )
   }
 
   event(

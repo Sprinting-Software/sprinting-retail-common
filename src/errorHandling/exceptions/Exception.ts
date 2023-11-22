@@ -56,7 +56,7 @@ export class Exception extends Error {
         }
       }
       if (msg.length > MSG_LENGTH) {
-        return msg.substring(0, MSG_LENGTH) + '...TRUNCATED'
+        return `${msg.substring(0, MSG_LENGTH)}...TRUNCATED`
       }
       return msg
     } catch (e) {
