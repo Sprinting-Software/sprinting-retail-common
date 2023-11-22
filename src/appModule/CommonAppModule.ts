@@ -73,28 +73,25 @@ export class CommonAppModule {
         console.log("There is already an 'unhandledRejection' handler, not adding sprinting-retail-common one.")
       }
     } else {
-      process.on("unhandledRejection", (reason) => {
+      process
+        .on("unhandledRejection", (reason) => {
           logger.logException(
             "UnhandledRejectionError",
             "A Promise rejection was not handled.",
             undefined,
             <Error>reason
           )
-      }).on('uncaughtException', (reason) => {
-        try {
-          logger.logException(
-            "UncaughtException",
-            "An exception was not caught properly.",
-            undefined,
-            <Error>reason
-          )
-        } catch (err) {
-          //Suppress errors in error handling
-          // eslint-disable-next-line no-console
-          console.error("UncaughtException", "An exception was not caught properly.", reason)
-          console.error("UncaughtException", "Failed to log UncaughtException.", err)
-        }
-      })
+        })
+        .on("uncaughtException", (reason) => {
+          try {
+            logger.logException("UncaughtException", "An exception was not caught properly.", undefined, <Error>reason)
+          } catch (err) {
+            //Suppress errors in error handling
+            // eslint-disable-next-line no-console
+            console.error("UncaughtException", "An exception was not caught properly.", reason)
+            console.error("UncaughtException", "Failed to log UncaughtException.", err)
+          }
+        })
     }
   }
 }
