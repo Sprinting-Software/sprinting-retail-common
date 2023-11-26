@@ -1,4 +1,4 @@
-export type ApmConfig = {
+export type IApmConfig = {
   enableLogs: boolean
   serviceName: string
   serviceNodeName?: string

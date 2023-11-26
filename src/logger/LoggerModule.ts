@@ -26,7 +26,7 @@ export class LoggerModule {
         },
         {
           provide: ApmHelper,
-          useValue: new ApmHelper(provider.config.elk.apm),
+          useValue: ApmHelper.Instance,
         },
       ],
       exports: [LoggerService, ApmHelper],

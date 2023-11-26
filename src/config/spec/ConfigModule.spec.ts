@@ -2,6 +2,7 @@ import { Test } from "@nestjs/testing"
 import { ConfigModule } from "../ConfigModule"
 import { TestConfig } from "./TestConfig"
 import { RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
+
 describe("ConfigModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   beforeAll(async () => {})
@@ -24,7 +25,7 @@ describe("ConfigModule", () => {
               someLabel: "someKey",
             },
             metricsInterval: "30s",
-            serverUrl: "localhost:8200",
+            serverUrl: "http://localhost:9999",
             serviceName: "testSystemName",
           },
           logstash: {
