@@ -11,6 +11,7 @@ import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
 import { ConfigMapper } from "../config/legacyInterfaces/ConfigMapper"
 import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBootstrap"
 import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
+import { ApmHelper } from "../apm/ApmHelper"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -28,6 +29,10 @@ export class CommonAppModule {
       module: CommonAppModule, // needed for dynamic modules
       imports: [ConfigModule.forRoot(configProvider), LoggerModule.forRoot(configProvider)],
       providers: [
+        {
+          provide: ApmHelper,
+          useValue: ApmHelper.Instance,
+        },
         {
           provide: LoadBalancingTimeoutBootstrap,
           useFactory: (refHost: HttpAdapterHost<any>, logger: LoggerService) =>
@@ -48,7 +53,7 @@ export class CommonAppModule {
           scope: Scope.REQUEST,
         },
       ],
-      exports: [ConfigModule, LoggerModule, TenantContext],
+      exports: [ConfigModule, LoggerModule, TenantContext, ApmHelper],
     }
   }
 

@@ -13,7 +13,7 @@ describe("CommonAppModule", () => {
     jest.clearAllMocks()
   })
 
-  it("should provide an instance of CommonAppModule", async () => {
+  it("should provide an instance of ApmHelper", async () => {
     const app = await Test.createTestingModule({
       imports: [CommonAppModule.forRoot(TestConfigRaw)],
     }).compile()

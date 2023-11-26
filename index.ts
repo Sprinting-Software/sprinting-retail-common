@@ -1,5 +1,6 @@
-export * from "./src/apm/ApmHelper"
 export * from "./src/appModule/CommonAppModule"
+export * from "./src/apm/ApmHelper"
+export { IApmConfig } from "./src/config/interface/IApmConfig"
 export * from "./src/context/TenantContext"
 export * from "./src/config/interface/RetailCommonConfig"
 export * from "./src/config/legacyInterfaces/ConfigLegacyV1"

@@ -53,6 +53,7 @@ interface CustomEventLog {
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerService {
   private static logger: winston.Logger
+
   // private readonly logstashClient: Logstash
 
   constructor(private readonly config: LoggerConfig, transports: any[] = []) {
@@ -132,7 +133,7 @@ export class LoggerService {
   logError(error: Exception | Error, contextData?: Record<string, any>) {
     const exception = ExceptionUtil.parse(error)
     if (contextData) exception.setContextData(contextData)
-    ApmHelper.captureError(exception)
+    ApmHelper.Instance.captureError(exception)
     const fileName = LoggerService._getCallerFile()
     LoggerService.logger.error(this.formatMessage(fileName, LogLevel.error, exception.toString()))
   }

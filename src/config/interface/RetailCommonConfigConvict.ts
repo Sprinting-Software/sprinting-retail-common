@@ -1,25 +1,32 @@
 import convict from "convict"
 import { ClientException } from "../../errorHandling/exceptions/ClientException"
 import * as validators from "convict-format-with-validator"
-import { ApmConfig } from "./ApmConfig"
+import { IApmConfig } from "./IApmConfig"
+
 convict.addFormat(validators.url)
 
 function isProd() {
   // We use the convention that all variations of p-, p{number}- and production are considered production environments
   return process.env.NODE_ENV && process.env.NODE_ENV.charAt(0) === "p"
 }
-export const DEFAULT_APM_CONFIG: Partial<ApmConfig> = {
-  transactionSampleRate: 1,
-  captureExceptions: false,
-  centralConfig: false,
-  metricsInterval: "10s",
-  captureErrorLogStackTraces: "messages",
-  captureBody: isProd() ? "errors" : "all",
-  captureHeaders: !isProd(),
-  enableLogs: false,
-}
+
+export const DEFAULT_APM_CONFIG = (): IApmConfig =>
+  Object.freeze({
+    serviceName: undefined,
+    serverUrl: undefined,
+    transactionSampleRate: isProd() ? 0.1 : 1,
+    captureExceptions: false,
+    centralConfig: false,
+    metricsInterval: "10s",
+    captureErrorLogStackTraces: "messages",
+    captureBody: isProd() ? "errors" : "all",
+    captureHeaders: !isProd(),
+    enableLogs:
+      process.env.ENABLE_LOGS === "true" || process.env.ENABLE_LOGS === "1" || process.env.ENABLE_LOGS === "yes",
+  })
 
 // Define the schema for the RetailCommonConfig object
+const defaultConfig = DEFAULT_APM_CONFIG()
 const schema = {
   envPrefix: {
     doc: "The environment letter such as d, t or p",
@@ -44,7 +51,7 @@ const schema = {
       enableLogs: {
         doc: "Whether to enable APM logs",
         format: Boolean,
-        default: DEFAULT_APM_CONFIG.enableLogs,
+        default: defaultConfig.enableLogs,
         env: "APM_ENABLE_LOGS",
       },
       serviceName: {
@@ -68,7 +75,7 @@ const schema = {
       transactionSampleRate: {
         doc: "Sample rate for APM transactions",
         format: Number,
-        default: DEFAULT_APM_CONFIG.transactionSampleRate,
+        default: defaultConfig.transactionSampleRate,
         env: "APM_TRANSACTION_SAMPLE_RATE",
       },
       labels: {
@@ -80,25 +87,25 @@ const schema = {
       captureErrorLogStackTraces: {
         doc: "Whether to capture stack traces for APM error logs",
         format: Boolean,
-        default: DEFAULT_APM_CONFIG.captureErrorLogStackTraces,
+        default: defaultConfig.captureErrorLogStackTraces,
         env: "APM_CAPTURE_ERROR_LOG_STACK_TRACES",
       },
       captureExceptions: {
         doc: "Whether to capture unhandled exceptions for APM",
         format: Boolean,
-        default: DEFAULT_APM_CONFIG.captureExceptions,
+        default: defaultConfig.captureExceptions,
         env: "APM_CAPTURE_EXCEPTIONS",
       },
       centralConfig: {
         doc: "Whether to use central config for APM",
         format: Boolean,
-        default: DEFAULT_APM_CONFIG.centralConfig,
+        default: defaultConfig.centralConfig,
         env: "APM_CENTRAL_CONFIG",
       },
       metricsInterval: {
         doc: "Interval for APM metrics",
         format: Number,
-        default: DEFAULT_APM_CONFIG.metricsInterval,
+        default: defaultConfig.metricsInterval,
         env: "APM_METRICS_INTERVAL",
       },
     },

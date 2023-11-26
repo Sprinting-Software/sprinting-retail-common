@@ -35,9 +35,7 @@ describe("logger", () => {
           filename: "test-file",
           system: mockConfig.serviceName,
           component: "test-service",
-          env: mockConfig.env,
           systemEnv: "test-test-service",
-          level: LogLevel.info,
           logType: LogLevel.info,
           message: "test-message",
         })
@@ -57,7 +55,6 @@ describe("logger", () => {
           component: "test-service",
           env: mockConfig.env,
           systemEnv: "test-test-service",
-          level: LogLevel.warn,
           logType: LogLevel.warn,
           message: "test-message",
         })
@@ -77,7 +74,6 @@ describe("logger", () => {
           component: "test-service",
           env: mockConfig.env,
           systemEnv: "test-test-service",
-          level: LogLevel.warn,
           logType: LogLevel.warn,
           message: "test-message",
         })
