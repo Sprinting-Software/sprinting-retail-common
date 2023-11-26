@@ -4,6 +4,7 @@ import { LoggerService } from "../../logger/LoggerService"
 
 describe("SeederService", () => {
   let seederService: SeederService
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let loggerService: LoggerService
 
   beforeEach(async () => {

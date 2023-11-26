@@ -1,22 +1,20 @@
 import { ApmHelper } from "./ApmHelper"
-import { Exception } from "../errorHandling/exceptions/Exception"
 import { TestConfigRaw } from "../config/spec/TestConfig"
+import { Exception } from "../errorHandling/exceptions/Exception"
 
+const mockConfig: any = {
+  captureErrorLogStackTraces: true,
+  captureExceptions: false,
+  centralConfig: false,
+  enableLogs: true,
+  serverUrl: "http://localhost:8200",
+  metricsInterval: 0,
+  secretToken: "test-secret-token",
+  serviceName: "test-service",
+  apmSamplingRate: 1.0,
+  transactionSampleRate: 1,
+}
 describe("ApmHelper", () => {
-  const mockConfig: any = {
-    captureErrorLogStackTraces: true,
-    captureExceptions: false,
-    captureBody: "all",
-    captureHeaders: true,
-    centralConfig: false,
-    enableLogs: true,
-    metricsInterval: 0,
-    secretToken: "test-secret-token",
-    serverUrl: "http://localhost:8200",
-    serviceName: "test-service",
-    transactionSampleRate: 1,
-  }
-
   beforeEach(() => {
     ApmHelper["config"] = undefined
     ApmHelper["apm"] = undefined
@@ -25,7 +23,20 @@ describe("ApmHelper", () => {
   describe("constructor", () => {
     it("should set config and call init method", () => {
       new ApmHelper(mockConfig)
-      expect(ApmHelper["config"]).toEqual(mockConfig)
+      expect(ApmHelper["config"]).toEqual({
+        apmSamplingRate: 1,
+        captureBody: "all",
+        captureErrorLogStackTraces: true,
+        captureExceptions: false,
+        captureHeaders: true,
+        centralConfig: false,
+        enableLogs: true,
+        metricsInterval: 0,
+        secretToken: "test-secret-token",
+        serverUrl: "http://localhost:8200",
+        serviceName: "test-service",
+        transactionSampleRate: 1,
+      })
       expect(ApmHelper["apm"]).not.toBeUndefined()
     })
 

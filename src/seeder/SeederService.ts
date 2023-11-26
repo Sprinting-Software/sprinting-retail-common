@@ -98,6 +98,7 @@ export class SeederService {
     const { tableName, resetBy } = seed
 
     try {
+      // eslint-disable-next-line no-console
       console.log(`Seeding Table: ${tableName}`)
 
       if (dryRun) {
@@ -120,13 +121,13 @@ export class SeederService {
       }
 
       await dbConnection.query("COMMIT")
-
+      // eslint-disable-next-line no-console
       console.log(`Seeding successfully finished`)
     } catch (error) {
       if (!dryRun) {
         await dbConnection.query("ROLLBACK")
       }
-
+      // eslint-disable-next-line no-console
       console.log(error)
       if (error instanceof Error || error instanceof Exception) {
         this.logger.logError(error)
@@ -212,6 +213,7 @@ export class SeederService {
     return `DELETE FROM "${tableName}" WHERE ${deleteConditions.join(" AND ")}`
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private logEvent(params: SeederServiceParams, row: Record<string, any>): void {
     // this.logger.event(__filename, params.envName, row, "seed", { tenantId: row?.tenantId })
   }

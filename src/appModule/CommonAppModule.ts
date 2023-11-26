@@ -89,6 +89,7 @@ export class CommonAppModule {
             //Suppress errors in error handling
             // eslint-disable-next-line no-console
             console.error("UncaughtException", "An exception was not caught properly.", reason)
+            // eslint-disable-next-line no-console
             console.error("UncaughtException", "Failed to log UncaughtException.", err)
           }
         })

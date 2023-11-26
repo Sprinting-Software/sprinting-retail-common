@@ -97,6 +97,7 @@ export class SeederHelper {
           itemStructure.data = replaceData
           items.push(itemStructure)
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error(`Error while parsing file ${file}: ${error}`)
         }
       }
