@@ -35,7 +35,6 @@ describe("logger", () => {
           filename: "test-file",
           system: mockConfig.serviceName,
           component: "test-service",
-          env: mockConfig.env,
           systemEnv: "test-test-service",
           logType: LogLevel.info,
           message: "test-message",

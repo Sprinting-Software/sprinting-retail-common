@@ -1,4 +1,4 @@
-import { ApmConfig } from "./ApmConfig"
+import { IApmConfig } from "./IApmConfig"
 import { EnvironmentConfig } from "./EnvironmentConfig"
 
 /**
@@ -8,7 +8,7 @@ export interface RetailCommonConfig extends EnvironmentConfig {
   systemName: string
   enableConsoleLogs: boolean
   elk: {
-    apm: ApmConfig
+    apm: IApmConfig
     logstash: {
       isEnabled: boolean
       host: string

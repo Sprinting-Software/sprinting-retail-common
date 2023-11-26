@@ -8,7 +8,7 @@ export const TestConfigRaw = {
   elk: {
     apm: {
       serviceName: SYSTEM_NAME,
-      serverUrl: "localhost:8200",
+      serverUrl: "http://localhost:9999",
       centralConfig: false,
       captureExceptions: false,
       enableLogs: false,
