@@ -93,4 +93,33 @@ describe("logger", () => {
       loggerService.logError(appException, contextData)
     })
   })
+
+  describe("event", () => {
+    it("should log an event", () => {
+      const spy = jest.spyOn(LoggerService["logger"], "info")
+      loggerService.event(
+        "test-file",
+        "test-event-name",
+        { dummy: "event-data" },
+        { eventCategory: "test-category", message: "test custom message" }
+      )
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filename: "test-file",
+          system: mockConfig.serviceName,
+          component: "test-service",
+          env: mockConfig.env,
+          systemEnv: "test-test-service",
+          logType: LogLevel.event,
+          message: "test custom message",
+          event: {
+            dummy: "event-data",
+            name:"test-event-name",
+            category: "test-category"
+          }
+        })
+      )
+    })
+  })
 })

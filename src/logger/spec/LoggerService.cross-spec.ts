@@ -14,8 +14,8 @@ describe("logger", () => {
     enableConsoleLogs: true,
     logstash: {
       isUDPEnabled: true,
-      host: process.env.LOGSTASH_HOST,
-      port: parseInt(process.env.LOGSTASH_PORT),
+      host: process.env.LOGSTASH_HOST as string,
+      port: parseInt(process.env.LOGSTASH_PORT as string),
     },
   }
 
@@ -49,6 +49,6 @@ describe("logger", () => {
   })
 
   it("should log events", () => {
-    loggerService.event(__filename, "TestEvent", { tenant: "tid100", tenantId: 100 }, "TestCategory")
+    loggerService.event(__filename, "TestEvent", { tenant: "tid100", tenantId: 100 }, { eventCategory: "TestCategory", message: "Custom test message" })
   })
 })
