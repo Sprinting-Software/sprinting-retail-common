@@ -1,5 +1,11 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 5.1.4</h2>
+
+Breaking changes:
+
+- LoggerService `event` logger now accepts additionalData which takes eventCategory, commonContext, and a new custom message property.
+  event name, data, and category are now part of the log event object instead of serialized message string.
 
 <h2>Release letter for version 5.0.1</h2>
 

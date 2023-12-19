@@ -1,1 +1,1 @@
-tsc --emitDecoratorMetadata && npm pack && cd ../bifrostbackend2/BifrostNest && npm install ../../sprinting-retail-common/sprinting-retail-common-4.4.0.tgz && cd ../../sprinting-retail-common
+npx tsc --emitDecoratorMetadata && npm pack && cd ../bifrostbackend/BifrostNest && npm install ../../sprinting-retail-common/sprinting-retail-common-5.1.4.tgz && cd ../../sprinting-retail-common

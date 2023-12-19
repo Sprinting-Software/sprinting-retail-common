@@ -44,10 +44,10 @@ interface LogMessage {
 
 export type ConfigOptions = LoggerConfig
 
-interface CustomEventLog {
-  eventName: string
-  eventCategory?: string
-  eventData: any
+type AdditionalEventData = {
+  eventCategory?: string,
+  commonContext?: ICommonLogContext,
+  message?: string
 }
 
 @Injectable({ scope: Scope.DEFAULT })
@@ -98,31 +98,21 @@ export class LoggerService {
     )
   }
 
-  event(
-    fileName: string,
-    eventName: string,
-    eventData: any,
-    eventCategory?: string,
-    commonContext?: ICommonLogContext
-  ) {
+  event(fileName: string, eventName: string, eventData: any, additionalData?: AdditionalEventData) {
     LoggerService.logger.info(
       this.formatMessage(
         fileName,
         LogLevel.event,
-        this.eventToString({ eventName, eventData, eventCategory }),
+        additionalData?.message || "",
         undefined,
-        eventData,
-        commonContext
+        {
+          ...eventData,
+          name: eventName,
+          ...(additionalData?.eventCategory ? { category: additionalData.eventCategory } : {})
+        },
+        additionalData?.commonContext
       )
     )
-  }
-
-  private eventToString(event: CustomEventLog) {
-    return `EVENT ${event.eventName} ${event.eventCategory ? ` (${event.eventCategory})` : ""} ${util.inspect(
-      event.eventData,
-      false,
-      10
-    )}`
   }
 
   /**
