@@ -1,10 +1,10 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
-<h2>Release letter for version 5.1.6</h2>
+<h2>Release letter for version 5.2.0</h2>
 
 - Improve error reporting so that the full error details are printed in a better way
-
-- 
+- Improve error http response to include the debug message and stacktrace in non-production
+- Improving console logs by making them simpler localhost
 
 <h2>Release letter for version 5.1.5</h2>
 
