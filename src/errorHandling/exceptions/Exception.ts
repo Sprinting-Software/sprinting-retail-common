@@ -25,6 +25,7 @@ const MSG_LENGTH = 8445 // Max message length for UDP
 
 export class Exception extends Error {
   public readonly errorTraceId: string
+
   constructor(
     public readonly httpStatus: number = HttpStatus.BAD_REQUEST,
     public errorName: string,
@@ -37,6 +38,17 @@ export class Exception extends Error {
     this.errorTraceId = Exception.generateErrorTraceId()
     this.refreshMessageField()
     Object.setPrototypeOf(this, Exception.prototype)
+    this.updateStacktrace()
+  }
+
+  /**
+   * We need this to preserve the original stack trace in ELK when errors are wrapped to get proper error reporting.
+   * @private
+   */
+  private updateStacktrace() {
+    if (this.innerError) {
+      this.stack = this.innerError.stack
+    }
   }
 
   public getStatus(): number {
@@ -105,6 +117,7 @@ export class Exception extends Error {
   setInnerError(innerError: Error): Exception {
     this.innerError = innerError
     this.refreshMessageField()
+    this.updateStacktrace()
     return this
   }
 
