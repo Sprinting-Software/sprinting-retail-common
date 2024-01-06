@@ -2,8 +2,8 @@
 
 <h2>Release letter for version 5.1.5</h2>
 
-- Improving error handling by adding messages from inner errors to the field in ELK called error.exception.message. This makes more details from the errors searchable. 
-
+- Improving error reporting by adding messages from inner errors to the field in ELK called error.exception.message. This makes more details from the errors searchable. 
+- Improving error reporting by preserving the original stacktrace so that errors can be clearly understood. 
 
 <h2>Release letter for version 5.1.4</h2>
 
