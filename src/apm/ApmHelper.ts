@@ -38,17 +38,23 @@ export class ApmHelper {
       emitWarningIfConfigIsChanged(config0)
       return
     }
+
+    myConsole("\n***** APM INFO BEGIN *****")
     logConfigToConsole(apmConfigSingleton)
+
     // APM is a little special with respect to how it is imported. For this reason we need to use require() instead of import.
     try {
       apmAgentSingleton.start(apmConfigSingleton)
     } catch (err) {
       throw new Error(`Failed to start APM: ${err} having config ${JSON.stringify(apmConfigSingleton)}`)
     }
+
     myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(apmConfigSingleton.serverUrl)}`)
     myConsole(
       `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${apmConfigSingleton.serviceName}.`
     )
+    myConsole("***** APM INFO END *****\n")
+
     isInitialized = true
   }
 
