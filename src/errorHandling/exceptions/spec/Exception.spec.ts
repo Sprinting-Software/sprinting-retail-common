@@ -33,13 +33,7 @@ describe("AppException", () => {
   describe("toString()", () => {
     it("should return the expected string representation of the exception with all optional fields", () => {
       const innerError = new Error("Inner error message")
-      const appException = new Exception(
-        HttpStatus.BAD_REQUEST,
-        "Some error name",
-        "Some description ",
-        { somekey: "someValue" },
-        innerError
-      )
+      const appException = new Exception(HttpStatus.BAD_REQUEST, "Some error name", "Some description ", { somekey: "someValue" }, innerError)
       const expectedString = "Some error name (HTTP_STATUS 400)"
       const expectedString2 = "ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
       expect(appException.toString()).toContain(expectedString)
@@ -54,19 +48,13 @@ describe("AppException", () => {
         { somekey: "someValue" },
         new Error("Some inner inner error")
       )
-      const appException = new Exception(
-        HttpStatus.BAD_REQUEST,
-        "Some error name",
-        "Some description ",
-        { somekey: "someValue" },
-        innerError
-      )
+      const appException = new Exception(HttpStatus.BAD_REQUEST, "Some error name", "Some description ", { somekey: "someValue" }, innerError)
       const expectedString = "Some error name (HTTP_STATUS 400)"
       const expectedString2 = "ERROR_DESCRIPTION - Some description  - CONTEXT_DATA: { somekey: 'someValue' }"
       expect(appException.toString()).toContain(expectedString)
       expect(appException.toString()).toContain(expectedString2)
       expect(appException.message).toContain("Some error name")
-      expect(appException.stack).toContain("Some error name")
+      expect(appException.stack).toContain("Some inner inner error")
     })
 
     it("should return the expected string representation of the exception with only required fields", () => {
