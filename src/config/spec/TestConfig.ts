@@ -5,6 +5,7 @@ export const TestConfigRaw = {
   systemName: SYSTEM_NAME,
   envPrefix: "",
   enableConsoleLogs: false,
+  enableConsoleLogsSimplified: false,
   elk: {
     apm: {
       serviceName: SYSTEM_NAME,

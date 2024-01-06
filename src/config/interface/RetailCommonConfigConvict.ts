@@ -21,8 +21,7 @@ export const DEFAULT_APM_CONFIG = (): IApmConfig =>
     captureErrorLogStackTraces: "messages",
     captureBody: isProd() ? "errors" : "all",
     captureHeaders: !isProd(),
-    enableLogs:
-      process.env.ENABLE_LOGS === "true" || process.env.ENABLE_LOGS === "1" || process.env.ENABLE_LOGS === "yes",
+    enableLogs: process.env.ENABLE_LOGS === "true" || process.env.ENABLE_LOGS === "1" || process.env.ENABLE_LOGS === "yes",
   })
 
 // Define the schema for the RetailCommonConfig object

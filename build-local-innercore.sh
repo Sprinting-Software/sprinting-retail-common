@@ -1,1 +1,1 @@
- tsc --emitDecoratorMetadata && npm pack && cd ../sprinting-retail-innercore/ && npm install ../sprinting-retail-common/sprinting-retail-common-5.0.2.tgz
+ tsc --emitDecoratorMetadata && npm pack && cd ../sprinting-retail-innercore/ && npm install ../sprinting-retail-common/sprinting-retail-common-5.1.5.tgz

@@ -8,7 +8,7 @@ import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 
-const { combine, timestamp } = winston.format
+const { combine, timestamp, printf } = winston.format
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ecsFormat = require("@elastic/ecs-winston-format")
 
@@ -66,13 +66,18 @@ export class LoggerService {
     if (config.logstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf))
     }
+    const ecsFormatter = combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true }))
+    const simpleFormatter = printf((args) => {
+      const fileName = args.filename ? `| ${args.filename.split("/").pop()}` : ""
+      return `${args.timestamp} | ${args["log.level"]} | ${args.message} ${fileName}`
+    })
     if (!LoggerService.logger) {
       LoggerService.logger = winston.createLogger({
-        format: combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true })),
+        format: ecsFormatter,
         silent: !config.enableConsoleLogs,
         transports: [
           new winston.transports.Console({
-            format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+            format: simpleFormatter,
           }),
           ...transports,
         ],

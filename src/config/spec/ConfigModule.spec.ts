@@ -36,6 +36,7 @@ describe("ConfigModule", () => {
         },
         envPrefix: "",
         enableConsoleLogs: false,
+        enableConsoleLogsSimplified: false,
         systemName: "testSystemName",
       })
       expect(myconfig.elk.apm.serviceName).toEqual("testSystemName")
