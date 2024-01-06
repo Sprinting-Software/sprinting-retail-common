@@ -1,6 +1,6 @@
 import { BadRequestException } from "@nestjs/common"
 import { CustomBadRequestException } from "../exceptions/CustomBadRequestException"
-import { AppExceptionResponseV2 } from "../exceptions/Exception"
+import { ExceptionHttpResponse } from "../exceptions/Exception"
 
 describe("CustomBadRequestException", () => {
   describe("constructor", () => {
@@ -69,12 +69,12 @@ describe("CustomBadRequestException", () => {
       const customException = new CustomBadRequestException(exception)
 
       // Act
-      const result: AppExceptionResponseV2 = customException.getResponse() as AppExceptionResponseV2
+      const result: ExceptionHttpResponse = customException.getResponse() as ExceptionHttpResponse
 
       // Assert
       expect(result.httpStatus).toBe(customException.httpStatus)
       expect(result.errorName).toBe(customException.errorName)
-      expect(result.message).toEqual(customException.errors)
+      expect(result.debugMessage).toEqual(customException.errors)
     })
   })
 })

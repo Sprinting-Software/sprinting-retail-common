@@ -48,7 +48,7 @@ export class CommonAppModule {
         {
           provide: APP_FILTER,
           useFactory: (logger: LoggerService, tenantContext: TenantContext) =>
-            new GlobalErrorFilter(logger, { tenantId: tenantContext.tenantIdOrUndefined }),
+            new GlobalErrorFilter(logger, { tenantId: tenantContext.tenantIdOrUndefined }, config.isProduction),
           inject: [LoggerService, TenantContext],
           scope: Scope.REQUEST,
         },

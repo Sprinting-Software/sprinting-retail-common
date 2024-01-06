@@ -1,6 +1,5 @@
-import { AppExceptionResponse, AppExceptionResponseV2, Exception } from "./Exception"
+import { Exception, ExceptionHttpResponse } from "./Exception"
 import { HttpStatus } from "@nestjs/common"
-import { LibraryVersioning } from "../../libVersioning/LibraryVersioning"
 
 /**
  * An exception using HTTP status code 403 FORBIDDEN.
@@ -21,19 +20,11 @@ export class SecurityException extends Exception {
   /**
    * Make sure details about security errors are never returned to the client.
    */
-  override getResponse(): AppExceptionResponse | AppExceptionResponseV2 {
-    if (LibraryVersioning.v2IsActive()) {
-      return {
-        httpStatus: this.httpStatus,
-        errorName: this.errorName,
-        errorTraceId: this.errorTraceId,
-      }
-    } else {
-      return {
-        statusCode: this.httpStatus,
-        errorName: this.errorName,
-        errorTraceId: this.errorTraceId,
-      }
+  override getResponse(): ExceptionHttpResponse {
+    return {
+      httpStatus: this.httpStatus,
+      errorName: this.errorName,
+      errorTraceId: this.errorTraceId,
     }
   }
 }

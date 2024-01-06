@@ -1,22 +1,14 @@
 import util from "util"
 import { HttpStatus } from "@nestjs/common"
-import { LibraryVersioning } from "../../libVersioning/LibraryVersioning"
 
-export interface AppExceptionResponse {
-  statusCode: number
-  errorName: string
-  errorTraceId: string
-  message?: string | object
-  contextData?: Record<string, any>
-  innerError?: Error
-}
-export interface AppExceptionResponseV2 {
+export interface ExceptionHttpResponse {
   httpStatus: number
   errorName: string
   errorTraceId: string
-  message?: string | object
+  message?: string
   contextData?: Record<string, any>
-  innerError?: Error
+  debugMessage?: string | object
+  stacktrace?: string
 }
 
 const INSPECT_DEPTH = 7
@@ -61,7 +53,7 @@ export class Exception extends Error {
   private toStringHelper(includeStackTrace = true) {
     try {
       let msg = this.message
-      if (this.stack && includeStackTrace) msg += `\n ${this.generateStacktrace()}`
+      if (this.stack && includeStackTrace) msg += `\n ${this.generatePrettyStacktrace()}`
       if (msg.length > MSG_LENGTH) {
         return `${msg.substring(0, MSG_LENGTH)}...TRUNCATED`
       }
@@ -71,7 +63,7 @@ export class Exception extends Error {
     }
   }
 
-  public generateStacktrace(): string {
+  public generatePrettyStacktrace(): string {
     try {
       return this.stack?.split("\n").slice(1).join("\n")
     } catch (e) {
@@ -86,7 +78,7 @@ export class Exception extends Error {
   private concatAllRelevantInfo() {
     const { errorName, httpStatus, description, contextData } = this
     let msg = `${this.constructor.name}(ERROR_NAME: ${errorName} | HTTP_STATUS: ${httpStatus} | ERR_ID: ${this.errorTraceId}`
-    if (description) msg += `| ERROR_DESCRIPTION: ${description}`
+    if (description) msg += ` | ERROR_DESCRIPTION: ${description}`
     if (contextData) msg += ` | CONTEXT_DATA: ${util.inspect(contextData, INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)})`
     return msg
   }
@@ -132,24 +124,19 @@ export class Exception extends Error {
    * Returns the response object that will be sent to the client.
    * Please do not change the method name as it matches with the NestJS built-in error interface.
    */
-  getResponse(): AppExceptionResponse | AppExceptionResponseV2 {
-    if (LibraryVersioning.v2IsActive()) {
-      return {
-        httpStatus: this.httpStatus,
-        errorName: this.errorName,
-        message: this.description,
-        contextData: this.contextData,
-        errorTraceId: this.errorTraceId,
-      }
-    } else {
-      return {
-        statusCode: this.httpStatus,
-        errorName: this.errorName,
-        message: this.description,
-        contextData: this.contextData,
-        errorTraceId: this.errorTraceId,
-      }
+  getResponse(hideErrorDetails: boolean): ExceptionHttpResponse {
+    const obj: any = {
+      httpStatus: this.httpStatus,
+      errorName: this.errorName,
+      errorTraceId: this.errorTraceId,
+      message: this.description,
+      contextData: this.contextData,
     }
+    if (!hideErrorDetails) {
+      obj.debugMessage = this.message
+      obj.stacktrace = this.generatePrettyStacktrace()
+    }
+    return obj
   }
 
   /**

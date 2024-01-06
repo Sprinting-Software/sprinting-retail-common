@@ -35,6 +35,7 @@ describe("ConfigModule", () => {
           },
         },
         envPrefix: "",
+        isProduction: false,
         enableConsoleLogs: false,
         enableConsoleLogsSimplified: false,
         systemName: "testSystemName",

@@ -91,7 +91,7 @@ export class ApmHelper {
       captureAttributes: true,
       message: `${exception.errorName} (${exception.errorTraceId})`,
       // For some reason custom data doesn't work in our ELK so we will comment it out.
-      custom: { ...exception.contextData, stacktraceFull: exception.toString() },
+      custom: { ...exception.contextData, stacktraceFull: exception.generatePrettyStacktrace() },
     }
     this.setLabelOnCurrentTransaction("errorTraceId", exception.errorTraceId)
     apmAgentSingleton.captureError(exception, errorDetails)

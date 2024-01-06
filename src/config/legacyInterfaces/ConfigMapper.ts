@@ -2,6 +2,12 @@ import { ConfigLegacyV1 } from "./ConfigLegacyV1"
 import { LoggerConfig } from "../../logger/LoggerConfig"
 import { RetailCommonConfig } from "../interface/RetailCommonConfig"
 
+const PRODUCTION_ENV_PREFIX = "p"
+
+function isProduction(envPrefix: string) {
+  return envPrefix.startsWith(PRODUCTION_ENV_PREFIX)
+}
+
 export class ConfigMapper {
   public static mapToLoggerConfig(appConfig: RetailCommonConfig): LoggerConfig {
     return {
@@ -19,6 +25,7 @@ export class ConfigMapper {
 
   public static mapToRetailCommon(appConfig: ConfigLegacyV1): RetailCommonConfig {
     return {
+      isProduction: isProduction(appConfig.envPrefix),
       envPrefix: appConfig.envPrefix,
       systemName: appConfig.elkConfig.serviceName,
       enableConsoleLogs: appConfig.enableConsoleLogs,

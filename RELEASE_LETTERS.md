@@ -4,6 +4,8 @@
 
 - Improve error reporting so that the full error details are printed in a better way
 
+- 
+
 <h2>Release letter for version 5.1.5</h2>
 
 - Improving error reporting by adding messages from inner errors to the field in ELK called error.exception.message. This makes more details from the errors searchable. 

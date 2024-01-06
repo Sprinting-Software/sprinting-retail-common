@@ -4,6 +4,7 @@ const SYSTEM_NAME = "testSystemName"
 export const TestConfigRaw = {
   systemName: SYSTEM_NAME,
   envPrefix: "",
+  isProduction: false,
   enableConsoleLogs: false,
   enableConsoleLogsSimplified: false,
   elk: {
