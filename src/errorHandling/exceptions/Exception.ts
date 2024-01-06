@@ -55,18 +55,13 @@ export class Exception extends Error {
     return this.httpStatus
   }
   override toString(): string {
+    return this.toStringHelper()
+  }
+
+  private toStringHelper(includeStackTrace = true) {
     try {
-      let msg = `${this.constructor.name} ${this.concatAllRelevantInfo()}`
-      if (this.stack) msg += `\n ${this.generateStacktrace()}`
-      if (this.innerError) {
-        msg += "\nINNER_ERROR:\n"
-        if (this.innerError instanceof Exception) {
-          msg += this.innerError.toString()
-        } else {
-          const e0 = util.inspect(this.innerError)
-          msg += e0
-        }
-      }
+      let msg = this.message
+      if (this.stack && includeStackTrace) msg += `\n ${this.generateStacktrace()}`
       if (msg.length > MSG_LENGTH) {
         return `${msg.substring(0, MSG_LENGTH)}...TRUNCATED`
       }
@@ -75,6 +70,7 @@ export class Exception extends Error {
       return "ERROR_IN_TO_STRING"
     }
   }
+
   public generateStacktrace(): string {
     try {
       return this.stack?.split("\n").slice(1).join("\n")
@@ -89,9 +85,9 @@ export class Exception extends Error {
    */
   private concatAllRelevantInfo() {
     const { errorName, httpStatus, description, contextData } = this
-    let msg = `${errorName} (HTTP_STATUS ${httpStatus}) (${this.errorTraceId}) `
-    if (description) msg += `ERROR_DESCRIPTION - ${description}`
-    if (contextData) msg += ` - CONTEXT_DATA: ${util.inspect(contextData, INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)}`
+    let msg = `${this.constructor.name}(ERROR_NAME: ${errorName} | HTTP_STATUS: ${httpStatus} | ERR_ID: ${this.errorTraceId}`
+    if (description) msg += `| ERROR_DESCRIPTION: ${description}`
+    if (contextData) msg += ` | CONTEXT_DATA: ${util.inspect(contextData, INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)})`
     return msg
   }
 
@@ -103,7 +99,7 @@ export class Exception extends Error {
    * @private
    */
   private refreshMessageField() {
-    const innerErrorMessage = this.innerError ? `INNER_ERROR_MESSAGE: ${this.innerError.message}` : ""
+    const innerErrorMessage = this.innerError ? `INNER_ERROR: ${this.innerError.message}` : ""
     this.message = `${this.concatAllRelevantInfo()} ${innerErrorMessage}`
   }
 
