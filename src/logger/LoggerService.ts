@@ -45,8 +45,8 @@ interface LogMessage {
 export type ConfigOptions = LoggerConfig
 
 type AdditionalEventData = {
-  eventCategory?: string,
-  commonContext?: ICommonLogContext,
+  eventCategory?: string
+  commonContext?: ICommonLogContext
   message?: string
 }
 
@@ -81,21 +81,15 @@ export class LoggerService {
   }
 
   info(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.info(
-      this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext)
-    )
+    LoggerService.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext))
   }
 
   debug(fileName: string, message: any, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.warn(
-      this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext)
-    )
+    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
   }
 
   warn(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.warn(
-      this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext)
-    )
+    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
   }
 
   event(fileName: string, eventName: string, eventData: any, additionalData?: AdditionalEventData) {
@@ -108,7 +102,7 @@ export class LoggerService {
         {
           ...eventData,
           name: eventName,
-          ...(additionalData?.eventCategory ? { category: additionalData.eventCategory } : {})
+          ...(additionalData?.eventCategory ? { category: additionalData.eventCategory } : {}),
         },
         additionalData?.commonContext
       )
@@ -139,14 +133,7 @@ export class LoggerService {
     this.logError(new ServerException(errorName, description, contextData, innerError))
   }
 
-  formatMessage(
-    fileName: string,
-    logLevel: LogLevel,
-    message: string,
-    data?: Record<string, any>,
-    eventData?: Record<string, any>,
-    commonFields?: ICommonLogContext
-  ): LogMessage {
+  formatMessage(fileName: string, logLevel: LogLevel, message: string, data?: Record<string, any>, eventData?: Record<string, any>, commonFields?: ICommonLogContext): LogMessage {
     const commonFields2: any = { ...commonFields }
     if (commonFields2.tenantId) {
       // In ELK we don't want integer-based values so we will use the tenant moniker instead.

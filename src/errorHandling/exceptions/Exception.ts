@@ -84,12 +84,15 @@ export class Exception extends Error {
   }
 
   /**
+   * This method will determine the content of the error.exception.message field in ELK.
+   * This field is indexed and searchable.
    * We need to refresh the message field because we have to support the fluent API
    * where not all fields are necessarily passed in the constructor.
    * @private
    */
   private refreshMessageField() {
-    this.message = this.concatAllRelevantInfo()
+    const innerErrorMessage = this.innerError ? `INNER_ERROR_MESSAGE: ${this.innerError.message}` : ""
+    this.message = `${this.concatAllRelevantInfo()} ${innerErrorMessage}`
   }
 
   /**
