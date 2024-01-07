@@ -1,5 +1,5 @@
 <h1>Release letter for sprinting-retail-common</h1>
-<h2>Release letter for version 6.0.0</h2>
+<h2>Release letter for version 6.0.1</h2>
 
 Breaking changes: 
 - LoggerService.event() is fixed not. At the same time the signature of this function has been altered.
