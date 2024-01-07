@@ -8,9 +8,7 @@ import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 
-const { combine, timestamp, printf } = winston.format
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ecsFormat = require("@elastic/ecs-winston-format")
+const { timestamp, printf } = winston.format
 
 /**
  * Shared context data for all log records
@@ -64,19 +62,17 @@ export class LoggerService {
       transports.push(new UDPTransport(conf))
     }
     // You can use this to get insight into what is sent to ELK
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const consoleLogFormatter = winston.format((info) => {
+    /*const consoleLogFormatter = winston.format((info) => {
       console.log(info)
       return info
-    })
+    })*/
 
     const legacyLogstashFormatter = timestamp
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const ecsFormatter = combine(
+    // If we want to experiment with ECS again we can use this.
+    /*const ecsFormatter = combine(
       timestamp(),
       ecsFormat({ convertReqRes: true, apmIntegration: true })
-      // consoleLogFormatter()
-    )
+    )*/
     const consoleFormatterForDevelopers = printf((args) => {
       const fileName = args.filename ? `| ${args.filename.split("/").pop()}` : ""
       return `${args.timestamp} | ${args["log.level"]} | ${args.message} ${fileName}`

@@ -35,8 +35,6 @@ describe("LoggerService", () => {
   const mockTransport = new MockTransport()
   const loggerService = new LoggerService(mockConfig, [mockTransport])
 
-  beforeEach(() => {})
-
   afterEach(() => {
     jest.clearAllMocks()
   })
@@ -163,7 +161,6 @@ describe("LoggerService", () => {
   })
 
   it("should log an event", () => {
-    const spy = jest.spyOn(LoggerService["logger"], "info")
     loggerService.event(
       "test-file",
       "SomeEvent",

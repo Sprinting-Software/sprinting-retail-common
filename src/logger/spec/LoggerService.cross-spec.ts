@@ -49,6 +49,6 @@ describe("logger", () => {
   })
 
   it("should log events", () => {
-    loggerService.event(__filename, "TestEvent", { tenant: "tid100", tenantId: 100 }, { eventCategory: "TestCategory", message: "Custom test message" })
+    loggerService.event(__filename, "TestEvent", "TestCategory", "TestDomain", { someKey: "someValue" })
   })
 })
