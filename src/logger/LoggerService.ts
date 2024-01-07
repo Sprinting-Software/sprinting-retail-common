@@ -7,8 +7,9 @@ import { LoggerConfig } from "./LoggerConfig"
 import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
+import ecsFormat from "@elastic/ecs-winston-format"
 
-const { timestamp, printf } = winston.format
+const { timestamp, printf, combine } = winston.format
 
 /**
  * Shared context data for all log records
@@ -67,19 +68,15 @@ export class LoggerService {
       return info
     })*/
 
-    const legacyLogstashFormatter = timestamp
-    // If we want to experiment with ECS again we can use this.
-    /*const ecsFormatter = combine(
-      timestamp(),
-      ecsFormat({ convertReqRes: true, apmIntegration: true })
-    )*/
+    // const legacyLogstashFormatter = timestamp
+    const ecsFormatter = combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true }))
     const consoleFormatterForDevelopers = printf((args) => {
       const fileName = args.filename ? `| ${args.filename.split("/").pop()}` : ""
       return `${args.timestamp} | ${args["log.level"]} | ${args.message} ${fileName}`
     })
     if (!LoggerService.logger) {
       LoggerService.logger = winston.createLogger({
-        format: legacyLogstashFormatter(), // ecsFormatter,
+        format: ecsFormatter, // ecsFormatter,
         silent: !config.enableConsoleLogs,
         transports: [
           new winston.transports.Console({

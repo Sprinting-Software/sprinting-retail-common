@@ -34,6 +34,12 @@ const schema = {
     default: null,
     env: "ENV_PREFIX",
   },
+  isProduction: {
+    doc: "Must be set to true if it is considered a production zone environment",
+    format: Boolean,
+    default: false,
+    env: "IS_PRODUCTION",
+  },
   systemName: {
     doc: "Name of the system",
     format: String,

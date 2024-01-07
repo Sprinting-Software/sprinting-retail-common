@@ -1,8 +1,11 @@
 <h1>Release letter for sprinting-retail-common</h1>
-<h2>Release letter for version 6.0.1</h2>
+<h2>Release letter for version 6.0.2</h2>
 
 Breaking changes: 
 - LoggerService.event() is fixed not. At the same time the signature of this function has been altered.
+
+Other changes: 
+- The env-suffix issue has been solved. Meaning, the index in ELK is now properly named so instead of p-env-bifrostbackend* it would be called p-bifrostbackend*
 
 <h2>Release letter for version 5.2.0</h2>
 

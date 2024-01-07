@@ -11,7 +11,7 @@ function isProduction(envPrefix: string) {
 export class ConfigMapper {
   public static mapToLoggerConfig(appConfig: RetailCommonConfig): LoggerConfig {
     return {
-      env: `${appConfig.envPrefix}-env`,
+      env: appConfig.envPrefix, // `${appConfig.envPrefix}-env`,
       serviceName: appConfig.systemName,
       enableLogs: appConfig.elk.logstash.isEnabled,
       enableConsoleLogs: appConfig.enableConsoleLogs,

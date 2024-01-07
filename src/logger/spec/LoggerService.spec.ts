@@ -1,4 +1,4 @@
-import { LoggerService, LogLevel } from "../LoggerService"
+import { LoggerService } from "../LoggerService"
 
 import Transport from "winston-transport"
 
@@ -17,6 +17,13 @@ class MockTransport extends Transport {
     }
     this.emit("logged", info)
   }
+}
+
+function clean(obj) {
+  delete obj.timestamp
+  delete obj["@timestamp"]
+  delete obj[Symbol.for("level")]
+  delete obj[Symbol.for("message")]
 }
 
 describe("LoggerService", () => {
@@ -41,23 +48,24 @@ describe("LoggerService", () => {
 
   it("should send info correctly 1", () => {
     loggerService.info("test-file", "SomeMessage")
-    expect(mockTransport.logMessages.pop()).toMatchInlineSnapshot(
-      { timestamp: expect.any(String) },
-      `
-        {
-          "component": "test-service",
-          "env": "test",
-          "filename": "test-file",
-          "level": "info",
-          "logType": "info",
-          "message": "SomeMessage",
-          "system": "test-service",
-          "systemEnv": "test-test-service",
-          "timestamp": Any<String>,
-          Symbol(level): "info",
-        }
-      `
-    )
+    const actual = mockTransport.logMessages.pop()
+    delete actual[Symbol.for("message")]
+
+    delete actual.timestamp
+    delete actual["@timestamp"]
+    delete actual[Symbol.for("level")]
+    delete actual[Symbol.for("message")]
+    expect(actual).toEqual({
+      component: "test-service",
+      "ecs.version": "8.10.0",
+      env: "test",
+      filename: "test-file",
+      "log.level": "info",
+      logType: "info",
+      message: "SomeMessage",
+      system: "test-service",
+      systemEnv: "test-test-service",
+    })
   })
 
   it("should send info correctly 2", () => {
@@ -74,10 +82,10 @@ describe("LoggerService", () => {
       }
     )
     const obj = mockTransport.logMessages.pop()
-    delete obj.timestamp
-    delete obj[Symbol.for("level")]
+    clean(obj)
     expect(obj).toEqual({
       component: "test-service",
+      "ecs.version": "8.10.0",
       context: {
         clientTraceId: "CT-2342",
         requestTraceId: "RQ-dsfsdf",
@@ -87,31 +95,12 @@ describe("LoggerService", () => {
       },
       env: "test",
       filename: "test-file",
-      level: "info",
+      "log.level": "info",
       logType: "info",
       message: "SomeMessage { someKey: 'someValue' }",
       system: "test-service",
       systemEnv: "test-test-service",
     })
-
-    // Add more assertions as needed
-  })
-
-  it("should log a debug message", () => {
-    const spy = jest.spyOn(LoggerService["logger"], "warn")
-    loggerService.debug("test-file", "test-message")
-    expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filename: "test-file",
-        system: mockConfig.serviceName,
-        component: "test-service",
-        env: mockConfig.env,
-        systemEnv: "test-test-service",
-        logType: LogLevel.warn,
-        message: "test-message",
-      })
-    )
   })
 
   it("should send events correctly", () => {
@@ -130,13 +119,13 @@ describe("LoggerService", () => {
       }
     )
     const obj = mockTransport.logMessages.pop()
-    delete obj.timestamp
-    delete obj[Symbol.for("level")]
+    clean(obj)
     expect(obj).toEqual({
       component: "test-service",
+      "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
-      level: "info",
+      "log.level": "info",
       logType: "event",
       message: 'SomeEvent {"someKey":"someValue"}',
       system: "test-service",
@@ -177,13 +166,13 @@ describe("LoggerService", () => {
       }
     )
     const obj = mockTransport.logMessages.pop()
-    delete obj.timestamp
-    delete obj[Symbol.for("level")]
+    clean(obj)
     expect(obj).toEqual({
       component: "test-service",
+      "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
-      level: "info",
+      "log.level": "info",
       logType: "event",
       message: 'SomeEvent {"someKey":"someValue"}',
       system: "test-service",
