@@ -30,7 +30,7 @@ describe("logger", () => {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   it("should log at all levels", () => {
-    const sharedContext: ICommonLogContext = { client: { name: "Bifrost" }, tenantId: 100 }
+    const sharedContext: ICommonLogContext = { clientTraceId: "xxx", tenantId: 100 }
     loggerService.info(__filename, "Testing", {}, sharedContext)
     loggerService.warn(__filename, "Testing", {}, sharedContext)
     loggerService.debug(__filename, "Testing", {}, sharedContext)
