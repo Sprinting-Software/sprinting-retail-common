@@ -16,8 +16,8 @@ const ecsFormat = require("@elastic/ecs-winston-format")
  * Shared context data for all log records
  */
 export interface ICommonLogContext {
-  tenantId?: number
-  client?: { traceId?: string; name?: string }
+  tenantId: number
+  clientTraceId?: string
   userId?: string
   requestTraceId?: string
   transactionName?: string
@@ -39,15 +39,12 @@ interface LogMessage {
   systemEnv: string
   logType: LogLevel
   message: string
-  event: Record<string, any>
+  event?: Record<string, any>
+  context?: Omit<ICommonLogContext, "tenantId"> & { tenant: string }
 }
 
-export type ConfigOptions = LoggerConfig
-
-type AdditionalEventData = {
-  eventCategory?: string
-  commonContext?: ICommonLogContext
-  message?: string
+function getTenantMoniker(tenantId: number) {
+  return `tid${tenantId}`
 }
 
 @Injectable({ scope: Scope.DEFAULT })
@@ -66,18 +63,31 @@ export class LoggerService {
     if (config.logstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf))
     }
-    const ecsFormatter = combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true }))
-    const simpleFormatter = printf((args) => {
+    // You can use this to get insight into what is sent to ELK
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const consoleLogFormatter = winston.format((info) => {
+      console.log(info)
+      return info
+    })
+
+    const legacyLogstashFormatter = timestamp
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const ecsFormatter = combine(
+      timestamp(),
+      ecsFormat({ convertReqRes: true, apmIntegration: true })
+      // consoleLogFormatter()
+    )
+    const consoleFormatterForDevelopers = printf((args) => {
       const fileName = args.filename ? `| ${args.filename.split("/").pop()}` : ""
       return `${args.timestamp} | ${args["log.level"]} | ${args.message} ${fileName}`
     })
     if (!LoggerService.logger) {
       LoggerService.logger = winston.createLogger({
-        format: ecsFormatter,
+        format: legacyLogstashFormatter(), // ecsFormatter,
         silent: !config.enableConsoleLogs,
         transports: [
           new winston.transports.Console({
-            format: simpleFormatter,
+            format: consoleFormatterForDevelopers,
           }),
           ...transports,
         ],
@@ -85,33 +95,51 @@ export class LoggerService {
     }
   }
 
-  info(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, undefined, commonContext))
+  info(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
+    LoggerService.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, context))
   }
 
-  debug(fileName: string, message: any, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
+  debug(fileName: string, message: any, messageData?: Record<string, any>, context?: ICommonLogContext) {
+    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, context))
   }
 
-  warn(fileName: string, message: string, messageData?: Record<string, any>, commonContext?: ICommonLogContext) {
-    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, undefined, commonContext))
+  warn(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
+    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, context))
   }
 
-  event(fileName: string, eventName: string, eventData: any, additionalData?: AdditionalEventData) {
-    LoggerService.logger.info(
-      this.formatMessage(
-        fileName,
-        LogLevel.event,
-        additionalData?.message || "",
-        undefined,
-        {
-          ...eventData,
-          name: eventName,
-          ...(additionalData?.eventCategory ? { category: additionalData.eventCategory } : {}),
-        },
-        additionalData?.commonContext
-      )
-    )
+  event(
+    fileName: string,
+    eventName: string,
+    eventCategory: string,
+    eventDomain: string,
+    eventData: any,
+    context?: ICommonLogContext
+  ) {
+    const logMessage: LogMessage = {
+      filename: fileName,
+      system: this.config.serviceName,
+      component: this.config.serviceName,
+      env: this.config.env,
+      systemEnv: `${this.config.env}-${this.config.serviceName}`,
+      logType: LogLevel.event,
+      event: {
+        name: eventName,
+        category: eventCategory,
+        domain: eventDomain,
+        data: eventData,
+      },
+      message: `${eventName} ${JSON.stringify(eventData)}`, //message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
+    }
+    if (context) {
+      logMessage.context = {
+        clientTraceId: context.clientTraceId,
+        tenant: getTenantMoniker(context.tenantId),
+        userId: context.userId,
+        requestTraceId: context.requestTraceId,
+        transactionName: context.transactionName,
+      }
+    }
+    LoggerService.logger.info(logMessage)
   }
 
   /**
@@ -138,14 +166,14 @@ export class LoggerService {
     this.logError(new ServerException(errorName, description, contextData, innerError))
   }
 
-  formatMessage(fileName: string, logLevel: LogLevel, message: string, data?: Record<string, any>, eventData?: Record<string, any>, commonFields?: ICommonLogContext): LogMessage {
-    const commonFields2: any = { ...commonFields }
-    if (commonFields2.tenantId) {
-      // In ELK we don't want integer-based values so we will use the tenant moniker instead.
-      commonFields2.tenant = `tid${commonFields2.tenantId}`
-      delete commonFields2.tenantId
-    }
-    return {
+  formatMessage(
+    fileName: string,
+    logLevel: LogLevel,
+    message: string,
+    data?: Record<string, any>,
+    commonFields?: ICommonLogContext
+  ): LogMessage {
+    const obj: LogMessage = {
       filename: fileName,
       system: this.config.serviceName,
       component: this.config.serviceName,
@@ -153,9 +181,17 @@ export class LoggerService {
       systemEnv: `${this.config.env}-${this.config.serviceName}`,
       logType: logLevel,
       message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
-      event: eventData,
-      ...commonFields2,
     }
+    if (commonFields) {
+      obj.context = {
+        clientTraceId: commonFields.clientTraceId,
+        tenant: getTenantMoniker(commonFields.tenantId),
+        userId: commonFields.userId,
+        requestTraceId: commonFields.requestTraceId,
+        transactionName: commonFields.transactionName,
+      }
+    }
+    return obj
   }
 
   private static _getCallerFile(error?: Error) {

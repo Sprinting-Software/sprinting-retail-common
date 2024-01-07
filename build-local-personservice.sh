@@ -1,1 +1,2 @@
- tsc --emitDecoratorMetadata && npm pack && cd ../sprinting_personservice/PersonServiceApi && npm install ../../sprinting-retail-common/sprinting-retail-common-5.1.5.tgz && cd ../../sprinting-retail-common
+ version=$(grep '"version"' package.json | awk -F '"' '{print $4}')
+ tsc --emitDecoratorMetadata && npm pack && cd ../sprinting_personservice/PersonServiceApi && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz && cd ../../sprinting-retail-common
