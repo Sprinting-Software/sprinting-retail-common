@@ -46,9 +46,26 @@ function getTenantMoniker(tenantId: number) {
   return `tid${tenantId}`
 }
 
+function formatEnvLetterWithDashEnv(env: string): string {
+  if (env.length === 1) {
+    return `${env}-env`
+  } else return env
+}
+
+/**
+ * If the env is something like "d-env", we want to format it as "d"
+ * @param env
+ */
+function formatAsEnvLetter(env: string): string {
+  if (env.indexOf("-") > -1) {
+    return env.split("-")[0]
+  } else return env
+}
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerService {
   private static logger: winston.Logger
+  private envDashEnv: string
+  private envPrefix: string
 
   // private readonly logstashClient: Logstash
 
@@ -58,6 +75,8 @@ export class LoggerService {
       host: config.logstash.host,
       port: config.logstash.port,
     }
+    this.envDashEnv = formatEnvLetterWithDashEnv(config.env)
+    this.envPrefix = formatAsEnvLetter(config.env)
 
     if (config.logstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf))
@@ -112,8 +131,8 @@ export class LoggerService {
       filename: fileName,
       system: this.config.serviceName,
       component: this.config.serviceName,
-      env: this.config.env,
-      systemEnv: `${this.config.env}-${this.config.serviceName}`,
+      env: this.envPrefix,
+      systemEnv: `${this.envPrefix}-${this.config.serviceName}`,
       logType: LogLevel.event,
       event: {
         name: eventName,
@@ -170,8 +189,8 @@ export class LoggerService {
       filename: fileName,
       system: this.config.serviceName,
       component: this.config.serviceName,
-      env: this.config.env,
-      systemEnv: `${this.config.env}-${this.config.serviceName}`,
+      env: this.envPrefix,
+      systemEnv: `${this.envPrefix}-${this.config.serviceName}`,
       logType: logLevel,
       message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
     }

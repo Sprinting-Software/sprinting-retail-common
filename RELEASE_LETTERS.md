@@ -1,4 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
+
+<h2>Release letter for version 6.0.3</h2>
+
+- Changing the environment names in application logs so that it is, say, p-personserviceapi instead of p-env-personserviceapi
+
 <h2>Release letter for version 6.0.2</h2>
 
 Breaking changes: 
