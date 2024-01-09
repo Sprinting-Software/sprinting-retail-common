@@ -110,6 +110,7 @@ describe("LoggerService", () => {
       "Payment",
       "SomeDomain",
       { someKey: "someValue" },
+      undefined,
       {
         tenantId: 100,
         clientTraceId: "xxx",
@@ -156,7 +157,7 @@ describe("LoggerService", () => {
       "Payment",
       "Payment",
       { someKey: "someValue" },
-
+      'Custom event message',
       {
         tenantId: 100,
         clientTraceId: "xxx",
@@ -174,7 +175,7 @@ describe("LoggerService", () => {
       filename: "test-file",
       "log.level": "info",
       logType: "event",
-      message: 'SomeEvent {"someKey":"someValue"}',
+      message: 'Custom event message',
       system: "test-service",
       systemEnv: "test-test-service",
       event: {
