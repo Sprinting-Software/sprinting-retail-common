@@ -125,6 +125,7 @@ export class LoggerService {
     eventCategory: string,
     eventDomain: string,
     eventData: any,
+    message?: string,
     context?: ICommonLogContext
   ) {
     const logMessage: LogMessage = {
@@ -140,7 +141,7 @@ export class LoggerService {
         domain: eventDomain,
         data: eventData,
       },
-      message: `${eventName} ${JSON.stringify(eventData)}`, //message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
+      message: message || `${eventName} ${JSON.stringify(eventData)}`, //message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
     }
     if (context) {
       logMessage.context = {
