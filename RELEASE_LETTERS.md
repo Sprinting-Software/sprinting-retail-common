@@ -1,5 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 6.0.5</h2>
+
+- Introduced PrincipalEnum base data
+
 <h2>Release letter for version 6.0.4</h2>
 
 - Adding custom message support in event logger using LoggerService
