@@ -1,23 +1,10 @@
-import { DynamicModule, Module } from "@nestjs/common"
+import { Module } from "@nestjs/common"
 import { SeederService } from "./SeederService"
-import { LoggerService } from "../logger/LoggerService"
-import { LoggerConfig } from "../logger/LoggerConfig"
+import { LoggerModule } from "../logger/LoggerModule"
 
-@Module({})
-export class SeederModule {
-  static forRoot({ loggerConfig }: { loggerConfig: LoggerConfig }): DynamicModule {
-    return {
-      module: SeederModule,
-      providers: [
-        SeederService,
-        {
-          provide: LoggerService,
-          useFactory() {
-            return new LoggerService(loggerConfig)
-          },
-        },
-      ],
-      exports: [SeederService],
-    }
-  }
-}
+@Module({
+  providers: [SeederService],
+  exports: [SeederService],
+  imports: [LoggerModule],
+})
+export class SeederModule {}

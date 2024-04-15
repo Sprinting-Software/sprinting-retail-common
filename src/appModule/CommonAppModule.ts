@@ -12,6 +12,7 @@ import { ConfigMapper } from "../config/legacyInterfaces/ConfigMapper"
 import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBootstrap"
 import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
 import { ApmHelper } from "../apm/ApmHelper"
+import { SeederModule } from "../seeder/SeederModule"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -27,7 +28,7 @@ export class CommonAppModule {
 
     return {
       module: CommonAppModule, // needed for dynamic modules
-      imports: [ConfigModule.forRoot(configProvider), LoggerModule.forRoot(configProvider)],
+      imports: [ConfigModule.forRoot(configProvider), LoggerModule.forRoot(configProvider), SeederModule],
       providers: [
         {
           provide: ApmHelper,
@@ -53,7 +54,7 @@ export class CommonAppModule {
           scope: Scope.REQUEST,
         },
       ],
-      exports: [ConfigModule, LoggerModule, TenantContext, ApmHelper],
+      exports: [ConfigModule, LoggerModule, TenantContext, ApmHelper, SeederModule],
     }
   }
 
