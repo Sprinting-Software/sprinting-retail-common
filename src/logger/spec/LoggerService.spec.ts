@@ -1,6 +1,7 @@
 import { LoggerService } from "../LoggerService"
 
 import Transport from "winston-transport"
+import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
 // Create a custom transport for testing
 class MockTransport extends Transport {
@@ -29,7 +30,7 @@ function clean(obj) {
 describe("LoggerService", () => {
   const mockConfig = {
     env: "test",
-    serviceName: "test-service",
+    serviceName: PrincipalEnum.TestSystemName,
     enableLogs: true,
     enableConsoleLogs: true,
     logstash: {
@@ -56,15 +57,15 @@ describe("LoggerService", () => {
     delete actual[Symbol.for("level")]
     delete actual[Symbol.for("message")]
     expect(actual).toEqual({
-      component: "test-service",
+      component: PrincipalEnum.TestSystemName,
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
       "log.level": "info",
       logType: "info",
       message: "SomeMessage",
-      system: "test-service",
-      systemEnv: "test-test-service",
+      system: PrincipalEnum.TestSystemName,
+      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
     })
   })
 
@@ -84,7 +85,7 @@ describe("LoggerService", () => {
     const obj = mockTransport.logMessages.pop()
     clean(obj)
     expect(obj).toEqual({
-      component: "test-service",
+      component: PrincipalEnum.TestSystemName,
       "ecs.version": "8.10.0",
       context: {
         clientTraceId: "CT-2342",
@@ -98,39 +99,31 @@ describe("LoggerService", () => {
       "log.level": "info",
       logType: "info",
       message: "SomeMessage { someKey: 'someValue' }",
-      system: "test-service",
-      systemEnv: "test-test-service",
+      system: PrincipalEnum.TestSystemName,
+      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
     })
   })
 
   it("should send events correctly", () => {
-    loggerService.event(
-      "test-file",
-      "SomeEvent",
-      "Payment",
-      "SomeDomain",
-      { someKey: "someValue" },
-      undefined,
-      {
-        tenantId: 100,
-        clientTraceId: "xxx",
-        userId: "userId",
-        requestTraceId: "RQ-dsfsdf",
-        transactionName: "txname",
-      }
-    )
+    loggerService.event("test-file", "SomeEvent", "Payment", "SomeDomain", { someKey: "someValue" }, undefined, {
+      tenantId: 100,
+      clientTraceId: "xxx",
+      userId: "userId",
+      requestTraceId: "RQ-dsfsdf",
+      transactionName: "txname",
+    })
     const obj = mockTransport.logMessages.pop()
     clean(obj)
     expect(obj).toEqual({
-      component: "test-service",
+      component: PrincipalEnum.TestSystemName,
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
       "log.level": "info",
       logType: "event",
       message: 'SomeEvent {"someKey":"someValue"}',
-      system: "test-service",
-      systemEnv: "test-test-service",
+      system: PrincipalEnum.TestSystemName,
+      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
       event: {
         category: "Payment",
         data: {
@@ -157,7 +150,7 @@ describe("LoggerService", () => {
       "Payment",
       "Payment",
       { someKey: "someValue" },
-      'Custom event message',
+      "Custom event message",
       {
         tenantId: 100,
         clientTraceId: "xxx",
@@ -169,15 +162,15 @@ describe("LoggerService", () => {
     const obj = mockTransport.logMessages.pop()
     clean(obj)
     expect(obj).toEqual({
-      component: "test-service",
+      component: PrincipalEnum.TestSystemName,
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
       "log.level": "info",
       logType: "event",
-      message: 'Custom event message',
-      system: "test-service",
-      systemEnv: "test-test-service",
+      message: "Custom event message",
+      system: PrincipalEnum.TestSystemName,
+      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
       event: {
         category: "Payment",
         domain: "Payment",

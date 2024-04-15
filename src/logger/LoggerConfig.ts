@@ -1,6 +1,8 @@
+import { PrincipalEnum } from "../baseData/PrincipalEnum"
+
 export interface LoggerConfig {
   env: string
-  serviceName: string
+  serviceName: PrincipalEnum
   enableLogs: boolean
   enableConsoleLogs: boolean
   logstash: {

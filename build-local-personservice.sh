@@ -1,2 +1,2 @@
  version=$(grep '"version"' package.json | awk -F '"' '{print $4}')
- tsc --emitDecoratorMetadata && npm pack && cd ../sprinting_personservice/PersonServiceApi && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz && cd ../../sprinting-retail-common
+npm run build-local && npm pack && cd ../sprinting_personservice/PersonServiceApi && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz && cd ../../sprinting-retail-common

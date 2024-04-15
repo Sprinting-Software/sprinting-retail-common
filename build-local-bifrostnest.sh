@@ -1,2 +1,2 @@
 version=$(grep '"version"' package.json | awk -F '"' '{print $4}')
-npx tsc --emitDecoratorMetadata && npm pack && cd ../bifrostbackend/BifrostNest && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz && cd ../../sprinting-retail-common
+npm run build-local && npm pack && cd ../bifrostbackend/BifrostNest && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz && cd ../../sprinting-retail-common

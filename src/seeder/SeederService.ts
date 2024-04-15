@@ -4,6 +4,7 @@ import { Exception } from "../errorHandling/exceptions/Exception"
 import { encodeValue } from "../helpers/SeederHelper"
 import * as fs from "fs"
 import * as path from "path"
+import { PrincipalEnum } from "../baseData/PrincipalEnum"
 
 type DbConnection = any
 
@@ -16,7 +17,7 @@ export interface SeedParams {
 }
 
 export interface SeederServiceParams {
-  systemName: string
+  systemName: PrincipalEnum
   envName: string
   dbConnection: DbConnection
   path?: string
@@ -46,6 +47,8 @@ export class SeederService {
           const filePath = path.join(dirPath, item)
           if (fs.existsSync(filePath)) {
             await this.processJsonFile(params, filePath)
+          } else {
+            this.logger.warn(__filename, `File in path ${filePath} does not exist`)
           }
         }
       }

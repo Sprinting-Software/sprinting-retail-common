@@ -1,6 +1,7 @@
 import { RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
+import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
-const SYSTEM_NAME = "testSystemName"
+const SYSTEM_NAME = PrincipalEnum.TestSystemName
 export const TestConfigRaw = {
   systemName: SYSTEM_NAME,
   envPrefix: "",

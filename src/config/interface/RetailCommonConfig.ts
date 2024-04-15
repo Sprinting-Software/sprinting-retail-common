@@ -1,11 +1,12 @@
 import { IApmConfig } from "./IApmConfig"
 import { EnvironmentConfig } from "./EnvironmentConfig"
+import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
 /**
  * The new configuration format recommended for new services.
  */
 export interface RetailCommonConfig extends EnvironmentConfig {
-  systemName: string
+  systemName: PrincipalEnum
   enableConsoleLogs: boolean
   elk: {
     apm: IApmConfig

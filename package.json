@@ -27,9 +27,11 @@
     "dist"
   ],
   "scripts": {
-    "format": "prettier --write \"{src,}/**/*.ts\"",
-    "lint": "eslint \"{src,}/**/*.ts\" --fix",
+    "format": "prettier --write \"{src,apps,libs,test}/**/*.ts\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings=0",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix --max-warnings=5",
     "build": "tsc --emitDecoratorMetadata",
+    "build-local": "npm run lint:fix && tsc --emitDecoratorMetadata",
     "test": "jest",
     "clean-install": "rimraf dist && rimraf sprinting-retail-common-*.tgz >/dev/null 2>&1 && npm ci && npm run lint && npm run format",
     "publish-prepare": "npm run clean-install && npm run build && npm run test",

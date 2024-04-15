@@ -1,0 +1,2 @@
+version=$(grep '"version"' package.json | awk -F '"' '{print $4}')
+npm run build-local && npm pack && cd ../TenantDataService/TenantDataServiceBE && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz && cd ../../sprinting-retail-common

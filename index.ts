@@ -25,6 +25,6 @@ export { LoggerConfig } from "./src/logger/LoggerConfig"
 export * from "./src/seeder/SeederService"
 export * from "./src/seeder/SeederModule"
 export * from "./src/seeder/SeederHelper"
-export * from './src/baseData/PrincipalEnum';
+export * from "./src/baseData/PrincipalEnum"
 
 export { RetailCommonConfigConvict } from "./src/config/interface/RetailCommonConfigConvict"

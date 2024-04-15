@@ -2,6 +2,7 @@ import { Test } from "@nestjs/testing"
 import { ConfigModule } from "../ConfigModule"
 import { TestConfig } from "./TestConfig"
 import { RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
+import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
 describe("ConfigModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -26,7 +27,7 @@ describe("ConfigModule", () => {
             },
             metricsInterval: "30s",
             serverUrl: "http://localhost:9999",
-            serviceName: "testSystemName",
+            serviceName: PrincipalEnum.TestSystemName,
           },
           logstash: {
             host: "",
@@ -38,9 +39,9 @@ describe("ConfigModule", () => {
         isProduction: false,
         enableConsoleLogs: false,
         enableConsoleLogsSimplified: false,
-        systemName: "testSystemName",
+        systemName: PrincipalEnum.TestSystemName,
       })
-      expect(myconfig.elk.apm.serviceName).toEqual("testSystemName")
+      expect(myconfig.elk.apm.serviceName).toEqual(PrincipalEnum.TestSystemName)
     })
   })
 })

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { SeederService, SeedTableParams } from "../SeederService"
 import { LoggerService } from "../../logger/LoggerService"
+import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
 describe("SeederService", () => {
   let service: SeederService
@@ -44,7 +45,7 @@ describe("SeederService", () => {
 
   it("should seed the table successfully", async () => {
     const params: SeedTableParams = {
-      systemName: "testSystem",
+      systemName: PrincipalEnum.TestSystemName,
       envName: "testEnv",
       dbConnection: mockDbConnection,
       path: "",
@@ -70,7 +71,7 @@ describe("SeederService", () => {
 
   it("should rollback if error happens during seeding", async () => {
     const params: SeedTableParams = {
-      systemName: "testSystem",
+      systemName: PrincipalEnum.TestSystemName,
       envName: "testEnv",
       dbConnection: mockDbConnection,
       path: "",
@@ -99,7 +100,7 @@ describe("SeederService", () => {
 
   it("should call dryRun when dryRun is true", async () => {
     const params: SeedTableParams = {
-      systemName: "testSystem",
+      systemName: PrincipalEnum.TestSystemName,
       envName: "testEnv",
       dbConnection: mockDbConnection,
       path: "",
@@ -117,7 +118,7 @@ describe("SeederService", () => {
 
   it("should call resetQuery when resetBy is provided", async () => {
     const params: SeedTableParams = {
-      systemName: "testSystem",
+      systemName: PrincipalEnum.TestSystemName,
       envName: "testEnv",
       dbConnection: mockDbConnection,
       path: "",
@@ -138,7 +139,7 @@ describe("SeederService", () => {
 
   it("should call upsertQuery when jsonData is provided", async () => {
     const params: SeedTableParams = {
-      systemName: "testSystem",
+      systemName: PrincipalEnum.TestSystemName,
       envName: "testEnv",
       dbConnection: mockDbConnection,
       path: "",
