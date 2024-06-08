@@ -126,14 +126,15 @@ export class LoggerService {
     eventDomain: string,
     eventData: any,
     message?: string,
-    context?: ICommonLogContext
+    context?: ICommonLogContext,
+    serviceNameOverride?: string // Allow override of the serviceName which is useful in some rare cases
   ) {
     const logMessage: LogMessage = {
       filename: fileName,
-      system: this.config.serviceName,
+      system: serviceNameOverride ?? this.config.serviceName,
       component: this.config.serviceName,
       env: this.envPrefix,
-      systemEnv: `${this.envPrefix}-${this.config.serviceName}`,
+      systemEnv: `${this.envPrefix}-${serviceNameOverride ?? this.config.serviceName}`,
       logType: LogLevel.event,
       event: {
         name: eventName,
