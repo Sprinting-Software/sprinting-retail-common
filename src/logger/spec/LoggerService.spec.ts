@@ -121,7 +121,7 @@ describe("LoggerService", () => {
       filename: "test-file",
       "log.level": "info",
       logType: "event",
-      message: 'SomeEvent {"someKey":"someValue"}',
+      message: "SomeEvent",
       system: PrincipalEnum.TestSystemName,
       systemEnv: `test-${PrincipalEnum.TestSystemName}`,
       event: {

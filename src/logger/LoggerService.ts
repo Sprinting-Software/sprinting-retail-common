@@ -141,7 +141,7 @@ export class LoggerService {
         domain: eventDomain,
         data: eventData,
       },
-      message: message || `${eventName} ${JSON.stringify(eventData)}`, //message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
+      message: message || eventName,
     }
     if (context) {
       logMessage.context = {
