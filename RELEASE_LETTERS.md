@@ -1,5 +1,10 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 6.0.9</h2>
+
+- Events logged to ELK are more compact now which minimizes the risk of lost logs. 
+- Error handdling during bootstrapping of applications is more verbose now. 
+
 <h2>Release letter for version 6.0.5</h2>
 
 - Introduced PrincipalEnum base data
