@@ -1,7 +1,7 @@
 import { Test } from "@nestjs/testing"
 import { ConfigModule } from "../ConfigModule"
 import { TestConfig } from "./TestConfig"
-import { RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
+import { UNKNOWN_ENV_PREFIX, RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
 import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
 describe("ConfigModule", () => {
@@ -35,7 +35,7 @@ describe("ConfigModule", () => {
             port: 0,
           },
         },
-        envPrefix: "",
+        envPrefix: UNKNOWN_ENV_PREFIX,
         isProduction: false,
         enableConsoleLogs: false,
         enableConsoleLogsSimplified: false,
