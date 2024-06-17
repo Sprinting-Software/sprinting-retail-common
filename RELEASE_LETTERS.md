@@ -1,6 +1,6 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
-<h2>Release letter for version 6.0.5 -> 6.0.9</h2>
+<h2>Release letter for version 6.0.5 -> 6.0.10</h2>
 
 - Various changes related to seeding
 - Improved handling of the case where no environment is specified and we will default to envPrefix z. 
