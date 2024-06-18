@@ -39,7 +39,7 @@ describe("ExceptionUtil", () => {
       status: 501,
       statusText: "SERVERERROR",
       response: { data: { error: { errorCode: "somecode" } } },
-      stackTrace: "somestack",
+      stack: "somestack",
       additional: "xxx",
     }
     expect(ExceptionUtil.toPlainJsonForSpec(ExceptionUtil.parse(axiosErrorMock as unknown as Error)))
@@ -52,7 +52,8 @@ describe("ExceptionUtil", () => {
             },
           },
           "errorCode": "somecode",
-          "stackTrace": "somestack",
+          "stack": "somestack",
+          "stackTrace": undefined,
           "status": undefined,
           "statusText": undefined,
         },
@@ -70,7 +71,7 @@ describe("ExceptionUtil", () => {
       status: 501,
       statusText: "SERVERERROR",
       response: { data: { error: { errorCode: "somecode" } } },
-      stackTrace: "somestack",
+      stack: "somestack",
       additional: "xxx",
     }
     expect(ExceptionUtil.toPlainJsonForSpec(ExceptionUtil.parse(axiosErrorMock as unknown as Error)))
@@ -79,7 +80,8 @@ describe("ExceptionUtil", () => {
         "contextData": {
           "config": {},
           "errorCode": "somecode",
-          "stackTrace": "somestack",
+          "stack": "somestack",
+          "stackTrace": undefined,
           "status": undefined,
           "statusText": undefined,
         },

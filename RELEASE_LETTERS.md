@@ -1,5 +1,9 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 6.0.11</h2>
+
+- Improved handling of HttpException errors from Nest making sure all relevant error details are correctly logged to console, ELK and http response
+
 <h2>Release letter for version 6.0.5 -> 6.0.10</h2>
 
 - Various changes related to seeding

@@ -1,5 +1,6 @@
 import util from "util"
 import { HttpStatus } from "@nestjs/common"
+import { inspect } from "util"
 
 export interface ExceptionHttpResponse {
   httpStatus: number
@@ -11,8 +12,8 @@ export interface ExceptionHttpResponse {
   stacktrace?: string
 }
 
-const INSPECT_DEPTH = 7
-const INSPECT_SHOW_HIDDEN = false
+const INSPECT_DEPTH = 3
+const INSPECT_SHOW_HIDDEN = true
 const MSG_LENGTH = 8445 // Max message length for UDP
 
 export class Exception extends Error {
@@ -91,8 +92,16 @@ export class Exception extends Error {
    * @private
    */
   private refreshMessageField() {
-    const innerErrorMessage = this.innerError ? `INNER_ERROR: ${this.innerError.message}` : ""
+    const innerErrorMessage = this.innerError ? `INNER_ERROR: ${Exception.FormatError(this.innerError)}` : ""
     this.message = `${this.concatAllRelevantInfo()} ${innerErrorMessage}`
+  }
+  static FormatError(innerError: any) {
+    if (innerError instanceof Exception) {
+      return (innerError as Exception).concatAllRelevantInfo()
+    } else {
+      // take all string fields of innerError and concat
+      return inspect(convertErrorToObjectForLogging(innerError, 0), INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)
+    }
   }
 
   /**
@@ -135,6 +144,8 @@ export class Exception extends Error {
     if (!hideErrorDetails) {
       obj.debugMessage = this.message
       obj.stacktrace = this.generatePrettyStacktrace()
+    } else {
+      obj.note = "Error details can be looked up elsewhere using the errorTraceId!"
     }
     return obj
   }
@@ -156,3 +167,30 @@ export class Exception extends Error {
   }
 }
 const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+/**
+ * Converts an error to an object that can be safely logged
+ * without risking circular references, very large objects or similar.
+ * Alto the stack trace should be removed.
+ * It runs through all properties recursively and converts them to strings.
+ * @param innerError
+ */
+function convertErrorToObjectForLogging(innerError: any, depth: number): any {
+  if (depth > 3) {
+    return "MAX_DEPTH_REACHED"
+  }
+  const result = {}
+  Object.keys(innerError).forEach((key) => {
+    if (innerError[key] instanceof Error) {
+      result[key] = convertErrorToObjectForLogging(innerError[key], depth + 1)
+    } else if (typeof innerError[key] === "object") {
+      result[key] = convertErrorToObjectForLogging(innerError[key], depth + 1)
+    } else {
+      if (key === "stack" && key.toLowerCase() === "stacktrace") {
+        // remove stack trace
+      } else {
+        result[key] = innerError[key].toString()
+      }
+    }
+  })
+  return result
+}
