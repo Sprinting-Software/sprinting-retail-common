@@ -185,10 +185,15 @@ function convertErrorToObjectForLogging(innerError: any, depth: number): any {
     } else if (typeof innerError[key] === "object") {
       result[key] = convertErrorToObjectForLogging(innerError[key], depth + 1)
     } else {
-      if (key === "stack" && key.toLowerCase() === "stacktrace") {
+      if (key === "stack" || key.toLowerCase() === "stacktrace") {
         // remove stack trace
       } else {
-        result[key] = innerError[key].toString()
+        try {
+          // eslint-disable-next-line prefer-template
+          result[key] = innerError[key] && innerError[key].toString ? innerError[key].toString() : innerError[key] + ""
+        } catch (e) {
+          result[key] = "IMPOSSIBLE TO SERIALIZE VALUE"
+        }
       }
     }
   })
