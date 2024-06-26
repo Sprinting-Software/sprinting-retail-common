@@ -1,4 +1,4 @@
-import { Exception, ExceptionHttpResponse } from "./Exception"
+import { Exception } from "./Exception"
 import { HttpStatus } from "@nestjs/common"
 
 /**
@@ -15,16 +15,5 @@ export class SecurityException extends Exception {
   ) {
     super(HttpStatus.FORBIDDEN, "SecurityException", description, contextData, innerError)
     Object.setPrototypeOf(this, SecurityException.prototype)
-  }
-
-  /**
-   * Make sure details about security errors are never returned to the client.
-   */
-  override getResponse(): ExceptionHttpResponse {
-    return {
-      httpStatus: this.httpStatus,
-      errorName: this.errorName,
-      errorTraceId: this.errorTraceId,
-    }
   }
 }

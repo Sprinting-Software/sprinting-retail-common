@@ -1,6 +1,7 @@
 import util from "util"
 import { HttpStatus } from "@nestjs/common"
 import { inspect } from "util"
+import { isProduction } from "../../config/interface/EnvironmentConfig"
 
 export interface ExceptionHttpResponse {
   httpStatus: number
@@ -133,19 +134,24 @@ export class Exception extends Error {
    * Returns the response object that will be sent to the client.
    * Please do not change the method name as it matches with the NestJS built-in error interface.
    */
-  getResponse(hideErrorDetails: boolean): ExceptionHttpResponse {
+  getResponse(hideErrorDetails: boolean, isProd = isProduction()): ExceptionHttpResponse {
     const obj: any = {
       httpStatus: this.httpStatus,
       errorName: this.errorName,
       errorTraceId: this.errorTraceId,
-      message: this.description,
-      contextData: this.contextData,
     }
+    if (isProd && this.errorName === "SecurityException") {
+      // Don't leak security information in production
+    } else {
+      obj.message = this.description
+      obj.contextData = this.contextData
+    }
+
     if (!hideErrorDetails) {
       obj.debugMessage = this.message
       obj.stacktrace = this.generatePrettyStacktrace()
     } else {
-      obj.note = "Error details can be looked up elsewhere using the errorTraceId!"
+      obj.note = "Error details can be looked up in Kibana"
     }
     return obj
   }
