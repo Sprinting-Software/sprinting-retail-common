@@ -2,25 +2,21 @@ import convict from "convict"
 import { ClientException } from "../../errorHandling/exceptions/ClientException"
 import * as validators from "convict-format-with-validator"
 import { IApmConfig } from "./IApmConfig"
+import { isProduction } from "./EnvironmentConfig"
 
 convict.addFormat(validators.url)
-
-function isProd() {
-  // We use the convention that all variations of p-, p{number}- and production are considered production environments
-  return process.env.NODE_ENV && process.env.NODE_ENV.charAt(0) === "p"
-}
 
 export const DEFAULT_APM_CONFIG = (): IApmConfig =>
   Object.freeze({
     serviceName: undefined,
     serverUrl: undefined,
-    transactionSampleRate: isProd() ? 0.1 : 1,
+    transactionSampleRate: isProduction() ? 0.1 : 1,
     captureExceptions: false,
     centralConfig: false,
     metricsInterval: "10s",
     captureErrorLogStackTraces: "messages",
-    captureBody: isProd() ? "errors" : "all",
-    captureHeaders: !isProd(),
+    captureBody: isProduction() ? "errors" : "all",
+    captureHeaders: !isProduction(),
     enableLogs:
       process.env.ENABLE_LOGS === "true" || process.env.ENABLE_LOGS === "1" || process.env.ENABLE_LOGS === "yes",
   })

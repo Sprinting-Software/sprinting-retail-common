@@ -1,5 +1,6 @@
 import { Exception, convertErrorToObjectForLogging } from "../Exception"
 import { HttpStatus } from "@nestjs/common"
+import { SecurityException } from "../SecurityException"
 
 describe("AppException", () => {
   describe("getResponse()", () => {
@@ -16,6 +17,90 @@ describe("AppException", () => {
         message: "ERROR_DESCRIPTION",
         contextData: { key: "value" },
       })
+    })
+
+    it("should produce correct response - non-prod zone - normal error", () => {
+      const appException: any = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME", "ERROR_DESCRIPTION", {
+        key: "value",
+      })
+      appException["errorTraceId"] = "xxx"
+      appException.refreshMessageField()
+      expect(appException.getResponse(false, false)).toMatchInlineSnapshot(
+        { stacktrace: expect.any(String) },
+        `
+        {
+          "contextData": {
+            "key": "value",
+          },
+          "debugMessage": "Exception(ERROR_NAME: ERROR_NAME | HTTP_STATUS: 400 | ERR_ID: xxx | ERROR_DESCRIPTION: ERROR_DESCRIPTION | CONTEXT_DATA: { key: 'value' }) ",
+          "errorName": "ERROR_NAME",
+          "errorTraceId": "xxx",
+          "httpStatus": 400,
+          "message": "ERROR_DESCRIPTION",
+          "stacktrace": Any<String>,
+        }
+      `
+      )
+    })
+
+    it("should produce correct response - prod zone - normal error", () => {
+      const appException: any = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME", "ERROR_DESCRIPTION", {
+        key: "value",
+      })
+      appException["errorTraceId"] = "xxx"
+      appException.refreshMessageField()
+      expect(appException.getResponse(true, true)).toMatchInlineSnapshot(`
+        {
+          "contextData": {
+            "key": "value",
+          },
+          "errorName": "ERROR_NAME",
+          "errorTraceId": "xxx",
+          "httpStatus": 400,
+          "message": "ERROR_DESCRIPTION",
+          "note": "Error details can be looked up in Kibana",
+        }
+      `)
+    })
+
+    it("should produce correct response - nonprod zone - SecurityException", () => {
+      const appException: any = new SecurityException("Description", {
+        key: "value",
+      })
+      appException["errorTraceId"] = "xxx"
+      appException.refreshMessageField()
+      expect(appException.getResponse(false, false)).toMatchInlineSnapshot(
+        { stacktrace: expect.any(String) },
+        `
+        {
+          "contextData": {
+            "key": "value",
+          },
+          "debugMessage": "SecurityException(ERROR_NAME: SecurityException | HTTP_STATUS: 403 | ERR_ID: xxx | ERROR_DESCRIPTION: Description | CONTEXT_DATA: { key: 'value' }) ",
+          "errorName": "SecurityException",
+          "errorTraceId": "xxx",
+          "httpStatus": 403,
+          "message": "Description",
+          "stacktrace": Any<String>,
+        }
+      `
+      )
+    })
+
+    it("should produce correct response - prod zone - SecurityException", () => {
+      const appException: any = new SecurityException("Description", {
+        key: "value",
+      })
+      appException["errorTraceId"] = "xxx"
+      appException.refreshMessageField()
+      expect(appException.getResponse(true, true)).toMatchInlineSnapshot(`
+        {
+          "errorName": "SecurityException",
+          "errorTraceId": "xxx",
+          "httpStatus": 403,
+          "note": "Error details can be looked up in Kibana",
+        }
+      `)
     })
 
     it("should return the expected response object without message and contextData", () => {

@@ -1,5 +1,38 @@
 <h1>Release letter for sprinting-retail-common</h1>
 
+<h2>Release letter for version 6.1.0</h2>
+
+- Changed handling of SecurityException's to have this http response in non-prod:
+
+```
+{
+          "contextData": {
+            "key": "value",
+          },
+          "debugMessage": "SecurityException(ERROR_NAME: SecurityException | HTTP_STATUS: 403 | ERR_ID: xxx | ERROR_DESCRIPTION: Description | CONTEXT_DATA: { key: 'value' }) ",
+          "errorName": "SecurityException",
+          "errorTraceId": "xxx",
+          "httpStatus": 403,
+          "message": "Description",
+          "stacktrace": Any<String>,
+        }
+```
+
+and this http response in prod:
+
+```
+        {
+          "errorName": "SecurityException",
+          "errorTraceId": "xxx",
+          "httpStatus": 403,
+          "note": "Error details can be looked up in Kibana",
+        }
+```
+
+<h2>Release letter for version 6.0.12</h2>
+
+- Fixed an issue in error handling when certain properties were undefined
+
 <h2>Release letter for version 6.0.11</h2>
 
 - Improved handling of HttpException errors from Nest making sure all relevant error details are correctly logged to console, ELK and http response
@@ -7,7 +40,7 @@
 <h2>Release letter for version 6.0.5 -> 6.0.10</h2>
 
 - Various changes related to seeding
-- Improved handling of the case where no environment is specified and we will default to envPrefix z. 
+- Improved handling of the case where no environment is specified and we will default to envPrefix z.
 
 <h2>Release letter for version 6.0.5</h2>
 
@@ -17,17 +50,18 @@
 
 - Adding custom message support in event logger using LoggerService
 
-
 <h2>Release letter for version 6.0.3</h2>
 
 - Changing the environment names in application logs so that it is, say, p-personserviceapi instead of p-env-personserviceapi
 
 <h2>Release letter for version 6.0.2</h2>
 
-Breaking changes: 
+Breaking changes:
+
 - LoggerService.event() is fixed not. At the same time the signature of this function has been altered.
 
-Other changes: 
+Other changes:
+
 - The env-suffix issue has been solved. Meaning, the index in ELK is now properly named so instead of p-env-bifrostbackend* it would be called p-bifrostbackend*
 
 <h2>Release letter for version 5.2.0</h2>
@@ -38,8 +72,8 @@ Other changes:
 
 <h2>Release letter for version 5.1.5</h2>
 
-- Improving error reporting by adding messages from inner errors to the field in ELK called error.exception.message. This makes more details from the errors searchable. 
-- Improving error reporting by preserving the original stacktrace so that errors can be clearly understood. 
+- Improving error reporting by adding messages from inner errors to the field in ELK called error.exception.message. This makes more details from the errors searchable.
+- Improving error reporting by preserving the original stacktrace so that errors can be clearly understood.
 
 <h2>Release letter for version 5.1.4</h2>
 
@@ -54,8 +88,8 @@ Multiple breaking changes were made here.
 
 - ApmHelper is now implemented as a traditional singleton pattern to make it work better with NestJS DI. It has these
   consequences:
-    - All functions on the ApmHelper such as startSpan() is now normal methods, not static functions. Hence you need to
-      change code such as ApmHelper.startSpan() to ApmHelper.Instance.startSpan().
+  - All functions on the ApmHelper such as startSpan() is now normal methods, not static functions. Hence you need to
+    change code such as ApmHelper.startSpan() to ApmHelper.Instance.startSpan().
 
 <h2>Release letter for version 4.5.0</h2>
 
@@ -64,8 +98,8 @@ Multiple breaking changes were made here.
 <h2>Release letter for version 4.4.1</h2>
 
 - We now support process.env.NODE_ENV to either include the "-env" or not meaning that both of these will work:
-    - NODE_ENV=d
-    - NODE_ENV=d-env
+  - NODE_ENV=d
+  - NODE_ENV=d-env
 
 <h2>Release letter for version 4.4.0</h2>
 
@@ -149,8 +183,7 @@ Multiple breaking changes were made here.
 - Adding support for context data in logs.
 - Adding support of custom events in logs.
 
-<h2>Release letter for version 2.5.0</h2>
-- 
+## <h2>Release letter for version 2.5.0</h2>
 
 - Simplify stacktrace generation to make sure stacktraces are clickable in the IDEs
 
@@ -189,3 +222,6 @@ Breaking changes:
 
 - apmSamplingRate has changed name to transactionSampleRate
 
+```
+
+```
