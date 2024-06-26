@@ -1,11 +1,11 @@
-import { Exception } from "../Exception"
+import { Exception, convertErrorToObjectForLogging } from "../Exception"
 import { HttpStatus } from "@nestjs/common"
 
 describe("AppException", () => {
   describe("getResponse()", () => {
     it("should return the expected response object", () => {
       const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME", "ERROR_DESCRIPTION", { key: "value" })
-      const response = appException.getResponse(false)
+      const response: any = appException.getResponse(false)
       expect(response.errorTraceId).toBeDefined()
       delete response.errorTraceId
       delete response.stacktrace
@@ -20,7 +20,7 @@ describe("AppException", () => {
 
     it("should return the expected response object without message and contextData", () => {
       const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME")
-      const response = appException.getResponse(false)
+      const response: any = appException.getResponse(false)
       expect(response.errorTraceId).toBeDefined()
       delete response.errorTraceId
       delete response.stacktrace
@@ -98,7 +98,7 @@ describe("AppException", () => {
     })
 
     it("should set the errorName to the HttpStatus name if not provided", () => {
-      const exception = new Exception(HttpStatus.AMBIGUOUS, undefined)
+      const exception = new Exception(HttpStatus.AMBIGUOUS, undefined as unknown as string)
       const expectedString = `HTTP_STATUS: 300`
       expect(exception.toString()).toContain(expectedString)
     })
@@ -128,5 +128,119 @@ describe("AppException", () => {
       const appException = new Exception(HttpStatus.BAD_REQUEST, "ERROR_NAME").setContextData(contextData)
       expect(appException.contextData).toEqual(contextData)
     })
+  })
+})
+
+describe("convertErrorToObjectForLogging", () => {
+  it('should return "MAX_DEPTH_REACHED" when depth is greater than 3', () => {
+    const error = new Error("Test error")
+    const result = convertErrorToObjectForLogging(error, 4)
+    expect(result).toMatchInlineSnapshot(`"MAX_DEPTH_REACHED"`)
+  })
+
+  it("should convert a simple error object correctly", () => {
+    const error = { message: "Test error", code: 500 }
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "code": "500",
+        "message": "Test error",
+      }
+    `)
+  })
+
+  it("should handle simple error", () => {
+    const error = new Error("Some error")
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "message": "Some error",
+      }
+    `)
+  })
+  it("should remove stack trace from the error object", () => {
+    const error = { message: "Test error", stack: "Error stack trace" }
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "message": "Test error",
+      }
+    `)
+  })
+
+  it("should handle nested error objects", () => {
+    const nestedError = { message: "Nested error" }
+    const error = { message: "Outer error", nested: nestedError }
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "message": "Outer error",
+        "nested": {
+          "message": "Nested error",
+        },
+      }
+    `)
+  })
+
+  it("should skip functions", () => {
+    const error: any = new Error("Some error")
+    error.someFunction = function (x: number) {
+      return x + 1
+    }
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "message": "Some error",
+      }
+    `)
+  })
+
+  it("should handle circular references", () => {
+    const error: any = { message: "Outer error", inner: { messageInner: "some" } }
+    error.circular = error
+    error.inner.circular = error
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "inner": {
+          "messageInner": "some",
+        },
+        "message": "Outer error",
+      }
+    `)
+  })
+
+  it("should handle Error instances", () => {
+    const error = new Error("Test error")
+    const result = convertErrorToObjectForLogging({ error }, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "error": {
+          "message": "Test error",
+        },
+      }
+    `)
+  })
+
+  it("should handle complex nested structures", () => {
+    const error = {
+      message: "Outer error",
+      nested: {
+        message: "Nested error",
+        inner: new Error("Inner error"),
+      },
+    }
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "message": "Outer error",
+        "nested": {
+          "inner": {
+            "message": "Inner error",
+          },
+          "message": "Nested error",
+        },
+      }
+    `)
   })
 })

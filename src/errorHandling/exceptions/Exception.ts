@@ -174,22 +174,40 @@ const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
  * It runs through all properties recursively and converts them to strings.
  * @param innerError
  */
-function convertErrorToObjectForLogging(innerError: any, depth: number): any {
+export function convertErrorToObjectForLogging(innerError: any, depth: number, visited: Set<any> = new Set()): any {
   if (depth > 3) {
     return "MAX_DEPTH_REACHED"
   }
-  const result = {}
-  Object.keys(innerError).forEach((key) => {
-    if (innerError[key] instanceof Error) {
-      result[key] = convertErrorToObjectForLogging(innerError[key], depth + 1)
-    } else if (typeof innerError[key] === "object") {
-      result[key] = convertErrorToObjectForLogging(innerError[key], depth + 1)
+
+  // Check if we've already visited this object
+  if (visited.has(innerError)) {
+    return undefined
+  }
+
+  // Add the current object to the visited set
+  visited.add(innerError)
+
+  const result: any = {}
+  const propertyNames = Object.getOwnPropertyNames(innerError)
+
+  propertyNames.forEach((key) => {
+    if (typeof innerError[key] === "function") {
+      // Skip functions
+    } else if (innerError[key] instanceof Error) {
+      const convertedError = convertErrorToObjectForLogging(innerError[key], depth + 1, visited)
+      if (convertedError !== undefined) {
+        result[key] = convertedError
+      }
+    } else if (typeof innerError[key] === "object" && innerError[key] !== null) {
+      const convertedObject = convertErrorToObjectForLogging(innerError[key], depth + 1, visited)
+      if (convertedObject !== undefined) {
+        result[key] = convertedObject
+      }
     } else {
       if (key === "stack" || key.toLowerCase() === "stacktrace") {
         // remove stack trace
       } else {
         try {
-          // eslint-disable-next-line prefer-template
           result[key] = innerError[key] && innerError[key].toString ? innerError[key].toString() : innerError[key] + ""
         } catch (e) {
           result[key] = "IMPOSSIBLE TO SERIALIZE VALUE"
@@ -197,5 +215,9 @@ function convertErrorToObjectForLogging(innerError: any, depth: number): any {
       }
     }
   })
+
+  // Remove the current object from the visited set before returning
+  visited.delete(innerError)
+
   return result
 }
