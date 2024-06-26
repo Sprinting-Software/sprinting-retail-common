@@ -208,6 +208,7 @@ export function convertErrorToObjectForLogging(innerError: any, depth: number, v
         // remove stack trace
       } else {
         try {
+          // eslint-disable-next-line prefer-template
           result[key] = innerError[key] && innerError[key].toString ? innerError[key].toString() : innerError[key] + ""
         } catch (e) {
           result[key] = "IMPOSSIBLE TO SERIALIZE VALUE"
