@@ -24,7 +24,9 @@ export class ExceptionUtil {
       const nestError = error as unknown as NestHttpException
       if (isSecurityRelatedHttpStatusCode(nestError.status)) {
         return new SecurityException(
-          `${nestError.constructor.name}: ${nestError.response.message} - ${nestError.response.error}`,
+          nestError.response.error
+            ? `${nestError.constructor.name}: ${nestError.response.message} - ${nestError.response.error}`
+            : `${nestError.constructor.name}: ${nestError.response.message}`,
           nestError.option,
           error
         )
