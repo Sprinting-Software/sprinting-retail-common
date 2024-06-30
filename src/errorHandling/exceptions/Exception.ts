@@ -161,7 +161,7 @@ export class Exception extends Error {
    * Should only contain upper case letters that cannot be confused with numbers.
    * @private
    */
-  private static generateErrorTraceId() {
+  public static generateErrorTraceId() {
     const result = new Array(6)
     function getRandom(cs: string = CHARS) {
       return cs.charAt(Math.floor(Math.random() * cs.length))

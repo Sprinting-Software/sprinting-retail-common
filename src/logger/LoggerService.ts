@@ -161,8 +161,8 @@ export class LoggerService {
    * @param contextData For some additional data relevant to the error. This context data will be added to the exceptions context data.
    */
   logError(error: Exception | Error, contextData?: Record<string, any>) {
-    const exception = ExceptionUtil.parse(error)
-    if (contextData) exception.setContextData(contextData)
+    const exception = ExceptionUtil.parseV2(error)
+    if (contextData) ExceptionUtil.assignContextData(error, contextData)
     ApmHelper.Instance.captureError(exception)
     const fileName = LoggerService._getCallerFile()
     LoggerService.logger.error(this.formatMessage(fileName, LogLevel.error, exception.toString()))

@@ -74,27 +74,25 @@ export class ApmHelper {
 
   public captureError(exception0: Error | Exception, logContext?: LogContext, handled = false) {
     if (!isInitialized) return
-
-    const exception = ExceptionUtil.parse(exception0)
+    const exceptionParsed = ExceptionUtil.parseV2(exception0)
+    const details = ExceptionUtil.parseErrorDetailsForApmLogging(exceptionParsed)
     const errorLabels: any = {
-      errorName: exception.errorName,
-      errorTraceId: exception.errorTraceId,
+      errorName: details.errorName,
+      errorTraceId: details.errorTraceId,
       ...apmConfigSingleton?.labels,
     }
-
     if (logContext?.tenantId) errorLabels.tenantId = `tid${logContext.tenantId}`
     if (logContext?.userId) errorLabels.userId = logContext.userId
-
     const errorDetails = {
       handled,
       labels: errorLabels,
       captureAttributes: true,
-      message: `${exception.errorName} (${exception.errorTraceId})`,
+      message: `${details.errorName} (${details.errorTraceId})`,
       // For some reason custom data doesn't work in our ELK so we will comment it out.
-      custom: { ...exception.contextData, stacktraceFull: exception.generatePrettyStacktrace() },
+      custom: { ...details.contextData, stacktraceFull: details.stacktrace },
     }
-    this.setLabelOnCurrentTransaction("errorTraceId", exception.errorTraceId)
-    apmAgentSingleton.captureError(exception, errorDetails)
+    this.setLabelOnCurrentTransaction("errorTraceId", details.errorTraceId)
+    apmAgentSingleton.captureError(exceptionParsed, errorDetails)
   }
 
   public isAppException(exception: Error | Exception): exception is Exception {

@@ -1,12 +1,61 @@
-import { Exception } from "./exceptions/Exception"
+import { Exception, ExceptionHttpResponse } from "./exceptions/Exception"
 import { CustomBadRequestException } from "./exceptions/CustomBadRequestException"
-import { BadRequestException } from "@nestjs/common"
+import { BadRequestException, HttpException } from "@nestjs/common"
 import util from "util"
 import { IExceptionJson } from "./IExceptionJson"
 import { ServerException } from "./exceptions/ServerException"
 import { SecurityException } from "./exceptions/SecurityException"
+import { Http } from "winston/lib/winston/transports"
 
+const ERROR_TRACE_ID_FIELD = "errorTraceId"
+
+export type ErrorDetailsForApmLogging = {
+  errorName: string
+  errorTraceId: string
+  contextData: Record<string, any>
+  stacktrace: string
+}
 export class ExceptionUtil {
+  static parseErrorDetailsForApmLogging(exception: Exception | HttpException): ErrorDetailsForApmLogging {
+    if (exception instanceof Exception) {
+      return {
+        contextData: exception.contextData,
+        errorName: exception.errorName,
+        errorTraceId: exception.errorTraceId,
+        stacktrace: exception.generatePrettyStacktrace(),
+      }
+    } else {
+      return {
+        contextData: exception["contextData"],
+        errorName: exception.name,
+        errorTraceId: exception[ERROR_TRACE_ID_FIELD],
+        stacktrace: exception.stack,
+      }
+    }
+  }
+  static getHttpJsonResponseFromError(
+    exception: Exception | HttpException,
+    hideErrorDetailsInHttpResponse: boolean
+  ): any {
+    if (exception instanceof Exception) {
+      return exception.getResponse(hideErrorDetailsInHttpResponse)
+    } else {
+      const httpException = exception as HttpException
+      return ExceptionUtil.getHttpResponseFromNestHttpException(httpException)
+    }
+  }
+  /**
+   * Assigns context data to an error object of any kind.
+   * @param exception
+   * @param contextData
+   */
+  static assignContextData(exception: any, contextData: Record<string, any>) {
+    if (exception.contextData === undefined) {
+      exception.contextData = {}
+    }
+    Object.assign(exception.contextData, contextData)
+  }
+
   /**
    * Parses an error and returns an AppException.
    * @param error
@@ -49,6 +98,38 @@ export class ExceptionUtil {
       return new Exception(error.getStatus(), error.name, error.message).setInnerError(error)
     }
     return new ServerException(error.name, error.message, undefined, error)
+  }
+
+  /**
+   * A new version of the parse function that tries to simplify things working in this way:
+   * Returns the error as is if it is already instanceof Exception.
+   * If Axios error, return a parsed axios error.
+   * If HttpException from Nest, return the error as-is but enriched with an errorTraceId.
+   * Otherwise returns ServerException with the error as inner error.
+   * @param error
+   * @returns
+   */
+  public static parseV2(error: Error): Exception | HttpException {
+    if (error instanceof Exception) {
+      return error
+    }
+    if (ExceptionUtil.isAxiosError(error)) {
+      return ExceptionUtil.parseAxiosError(error)
+    }
+    if (error instanceof HttpException) {
+      error[ERROR_TRACE_ID_FIELD] = Exception.generateErrorTraceId()
+      return error
+    }
+    return new ServerException(error.name, error.message, undefined, error)
+  }
+
+  public static getHttpResponseFromNestHttpException(httpException: HttpException): ExceptionHttpResponse {
+    return {
+      httpStatus: httpException.getStatus(),
+      errorName: httpException.name,
+      message: httpException.message,
+      errorTraceId: httpException[ERROR_TRACE_ID_FIELD],
+    }
   }
 
   /**
