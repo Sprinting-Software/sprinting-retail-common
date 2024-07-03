@@ -1,3 +1,186 @@
+<h1>Release letter for 6.2.0</h1>
+`DataRedactor` is a utility class designed to redact Personally Identifiable Information (PII) from data objects. It provides functions to mask strings, emails, and nested objects while allowing specific properties to be included or excluded from masking.
+
+### Import DataRedactor Class
+```javascript
+import { DataRedactor } from 'sprinting-retail-common';
+```
+## Usage
+### Basic Example
+The following example demonstrates how to use `DataRedactor` to redact PII from a data object:
+```javascript
+const personCreateBody = {
+  action: 'CreatePerson',
+  id: '87654321-4321-4321-4321-87654321',
+  payload: {
+    id: '12345678-1234-1234-1234-12345678',
+    firstName: 'Testing',
+    lastName: 'Testing',
+    middleName: '',
+    dateOfBirth: '1992-12-20',
+    email: 'testingapi@gmail.com',
+    phone: '123456789',
+    address: {
+      address: 'testinging address',
+      address2: 'testinging address',
+      zipcode: 1234,
+    },
+    countryCode: 'pk',
+    tenantId: 100,
+  },
+};
+
+const redactor = new DataRedactor(personCreateBody);
+const redactedData = redactor.mask();
+
+console.log(redactedData);
+/*
+{
+    "action": "C**********n",
+    "id": "8******************************1",
+    "payload": {
+        "id": "1******************************8",
+        "firstName": "T*****g",
+        "lastName": "T*****g",
+        "middleName": "",
+        "dateOfBirth": "1********0",
+        "email": "t********i@gmail.com",
+        "phone": "1*******9",
+        "address": {
+            "address": "t****************s",
+            "address2": "t****************s",
+            "zipcode": 1234
+        },
+        "countryCode": "p***",
+        "tenantId": 100
+    }
+}
+*/
+
+```
+
+## Excluding Specific Properties
+You can also specify properties to exclude from masking by passing an array of property paths to the `exclude` method:
+
+```javascript
+const excludeProperties = ['action', 'payload.id', 'payload.countryCode'];
+const redactorWithExclusions = new DataRedactor(personCreateBody)
+                                    .exclude(excludeProperties)
+                                    .mask();
+
+console.log(redactorWithExclusions);
+/*
+{
+    "action": "CreatePerson",
+    "id": "8******************************1",
+    "payload": {
+        "id": "12345678-1234-1234-1234-12345678",
+        "firstName": "T*****g",
+        "lastName": "T*****g",
+        "middleName": "",
+        "dateOfBirth": "1********0",
+        "email": "t********i@gmail.com",
+        "phone": "1*******9",
+        "address": {
+            "address": "t****************s",
+            "address2": "t****************s",
+            "zipcode": 1234
+        },
+        "countryCode": "pk",
+        "tenantId": 100
+    }
+}
+*/
+
+```
+
+## Including Specific Properties
+You can also specify properties to include in masking by passing an array of property paths to the `include` method:
+```javascript
+const includeProperties = ['payload.firstName', 'payload.lastName'];
+const redactorWithInclusions = new DataRedactor(personCreateBody)
+                                  .include(includeProperties)
+                                  .mask();
+
+console.log(redactorWithInclusions);
+/*
+{
+    "action": "CreatePerson",
+    "id": "87654321-4321-4321-4321-87654321",
+    "payload": {
+        "id": "12345678-1234-1234-1234-12345678",
+        "firstName": "T*****g",
+        "lastName": "T*****g",
+        "middleName": "",
+        "dateOfBirth": "1992-12-20",
+        "email": "testingapi@gmail.com",
+        "phone": "123456789",
+        "address": {
+            "address": "testinging address",
+            "address2": "testinging address",
+            "zipcode": 1234
+        },
+        "countryCode": "pk",
+        "tenantId": 100
+    }
+}
+*/
+
+```
+
+## Change the masking Characters
+You can also specify Symbol to use in masking by passing a symbol to the `setMaskChar` method:
+
+```javascript
+const redactorWithCustomSymbol = new DataRedactor(personCreateBody)
+                                      .setMaskChar('.')
+                                      .mask();
+
+console.log(redactorWithCustomSymbol);
+/*
+{
+    "action": "C..........n",
+    "id": "8..............................1",
+    "payload": {
+        "id": "1..............................8",
+        "firstName": "T.....g",
+        "lastName": "T.....g",
+        "middleName": "",
+        "dateOfBirth": "1........0",
+        "email": "t........i@gmail.com",
+        "phone": "1.......9",
+        "address": {
+            "address": "t................s",
+            "address2": "t................s",
+            "zipcode": 1234
+        },
+        "countryCode": "p...",
+        "tenantId": 100
+    }
+}
+*/
+
+```
+
+## Methods
+`mask(): any`
+Redacts PII from the provided data object.
+
+`exclude(keys: string | string[]): DataRedactor`
+Specifies properties to exclude from masking.
+
+`include(keys: string | string[]): DataRedactor`
+Specifies properties to include in masking.
+
+`setMaskChar(char: string): DataRedactor`
+Sets a custom character to use for masking.
+
+ - keys: The property paths to be excluded or included.
+ - char: The custom character for masking.
+
+
+<h2>Release letter for version 6.1.0</h2>
+
 <h1>Release letter for sprinting-retail-common</h1>
 
 <h2>Release letter for version 6.1.0</h2>
