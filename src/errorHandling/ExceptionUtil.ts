@@ -46,6 +46,12 @@ export class ExceptionUtil {
     if ("getStatus" in error && typeof error.getStatus === "function") {
       return new Exception(error.getStatus(), error.name, error.message).setInnerError(error)
     }
+
+    // This is to not re-throw Sprinting IDP errors with 500 status
+    if ("httpStatus" in error) {
+      return new Exception(+error.httpStatus, error.name, error.message).setInnerError(error)
+    }
+
     return new ServerException(error.name, error.message, undefined, error)
   }
 
@@ -111,7 +117,13 @@ export class ExceptionUtil {
  */
 function isNestHttpException(error: any) {
   // Check if the error has all the properties of a NestHttpException
-  return "response" in error && "statusCode" in error.response && "message" in error.response && "status" in error
+  return (
+    "response" in error &&
+    typeof error.response === "object" &&
+    "statusCode" in error.response &&
+    "message" in error.response &&
+    "status" in error
+  )
 }
 
 type NestHttpException = {
