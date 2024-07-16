@@ -1,3 +1,7 @@
+<h2>Release letter for version 6.2.1</h2>
+
+- Bugfix: fix stack trace being returned when typing in the incorrect password in IDP
+
 <h1>Release letter for 6.2.0</h1>
 `DataRedactor` is a utility class designed to redact Personally Identifiable Information (PII) from data objects. It provides functions to mask strings, emails, and nested objects while allowing specific properties to be included or excluded from masking.
 

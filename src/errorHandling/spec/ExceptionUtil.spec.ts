@@ -135,6 +135,20 @@ describe("ExceptionUtil", () => {
   it("should create plain objects from false error", () => {
     expect(ExceptionUtil.toPlainJsonForSpec(false)).toMatchSnapshot()
   })
+  it("should handle IDP IncorrectPassword error", () => {
+    const idpError = {
+      response: "IncorrectPassword",
+      status: 400,
+      message: "IncorrectPassword",
+      name: "HttpException2",
+      httpStatus: 400,
+      errorName: "IncorrectPassword",
+      errorData: { tenantId: 100, email: "a@b.com" },
+      errorTraceId: "ERR-83TCU4PE",
+    }
+
+    expect(ExceptionUtil.parse(idpError)).toMatchSnapshot()
+  })
 })
 
 function getComplexError() {
