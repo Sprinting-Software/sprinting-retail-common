@@ -147,7 +147,8 @@ describe("ExceptionUtil", () => {
       errorTraceId: "ERR-83TCU4PE",
     }
 
-    expect(ExceptionUtil.parse(idpError)).toMatchSnapshot()
+    const parsedError = ExceptionUtil.parse(idpError)
+    expect(ExceptionUtil.toPlainJsonForSpec(parsedError)).toMatchSnapshot()
   })
 })
 
