@@ -137,5 +137,5 @@ type NestHttpException = {
   option?: Record<string, string>
 }
 function isSecurityRelatedHttpStatusCode(status: number) {
-  return status === 401 || status === 403 || status === 407
+  return status === 403 || status === 407
 }
