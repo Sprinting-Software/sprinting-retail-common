@@ -11,9 +11,10 @@ export class SecurityException extends Exception {
   constructor(
     public readonly description?: string,
     public readonly contextData: Record<string, any> = {},
-    public readonly innerError?: Error
+    public readonly innerError?: Error,
+    public readonly httpStatusCode?: number
   ) {
-    super(HttpStatus.FORBIDDEN, "SecurityException", description, contextData, innerError)
+    super(httpStatusCode ?? HttpStatus.FORBIDDEN, "SecurityException", description, contextData, innerError)
     Object.setPrototypeOf(this, SecurityException.prototype)
   }
 }
