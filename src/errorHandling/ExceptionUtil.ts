@@ -26,7 +26,8 @@ export class ExceptionUtil {
         return new SecurityException(
           `${nestError.constructor.name}: ${nestError.response.message} - ${nestError.response.error}`,
           nestError.option,
-          error
+          error,
+          nestError.status
         )
       } else {
         return new Exception(
