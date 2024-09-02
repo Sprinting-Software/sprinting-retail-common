@@ -1,3 +1,6 @@
+<h2>Release letter for version 6.2.3</h2>
+- Introduced new PrincipalEnum EcoBE for Ecosoft client
+
 <h2>Release letter for version 6.2.1</h2>
 
 - Bugfix: fix stack trace being returned when typing in the incorrect password in IDP

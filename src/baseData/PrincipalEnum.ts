@@ -8,6 +8,7 @@ export enum PrincipalEnum {
   BifrostBackend = "BifrostBackend",
   RGS = "RGS",
   PlatformConfigBE = "PlatformConfigBE",
+  EcoBE = "EcoBE",
   GlobalBackOffice = "GlobalBackOffice",
   TestSystemName = "TestSystemName",
   All = "All",
