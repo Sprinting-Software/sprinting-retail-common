@@ -1,6 +1,14 @@
-export type IApmConfig = {
+import { AgentConfigOptions } from "elastic-apm-node"
+
+export type IApmConfig = AgentConfigOptions & {
   enableLogs: boolean
   serviceName: string
+  /***
+   * @obsolete Please use globalLabels instead. This field will no longer work.
+   */
+  labels?: Record<string, string>
+  /*  
+  2024-10-31 Nikola: We will migrate to use the built-in types of apm instead of a wrapper type.
   serviceNodeName?: string
   apiKey?: string
   serverUrl: string
@@ -64,5 +72,5 @@ export type IApmConfig = {
   centralConfig?: boolean
   metricsInterval?: string
   captureBody?: "off" | "errors" | "transactions" | "all"
-  captureHeaders?: boolean
+  captureHeaders?: boolean*/
 }

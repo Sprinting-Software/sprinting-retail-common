@@ -1,17 +1,16 @@
 // APM is special and needs early initialization. For this reason we need to instantiate it here and
 // treat both the apmAgent and the config as singletons.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const apmAgentSingleton = require("elastic-apm-node")
+const apmAgentSingleton = require("elastic-apm-node") as apm.Agent
 let isInitialized = false
 let apmConfigSingleton: IApmConfig
 
 import { LogContext } from "../logger/LogContext"
 import { Exception } from "../errorHandling/exceptions/Exception"
-import { IApmConfig } from "../config/interface/IApmConfig"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { DEFAULT_APM_CONFIG } from "../config/interface/RetailCommonConfigConvict"
-
-export type IApmSpan = { end: () => void }
+import apm from "elastic-apm-node"
+import { IApmConfig } from "../config/interface/IApmConfig"
 
 /**
  * Used to encapsulate the ApmAgent and allow for easy dependency injection.
@@ -68,7 +67,7 @@ export class ApmHelper {
   /**
    * Returns the ApmAgent if it was initialized. Otherwise returns undefined.
    */
-  public getApmAgent() {
+  public getApmAgent(): apm.Agent {
     return apmAgentSingleton
   }
 
@@ -79,7 +78,13 @@ export class ApmHelper {
     const errorLabels: any = {
       errorName: exception.errorName,
       errorTraceId: exception.errorTraceId,
-      ...apmConfigSingleton?.labels,
+    }
+    // Assign global labels to the error
+    const globalLabels = apmConfigSingleton.globalLabels
+    if (globalLabels) {
+      Object.entries(globalLabels).forEach(([key, value]) => {
+        errorLabels[key] = value
+      })
     }
 
     if (logContext?.tenantId) errorLabels.tenantId = `tid${logContext.tenantId}`
@@ -142,12 +147,20 @@ export class ApmHelper {
     return this.getApmAgent()
   }
 
-  public startSpan(fileName: string, spanName: string, message?: string): IApmSpan | undefined {
+  /**
+   * Starts a new span with the given name. If no transaction exists, nothing happens.
+   * @deprecated use getApmAgent().startSpan() instead.
+   * @param fileName
+   * @param spanName
+   * @param message Not used
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public startSpan(fileName: string, spanName: string, message?: string): apm.Span | undefined {
     if (!isInitialized) return
     if (!apmAgentSingleton.currentTransaction) {
       return
     }
-    return apmAgentSingleton.currentTransaction.startSpan(fileName, spanName, "Javascript", undefined, message)
+    return apmAgentSingleton.currentTransaction.startSpan(fileName, spanName, "Javascript", undefined)
   }
 
   public logSpanEvent(fileName: string, eventName: string, eventMessage: any): void {
@@ -158,7 +171,7 @@ export class ApmHelper {
 
   public stopApm(): void {
     if (!isInitialized) return
-    apmAgentSingleton.stop()
+    apmAgentSingleton.destroy()
   }
 
   isInitialized() {
