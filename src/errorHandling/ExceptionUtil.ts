@@ -66,13 +66,19 @@ export class ExceptionUtil {
       config: err.config,
       status: err.response.status,
       statusText: err.response.statusText,
-      ...(err.response.data.error ? err.response.data.error : {}),
+      ...(err.response?.data?.error &&
+        (typeof err.response.data.error === "object" ? err.response.data.error : { message: err.response.data.error })),
       // Not sure which field holds the stack trace
       stackTrace: err.stackTrace,
       stack: err.stack,
     }
 
-    if (context.config.auth) context.config.auth.password = "REDACTED"
+    if (context.config?.auth) {
+      if (context.config.auth.username) {
+        context.config.auth.username = maskString(context.config.auth.username)
+      }
+      context.config.auth.password = "REDACTED"
+    }
     return new ServerException("AxiosError").setContextData(context)
   }
 
@@ -138,4 +144,16 @@ type NestHttpException = {
 }
 function isSecurityRelatedHttpStatusCode(status: number) {
   return status === 403 || status === 407
+}
+
+function maskString(input?: string) {
+  if (!input?.length) {
+    return input
+  }
+
+  const stars = "*".repeat(input.length > 4 ? Math.max(3, input.length - 4) : 0)
+
+  return `${input.slice(0, Math.floor((input.length - stars.length) / 2))}${stars}${input.slice(
+    Math.floor((stars.length - input.length) / 2)
+  )}`
 }

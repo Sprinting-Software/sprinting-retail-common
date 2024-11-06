@@ -65,6 +65,39 @@ describe("ExceptionUtil", () => {
     `)
   })
 
+  it("should handle axios error and mask username", () => {
+    const axiosErrorMock = {
+      config: { auth: { username: "username we don't want to show", password: "secret" } },
+      status: 501,
+      statusText: "SERVERERROR",
+      response: { data: { error: { errorCode: "somecode" } } },
+      stack: "somestack",
+      additional: "xxx",
+    }
+    expect(ExceptionUtil.toPlainJsonForSpec(ExceptionUtil.parse(axiosErrorMock as unknown as Error)))
+      .toMatchInlineSnapshot(`
+      {
+        "contextData": {
+          "config": {
+            "auth": {
+              "password": "REDACTED",
+              "username": "us**************************ow",
+            },
+          },
+          "errorCode": "somecode",
+          "stack": "somestack",
+          "stackTrace": undefined,
+          "status": undefined,
+          "statusText": undefined,
+        },
+        "description": undefined,
+        "errorName": "AxiosError",
+        "errorTraceId": "REDACTED",
+        "httpStatus": 500,
+      }
+    `)
+  })
+
   it("should handle axios error without auth config", () => {
     const axiosErrorMock = {
       config: {},

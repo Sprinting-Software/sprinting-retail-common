@@ -1,3 +1,8 @@
+<h2>Release letter for version 6.2.5</h2>
+- Bumped Node version up to 18.20.4 because BifrostBackend requires it
+
+- Improved the Exception parser for Axios errors - in case the error is a string and not an object
+
 <h2>Release letter for version 6.2.3</h2>
 - Introduced new PrincipalEnum EcoBE for Ecosoft client
 
