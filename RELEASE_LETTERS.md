@@ -1,3 +1,7 @@
+<h2>Release letter for version 6.3.0</h2>
+
+- Small adjustment in wrapping of Errors to provide cleaner error logs without loosing any information
+
 <h2>Release letter for version 6.2.5</h2>
 - Bumped Node version up to 18.20.4 because BifrostBackend requires it
 
@@ -14,38 +18,43 @@
 `DataRedactor` is a utility class designed to redact Personally Identifiable Information (PII) from data objects. It provides functions to mask strings, emails, and nested objects while allowing specific properties to be included or excluded from masking.
 
 ### Import DataRedactor Class
+
 ```javascript
-import { DataRedactor } from 'sprinting-retail-common';
+import { DataRedactor } from "sprinting-retail-common"
 ```
+
 ## Usage
+
 ### Basic Example
+
 The following example demonstrates how to use `DataRedactor` to redact PII from a data object:
+
 ```javascript
 const personCreateBody = {
-  action: 'CreatePerson',
-  id: '87654321-4321-4321-4321-87654321',
+  action: "CreatePerson",
+  id: "87654321-4321-4321-4321-87654321",
   payload: {
-    id: '12345678-1234-1234-1234-12345678',
-    firstName: 'Testing',
-    lastName: 'Testing',
-    middleName: '',
-    dateOfBirth: '1992-12-20',
-    email: 'testingapi@gmail.com',
-    phone: '123456789',
+    id: "12345678-1234-1234-1234-12345678",
+    firstName: "Testing",
+    lastName: "Testing",
+    middleName: "",
+    dateOfBirth: "1992-12-20",
+    email: "testingapi@gmail.com",
+    phone: "123456789",
     address: {
-      address: 'testinging address',
-      address2: 'testinging address',
+      address: "testinging address",
+      address2: "testinging address",
       zipcode: 1234,
     },
-    countryCode: 'pk',
+    countryCode: "pk",
     tenantId: 100,
   },
-};
+}
 
-const redactor = new DataRedactor(personCreateBody);
-const redactedData = redactor.mask();
+const redactor = new DataRedactor(personCreateBody)
+const redactedData = redactor.mask()
 
-console.log(redactedData);
+console.log(redactedData)
 /*
 {
     "action": "C**********n",
@@ -68,19 +77,17 @@ console.log(redactedData);
     }
 }
 */
-
 ```
 
 ## Excluding Specific Properties
+
 You can also specify properties to exclude from masking by passing an array of property paths to the `exclude` method:
 
 ```javascript
-const excludeProperties = ['action', 'payload.id', 'payload.countryCode'];
-const redactorWithExclusions = new DataRedactor(personCreateBody)
-                                    .exclude(excludeProperties)
-                                    .mask();
+const excludeProperties = ["action", "payload.id", "payload.countryCode"]
+const redactorWithExclusions = new DataRedactor(personCreateBody).exclude(excludeProperties).mask()
 
-console.log(redactorWithExclusions);
+console.log(redactorWithExclusions)
 /*
 {
     "action": "CreatePerson",
@@ -103,18 +110,17 @@ console.log(redactorWithExclusions);
     }
 }
 */
-
 ```
 
 ## Including Specific Properties
-You can also specify properties to include in masking by passing an array of property paths to the `include` method:
-```javascript
-const includeProperties = ['payload.firstName', 'payload.lastName'];
-const redactorWithInclusions = new DataRedactor(personCreateBody)
-                                  .include(includeProperties)
-                                  .mask();
 
-console.log(redactorWithInclusions);
+You can also specify properties to include in masking by passing an array of property paths to the `include` method:
+
+```javascript
+const includeProperties = ["payload.firstName", "payload.lastName"]
+const redactorWithInclusions = new DataRedactor(personCreateBody).include(includeProperties).mask()
+
+console.log(redactorWithInclusions)
 /*
 {
     "action": "CreatePerson",
@@ -137,18 +143,16 @@ console.log(redactorWithInclusions);
     }
 }
 */
-
 ```
 
 ## Change the masking Characters
+
 You can also specify Symbol to use in masking by passing a symbol to the `setMaskChar` method:
 
 ```javascript
-const redactorWithCustomSymbol = new DataRedactor(personCreateBody)
-                                      .setMaskChar('.')
-                                      .mask();
+const redactorWithCustomSymbol = new DataRedactor(personCreateBody).setMaskChar(".").mask()
 
-console.log(redactorWithCustomSymbol);
+console.log(redactorWithCustomSymbol)
 /*
 {
     "action": "C..........n",
@@ -171,10 +175,10 @@ console.log(redactorWithCustomSymbol);
     }
 }
 */
-
 ```
 
 ## Methods
+
 `mask(): any`
 Redacts PII from the provided data object.
 
@@ -187,9 +191,8 @@ Specifies properties to include in masking.
 `setMaskChar(char: string): DataRedactor`
 Sets a custom character to use for masking.
 
- - keys: The property paths to be excluded or included.
- - char: The custom character for masking.
-
+- keys: The property paths to be excluded or included.
+- char: The custom character for masking.
 
 <h2>Release letter for version 6.1.0</h2>
 
