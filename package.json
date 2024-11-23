@@ -1,22 +1,14 @@
 {
   "name": "sprinting-retail-common",
-  "version": "6.2.5",
+  "version": "6.3.0",
   "description": "Error handling and logging with APM",
   "contributors": [
-    "Nairi Abgaryan",
     "Nikola Schou",
     "Szabolcs Nagy",
     "Goran Blazin"
   ],
   "license": "MIT",
-  "keywords": [
-    "nest",
-    "nestjs",
-    "winston",
-    "apm",
-    "logger",
-    "logging"
-  ],
+  "keywords": [],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
