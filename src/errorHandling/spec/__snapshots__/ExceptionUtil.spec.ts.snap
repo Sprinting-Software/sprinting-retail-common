@@ -161,22 +161,23 @@ exports[`ExceptionUtil should create plain objects from undefined error 1`] = `
 
 exports[`ExceptionUtil should handle IDP IncorrectPassword error 1`] = `
 {
-  "contextData": {},
+  "contextData": {
+    "errorData": {
+      "email": "a@b.com",
+      "tenantId": 100,
+    },
+    "errorName": "IncorrectPassword",
+    "errorTraceId": "ERR-83TCU4PE",
+    "name": "HttpException2",
+    "response": "IncorrectPassword",
+    "status": 400,
+  },
   "description": "IncorrectPassword",
   "errorName": "HttpException2",
   "errorTraceId": "REDACTED",
   "httpStatus": 400,
   "innerError": {
-    "description": "Found this error: {
-  response: 'IncorrectPassword',
-  status: 400,
-  message: 'IncorrectPassword',
-  name: 'HttpException2',
-  httpStatus: 400,
-  errorName: 'IncorrectPassword',
-  errorData: { tenantId: 100, email: 'a@b.com' },
-  errorTraceId: 'ERR-83TCU4PE'
-}",
+    "description": "Found this error: {}",
     "errorName": "UnknownError",
   },
 }

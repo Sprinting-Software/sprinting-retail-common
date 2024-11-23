@@ -5,6 +5,7 @@ import util from "util"
 import { IExceptionJson } from "./IExceptionJson"
 import { ServerException } from "./exceptions/ServerException"
 import { SecurityException } from "./exceptions/SecurityException"
+import { RawLogger } from "../logger/RawLogger"
 
 export class ExceptionUtil {
   /**
@@ -48,12 +49,50 @@ export class ExceptionUtil {
       return new Exception(error.getStatus(), error.name, error.message).setInnerError(error)
     }
 
-    // This is to not re-throw Sprinting IDP errors with 500 status
-    if ("httpStatus" in error) {
-      return new Exception(+error.httpStatus, error.name, error.message).setInnerError(error)
-    }
+    return ExceptionUtil.parseGenericErrorUtil(error)
+  }
 
-    return new ServerException(error.name, error.message, undefined, error)
+  /**
+   * This function will properly parse any kind of Error or Object and properly
+   * wrap it into an Exception. It will also try to extract as much information
+   * and context data and stack information as possible from the original error.
+   * Finally, the original error will be discarded to avoid duplicate information.
+   * If one really needs to see the original error, you can enable raw logging
+   * via setting of an environment variable DEBUG_ERROR_HANDLING=true.
+   * @param origError
+   * @returns
+   */
+  private static parseGenericErrorUtil(origError: any): Exception {
+    RawLogger.debug("Original error", { origError })
+    if (origError.constructor === Object || origError.constructor === Error) {
+      const contextDataExtra = {}
+      let errorName = origError.name || origError.errorName
+      const constructorName = origError.constructor.name
+      if (origError.constructor !== Object && origError.constructor !== Error && origError.constructor !== String) {
+        // Constructor may be significant information
+        if (!errorName) {
+          errorName = origError.constructor.name
+        } else {
+          contextDataExtra["innerErrorConstructor"] = constructorName
+        }
+      }
+      const httpStatus = origError.httpStatus || 500
+      delete origError.httpStatus
+      const message = origError.message || ""
+      justTry(() => delete origError.message)
+      const contextData = { ...contextDataExtra }
+      // Pass all properties of the inner error to the context data
+      for (const key of Object.keys(origError)) {
+        contextData[key] = origError[key]
+        justTry(() => delete origError[key])
+      }
+      const wrappedError = new Exception(httpStatus, errorName, message, contextData, origError)
+      wrappedError.setStacktraceFromAnotherError(origError)
+      RawLogger.debug("Wrapped error", { wrappedError })
+      return wrappedError
+    } else {
+      return new Exception(500, "ReallyUnknownError").setInnerError(origError)
+    }
   }
 
   /**
@@ -156,4 +195,13 @@ function maskString(input?: string) {
   return `${input.slice(0, Math.floor((input.length - stars.length) / 2))}${stars}${input.slice(
     Math.floor((stars.length - input.length) / 2)
   )}`
+}
+
+/*Convenience function to try to execute a function and ignore any exceptions that might be thrown.*/
+function justTry(action: () => void) {
+  try {
+    action()
+  } catch (e) {
+    // ignore
+  }
 }

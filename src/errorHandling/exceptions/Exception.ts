@@ -32,16 +32,16 @@ export class Exception extends Error {
     this.errorTraceId = Exception.generateErrorTraceId()
     this.refreshMessageField()
     Object.setPrototypeOf(this, Exception.prototype)
-    this.updateStacktrace()
+    this.setStacktraceFromAnotherError(innerError)
   }
 
   /**
    * We need this to preserve the original stack trace in ELK when errors are wrapped to get proper error reporting.
    * @private
    */
-  private updateStacktrace() {
-    if (this.innerError) {
-      this.stack = this.innerError.stack
+  public setStacktraceFromAnotherError(error: Error) {
+    if (error) {
+      this.stack = error.stack
     }
   }
 
@@ -115,7 +115,7 @@ export class Exception extends Error {
   setInnerError(innerError: Error): Exception {
     this.innerError = innerError
     this.refreshMessageField()
-    this.updateStacktrace()
+    this.setStacktraceFromAnotherError(innerError)
     return this
   }
 
@@ -204,6 +204,9 @@ export function convertErrorToObjectForLogging(innerError: any, depth: number, v
       if (convertedError !== undefined) {
         result[key] = convertedError
       }
+    } else if (innerError[key] instanceof Date) {
+      // Convert Date to ISO string
+      result[key] = innerError[key].toISOString()
     } else if (typeof innerError[key] === "object" && innerError[key] !== null) {
       const convertedObject = convertErrorToObjectForLogging(innerError[key], depth + 1, visited)
       if (convertedObject !== undefined) {
