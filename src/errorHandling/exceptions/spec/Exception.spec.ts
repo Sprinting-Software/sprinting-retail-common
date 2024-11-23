@@ -328,4 +328,12 @@ describe("convertErrorToObjectForLogging", () => {
       }
     `)
   })
+  it("should handle date object", () => {
+    const error = {
+      message: "Outer error",
+      timestamp: new Date(),
+    }
+    const result = convertErrorToObjectForLogging(error, 0)
+    expect(result.timestamp).toBeDefined()
+  })
 })
