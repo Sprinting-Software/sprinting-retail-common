@@ -165,7 +165,13 @@ export class LoggerService {
     if (contextData) exception.setContextData(contextData)
     ApmHelper.Instance.captureError(exception)
     const fileName = LoggerService._getCallerFile()
-    LoggerService.logger.error(this.formatMessage(fileName, LogLevel.error, exception.toString()))
+    let exceptionString = exception.toString()
+    if (exceptionString.length > 800) {
+      // truncate to avoid logs being lost
+      exceptionString = `${exceptionString.substring(0, 780)}...(truncated due to UDP limit)`
+    }
+    const formatedMessage = this.formatMessage(fileName, LogLevel.error, exceptionString)
+    LoggerService.logger.error(formatedMessage)
   }
 
   /**

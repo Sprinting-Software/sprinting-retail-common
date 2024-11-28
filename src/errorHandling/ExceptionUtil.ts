@@ -41,12 +41,9 @@ export class ExceptionUtil {
       }
     }
 
+    // This special case should be removed at some point.
     if (error.name === "BadRequestException") {
       return new CustomBadRequestException(<BadRequestException>error)
-    }
-
-    if ("getStatus" in error && typeof error.getStatus === "function") {
-      return new Exception(error.getStatus(), error.name, error.message).setInnerError(error)
     }
 
     return ExceptionUtil.parseGenericErrorUtil(error)
@@ -63,7 +60,7 @@ export class ExceptionUtil {
    * @returns
    */
   private static parseGenericErrorUtil(origError: any): Exception {
-    RawLogger.debug("Original error", { origError })
+    RawLogger.debug("Original error", { origError, type: typeof origError, constructor: origError.constructor.name })
     if (origError.constructor === Object || origError.constructor === Error) {
       const contextDataExtra = {}
       let errorName = origError.name || origError.errorName
@@ -76,7 +73,7 @@ export class ExceptionUtil {
           contextDataExtra["innerErrorConstructor"] = constructorName
         }
       }
-      const httpStatus = origError.httpStatus || 500
+      const httpStatus = getStatusFrom(origError) || 500
       delete origError.httpStatus
       const message = origError.message || ""
       justTry(() => delete origError.message)
@@ -204,4 +201,14 @@ function justTry(action: () => void) {
   } catch (e) {
     // ignore
   }
+}
+function getStatusFrom(origError: any): number {
+  if (origError.httpStatus || origError.status) {
+    return parseInt(origError.httpStatus || origError.status)
+  } else {
+    if (origError.getStatus && typeof origError.getStatus === "function") {
+      return parseInt(origError.getStatus())
+    }
+  }
+  return undefined
 }
