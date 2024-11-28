@@ -1,6 +1,8 @@
 <h2>Release letter for version 6.3.0</h2>
 
 - Small adjustment in wrapping of Errors to provide cleaner error logs without loosing any information
+- Truncation of errors sent to ELK to avoid issues with too large logs (exceeding the UDP limit)
+- Cleaner stack-traces in error logs in ELK
 
 <h2>Release letter for version 6.2.5</h2>
 - Bumped Node version up to 18.20.4 because BifrostBackend requires it
