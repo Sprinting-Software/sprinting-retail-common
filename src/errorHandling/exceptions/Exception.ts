@@ -65,10 +65,63 @@ export class Exception extends Error {
     }
   }
 
-  public generatePrettyStacktrace(): string {
+  public generatePrettyStacktrace(makeCompact = true): string {
+    if (makeCompact) {
+      return this.generatePrettyStacktraceCompactUtil()
+    } else {
+      try {
+        return this.stack?.split("\n").slice(1).join("\n")
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error("STACKTRACE_GENERATION_FAILED: ", e)
+        return "STACKTRACE_GENERATION_FAILED"
+      }
+    }
+  }
+
+  private generatePrettyStacktraceCompactUtil(): string {
     try {
-      return this.stack?.split("\n").slice(1).join("\n")
+      if (!this.stack) return "No stack trace available"
+
+      const stackLines = this.stack.split("\n").slice(1) // Skip the first line (error message)
+
+      const srcPath = "./src/"
+      const nodeModulesPath = "./node_modules/"
+      let externalCount = 0
+      const maxExternalLines = 3
+
+      const prettifiedStack = stackLines.map((line) => {
+        // Extract the path from the stack trace line
+        const match = line.match(/\((.*?):\d+:\d+\)|at (\/.*?):\d+:\d+/)
+        const filePath = match ? match[1] : null
+
+        if (!filePath) {
+          // If no valid file path is found, keep the line as-is
+          return line
+        }
+
+        // Make paths relative to `src` or `node_modules`, if applicable
+        if (filePath.includes("/node_modules/")) {
+          return line.replace(filePath, `${nodeModulesPath}${filePath.split("/node_modules/")[1]}`)
+        } else if (filePath.includes("/src/")) {
+          return line.replace(filePath, `${srcPath}${filePath.split("/src/")[1]}`)
+        } else {
+          // Count and replace lines beyond the max allowed for external code
+          externalCount++
+          return externalCount > maxExternalLines ? null : line
+        }
+      })
+
+      // Filter out and summarize the skipped lines
+      const filteredStack = prettifiedStack.filter(Boolean)
+      if (externalCount > maxExternalLines) {
+        filteredStack.push(`...${externalCount - maxExternalLines} more lines...`)
+      }
+
+      return filteredStack.join("\n")
     } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("STACKTRACE_GENERATION_FAILED: ", e)
       return "STACKTRACE_GENERATION_FAILED"
     }
   }
