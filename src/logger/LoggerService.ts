@@ -8,6 +8,7 @@ import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 import ecsFormat from "@elastic/ecs-winston-format"
+import { LogstashTransport } from "winston-logstash-transport"
 
 const { timestamp, printf, combine } = winston.format
 
@@ -79,7 +80,15 @@ export class LoggerService {
     this.envPrefix = formatAsEnvLetter(config.env)
 
     if (config.logstash.isUDPEnabled) {
+      // eslint-disable-next-line no-console
+      console.log("Using UDP transport")
       transports.push(new UDPTransport(conf))
+    }
+    if (config.logstash.isTCPEnabled) {
+      // eslint-disable-next-line no-console
+      console.log("Using TCP transport")
+      // Use TCP transport
+      transports.push(new LogstashTransport(conf))
     }
     // You can use this to get insight into what is sent to ELK
     /*const consoleLogFormatter = winston.format((info) => {

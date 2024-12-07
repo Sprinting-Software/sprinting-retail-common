@@ -41,7 +41,8 @@
     "logstash-client": "1.1.1",
     "reflect-metadata": "^0.1.13",
     "udp-transport-winston": "^1.2.11",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "winston-logstash-transport": "^2.0.0"
   },
   "devDependencies": {
     "@nestjs/testing": "^9.4.0",

@@ -7,6 +7,7 @@ export interface LoggerConfig {
   enableConsoleLogs: boolean
   logstash: {
     isUDPEnabled: boolean
+    isTCPEnabled?: boolean
     host: string
     port: number
   }

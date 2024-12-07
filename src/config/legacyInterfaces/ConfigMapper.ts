@@ -16,7 +16,8 @@ export class ConfigMapper {
       enableLogs: appConfig.elk.logstash.isEnabled,
       enableConsoleLogs: appConfig.enableConsoleLogs,
       logstash: {
-        isUDPEnabled: true,
+        isUDPEnabled: appConfig.elk.logstash.type === "udp" || appConfig.elk.logstash.type === undefined,
+        isTCPEnabled: appConfig.elk.logstash.type === "tcp",
         host: appConfig.elk.logstash.host,
         port: appConfig.elk.logstash.port,
       },

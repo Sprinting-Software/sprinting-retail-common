@@ -12,6 +12,7 @@ export interface RetailCommonConfig extends EnvironmentConfig {
     apm: IApmConfig
     logstash: {
       isEnabled: boolean
+      type?: "udp" | "tcp"
       host: string
       port: number
     }
