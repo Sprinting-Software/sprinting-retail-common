@@ -186,11 +186,11 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
       timestamp: timestamp,
       meta: { sentViaRestApi: true },
     }
-    /*const tx = ApmHelper.Instance.getApmAgent().currentTransaction
+    const tx = ApmHelper.Instance.getApmAgent().currentTransaction
     if (tx) {
       eventObj["trace.id"] = tx.ids["trace.id"]
       eventObj["transaction.id"] = tx.ids["transaction.id"]
-    }*/
+    }
     if (type === "event") this.tcpLoggerEvents.sendObject(eventObj)
     else this.tcpLoggerErrors.sendObject(eventObj)
   }
