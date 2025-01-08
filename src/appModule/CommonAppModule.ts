@@ -2,7 +2,7 @@ import { DynamicModule, Global, Module, Scope } from "@nestjs/common"
 import { ConfigModule } from "../config/ConfigModule"
 import { LoggerModule } from "../logger/LoggerModule"
 import { APP_FILTER, HttpAdapterHost, REQUEST } from "@nestjs/core"
-import { LoggerConfig } from "../logger/LoggerConfig"
+import { LibConfig } from "../config/interface/LibConfig"
 import { LoggerService } from "../logger/LoggerService"
 import TenantContext from "../context/TenantContext"
 import { GlobalErrorFilter } from "../errorHandling/GlobalErrorFilter"
@@ -13,6 +13,7 @@ import { LoadBalancingTimeoutBootstrap } from "../helpers/LoadBalancingTimeoutBo
 import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
 import { ApmHelper } from "../apm/ApmHelper"
 import { SeederModule } from "../seeder/SeederModule"
+import { LibraryDebugFlags } from "../config/LibraryDebugFlags"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -22,9 +23,14 @@ import { SeederModule } from "../seeder/SeederModule"
 @Global()
 @Module({})
 export class CommonAppModule {
-  static forRoot(config: RetailCommonConfig): DynamicModule {
+  /**
+   * @deprecated Use forRootV2 instead
+   * @param config
+   * @returns
+   */
+  static forRootObsolete(config: RetailCommonConfig): DynamicModule {
     const configProvider = new RetailCommonConfigProvider(config)
-    this.setupGlobalProcessHandlers(configProvider)
+    this.setupGlobalProcessHandlersObsolete(configProvider)
 
     return {
       module: CommonAppModule, // needed for dynamic modules
@@ -57,14 +63,52 @@ export class CommonAppModule {
       exports: [ConfigModule, LoggerModule, TenantContext, ApmHelper, SeederModule],
     }
   }
+  static forRoot(config: LibConfig): DynamicModule {
+    this.setupGlobalProcessHandlers(config)
+    const _isProduction = LibraryDebugFlags.SimulateProduction() || config.isProdZone
+    return {
+      module: CommonAppModule, // needed for dynamic modules
+      imports: [LoggerModule.forRootV2(config), SeederModule],
+      providers: [
+        {
+          provide: ApmHelper,
+          useValue: ApmHelper.Instance,
+        },
+        {
+          provide: LoadBalancingTimeoutBootstrap,
+          useFactory: (refHost: HttpAdapterHost<any>, logger: LoggerService) =>
+            new LoadBalancingTimeoutBootstrap(refHost, logger),
+          inject: [HttpAdapterHost, LoggerService],
+        },
+        {
+          provide: TenantContext,
+          scope: Scope.REQUEST,
+          useFactory: (request: Request) => TenantContextFactory.getTenantContext(request),
+          inject: [REQUEST],
+        },
+        {
+          provide: APP_FILTER,
+          useFactory: (logger: LoggerService, tenantContext: TenantContext) =>
+            new GlobalErrorFilter(logger, { tenantId: tenantContext.tenantIdOrUndefined }, _isProduction),
+          inject: [LoggerService, TenantContext],
+          scope: Scope.REQUEST,
+        },
+      ],
+      exports: [LoggerModule, TenantContext, ApmHelper, SeederModule],
+    }
+  }
 
   /**
    * Assigns the global handler on unhandledRejections
    * @param configProvider
    * @private
    */
-  private static setupGlobalProcessHandlers(configProvider: RetailCommonConfigProvider) {
-    const loggerConfig: LoggerConfig = ConfigMapper.mapToLoggerConfig(configProvider.config)
+  private static setupGlobalProcessHandlersObsolete(configProvider: RetailCommonConfigProvider) {
+    const loggerConfig: LibConfig = ConfigMapper.mapToLoggerConfig(configProvider.config)
+    CommonAppModule.setupGlobalProcessHandlers(loggerConfig)
+  }
+
+  public static setupGlobalProcessHandlers(loggerConfig: LibConfig) {
     const logger = new LoggerService(loggerConfig)
 
     if (process.listenerCount("unhandledRejection") > 0) {

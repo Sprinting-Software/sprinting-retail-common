@@ -1,7 +1,6 @@
 import { LoggerService } from "../LoggerService"
 
 import Transport from "winston-transport"
-import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
 // Create a custom transport for testing
 class MockTransport extends Transport {
@@ -30,10 +29,10 @@ function clean(obj) {
 describe("LoggerService", () => {
   const mockConfig = {
     env: "test",
-    serviceName: PrincipalEnum.TestSystemName,
-    enableLogs: true,
+    serviceName: "TestSystemName",
+    enableElkLogs: true,
     enableConsoleLogs: true,
-    logstash: {
+    elkLogstash: {
       isUDPEnabled: false,
       host: "localhost",
       port: 9200,
@@ -57,15 +56,15 @@ describe("LoggerService", () => {
     delete actual[Symbol.for("level")]
     delete actual[Symbol.for("message")]
     expect(actual).toEqual({
-      component: PrincipalEnum.TestSystemName,
+      component: "TestSystemName",
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
       "log.level": "info",
       logType: "info",
       message: "SomeMessage",
-      system: PrincipalEnum.TestSystemName,
-      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
+      system: "TestSystemName",
+      systemEnv: `test-TestSystemName`,
     })
   })
 
@@ -85,7 +84,7 @@ describe("LoggerService", () => {
     const obj = mockTransport.logMessages.pop()
     clean(obj)
     expect(obj).toEqual({
-      component: PrincipalEnum.TestSystemName,
+      component: "TestSystemName",
       "ecs.version": "8.10.0",
       context: {
         clientTraceId: "CT-2342",
@@ -99,8 +98,8 @@ describe("LoggerService", () => {
       "log.level": "info",
       logType: "info",
       message: "SomeMessage { someKey: 'someValue' }",
-      system: PrincipalEnum.TestSystemName,
-      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
+      system: "TestSystemName",
+      systemEnv: `test-TestSystemName`,
     })
   })
 
@@ -115,15 +114,15 @@ describe("LoggerService", () => {
     const obj = mockTransport.logMessages.pop()
     clean(obj)
     expect(obj).toEqual({
-      component: PrincipalEnum.TestSystemName,
+      component: "TestSystemName",
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
       "log.level": "info",
       logType: "event",
       message: "SomeEvent",
-      system: PrincipalEnum.TestSystemName,
-      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
+      system: "TestSystemName",
+      systemEnv: `test-TestSystemName`,
       event: {
         category: "Payment",
         data: {
@@ -162,15 +161,15 @@ describe("LoggerService", () => {
     const obj = mockTransport.logMessages.pop()
     clean(obj)
     expect(obj).toEqual({
-      component: PrincipalEnum.TestSystemName,
+      component: "TestSystemName",
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
       "log.level": "info",
       logType: "event",
       message: "Custom event message",
-      system: PrincipalEnum.TestSystemName,
-      systemEnv: `test-${PrincipalEnum.TestSystemName}`,
+      system: "TestSystemName",
+      systemEnv: `test-TestSystemName`,
       event: {
         category: "Payment",
         domain: "Payment",

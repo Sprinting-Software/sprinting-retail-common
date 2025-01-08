@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { SeederService, SeedTableParams } from "../SeederService"
 import { LoggerService } from "../../logger/LoggerService"
-import { PrincipalEnum } from "../../baseData/PrincipalEnum"
+import { PrincipalEnum } from "../../config/spec/TestConfig"
 
 describe("SeederService", () => {
   let service: SeederService

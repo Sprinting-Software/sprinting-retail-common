@@ -1,46 +1,19 @@
 import { UDPTransport } from "udp-transport-winston"
 import * as winston from "winston"
 import { ApmHelper } from "../apm/ApmHelper"
-import { Injectable, Scope } from "@nestjs/common"
+import { Injectable, OnApplicationShutdown, OnModuleDestroy, Scope } from "@nestjs/common"
 import { Exception } from "../errorHandling/exceptions/Exception"
-import { LoggerConfig } from "./LoggerConfig"
+import { LibConfig } from "../config/interface/LibConfig"
 import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 import ecsFormat from "@elastic/ecs-winston-format"
+import { ICommonLogContext, LogLevel, LogMessage } from "./types"
+import { ElkBufferedTcpLogger } from "./ElkBufferedTcpLogger"
+import { ElkRestApi } from "./ElkRestApi"
+import { RawLogger } from "./RawLogger"
 
 const { timestamp, printf, combine } = winston.format
-
-/**
- * Shared context data for all log records
- */
-export interface ICommonLogContext {
-  tenantId: number
-  clientTraceId?: string
-  userId?: string
-  requestTraceId?: string
-  transactionName?: string
-}
-
-export const enum LogLevel {
-  info = "info",
-  event = "event",
-  debug = "debug",
-  error = "error",
-  warn = "warn",
-}
-
-interface LogMessage {
-  filename: string
-  system: string
-  component: string
-  env: string
-  systemEnv: string
-  logType: LogLevel
-  message: string
-  event?: Record<string, any>
-  context?: Omit<ICommonLogContext, "tenantId"> & { tenant: string }
-}
 
 function getTenantMoniker(tenantId: number) {
   return `tid${tenantId}`
@@ -62,24 +35,30 @@ function formatAsEnvLetter(env: string): string {
   } else return env
 }
 @Injectable({ scope: Scope.DEFAULT })
-export class LoggerService {
+export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
   private static logger: winston.Logger
   private envDashEnv: string
   private envPrefix: string
+  private tcpLogger: ElkBufferedTcpLogger
 
   // private readonly logstashClient: Logstash
 
-  constructor(private readonly config: LoggerConfig, transports: any[] = []) {
+  constructor(private readonly config: LibConfig, transports: any[] = []) {
     const conf = {
       systemName: config.serviceName,
-      host: config.logstash.host,
-      port: config.logstash.port,
+      host: config.elkLogstash.host,
+      port: config.elkLogstash.port,
     }
     this.envDashEnv = formatEnvLetterWithDashEnv(config.env)
     this.envPrefix = formatAsEnvLetter(config.env)
 
-    if (config.logstash.isUDPEnabled) {
+    if (config.elkLogstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf))
+    }
+
+    if (config.elkRestApi?.useForEvents) {
+      // Find year and week number
+      this.initTcpLogger(config)
     }
     // You can use this to get insight into what is sent to ELK
     /*const consoleLogFormatter = winston.format((info) => {
@@ -105,6 +84,31 @@ export class LoggerService {
         ],
       })
     }
+  }
+  onApplicationShutdown() {
+    this.cleanupLogger()
+  }
+
+  // Clean up on module destruction
+  onModuleDestroy() {
+    this.cleanupLogger()
+  }
+
+  private async cleanupLogger() {
+    if (this.tcpLogger) {
+      RawLogger.debug("Cleaning up logger...")
+      await this.tcpLogger.flush() // Ensure remaining logs are flushed
+      this.tcpLogger = null
+    }
+  }
+
+  private initTcpLogger(config: LibConfig) {
+    if (!this.config.elkRestApi) return
+    const yyyyww = getYearAndWeek()
+    this.tcpLogger = new ElkBufferedTcpLogger(
+      new ElkRestApi({ ...config.elkRestApi, indexName: `${config.env}-${config.serviceName}-event-${yyyyww}` })
+    )
+    this.tcpLogger.start()
   }
 
   info(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
@@ -152,7 +156,18 @@ export class LoggerService {
         transactionName: context.transactionName,
       }
     }
-    LoggerService.logger.info(logMessage)
+    if (this.config?.elkRestApi?.useForEvents && this.tcpLogger) {
+      const timestamp = new Date().toISOString()
+      const eventObj = { ...logMessage, "@timestamp": timestamp, timestamp: timestamp }
+      const tx = ApmHelper.Instance.getApmAgent().currentTransaction
+      if (tx) {
+        eventObj["trace.id"] = tx.ids["trace.id"]
+        eventObj["transaction.id"] = tx.ids["transaction.id"]
+      }
+      this.tcpLogger.log(eventObj)
+    } else {
+      LoggerService.logger.info(logMessage)
+    }
   }
 
   /**
@@ -231,4 +246,14 @@ export class LoggerService {
     const stackFrame = stack[2] as unknown as NodeJS.CallSite
     return stackFrame.getFileName()
   }
+}
+
+function getYearAndWeek() {
+  const date = new Date()
+  const year = date.getFullYear()
+  const firstDayOfYear = new Date(year, 0, 1)
+  const dayOfYear = Math.floor((date.getTime() - firstDayOfYear.getTime()) / (24 * 60 * 60 * 1000)) + 1
+  const weekNumber = Math.ceil((dayOfYear + firstDayOfYear.getDay()) / 7)
+  const yyyyww = `${year}${weekNumber.toString().padStart(2, "0")}`
+  return yyyyww
 }
