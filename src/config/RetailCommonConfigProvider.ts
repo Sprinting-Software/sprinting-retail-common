@@ -2,6 +2,7 @@ import { RetailCommonConfig } from "./interface/RetailCommonConfig"
 import { RetailCommonConfigConvict } from "./interface/RetailCommonConfigConvict"
 export const UNKNOWN_ENV_PREFIX = "z"
 /**
+ * @deprecated Use LoggerConfig instead
  * A wrapper around the configuration of sprinting-retail-common that helps with validation.
  * It also makes it easier to deal with dependency injection as DI in Nest only works with classes,
  * not interfaces (unless we should use provider tokens)

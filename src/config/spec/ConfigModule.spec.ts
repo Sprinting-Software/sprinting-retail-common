@@ -1,8 +1,7 @@
 import { Test } from "@nestjs/testing"
 import { ConfigModule } from "../ConfigModule"
-import { TestConfig } from "./TestConfig"
+import { PrincipalEnum, TestConfig } from "./TestConfig"
 import { UNKNOWN_ENV_PREFIX, RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
-import { PrincipalEnum } from "../../baseData/PrincipalEnum"
 
 describe("ConfigModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function

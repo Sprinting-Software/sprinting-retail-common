@@ -4,7 +4,7 @@ import { Exception } from "../errorHandling/exceptions/Exception"
 import { encodeValue } from "../helpers/SeederHelper"
 import * as fs from "fs"
 import * as path from "path"
-import { PrincipalEnum } from "../baseData/PrincipalEnum"
+import { PrincipalName } from "../baseData/PrincipalName"
 
 type DbConnection = any
 
@@ -17,7 +17,7 @@ export interface SeedParams {
 }
 
 export interface SeederServiceParams {
-  systemName: PrincipalEnum
+  systemName: PrincipalName
   envName: string
   dbConnection: DbConnection
   path?: string

@@ -1,7 +1,9 @@
+import { PrincipalName } from "../../baseData/PrincipalName"
 import { RetailCommonConfigProvider } from "../RetailCommonConfigProvider"
-import { PrincipalEnum } from "../../baseData/PrincipalEnum"
+import { LibConfig } from "../interface/LibConfig"
+import { ConfigMapper } from "../legacyInterfaces/ConfigMapper"
 
-const SYSTEM_NAME = PrincipalEnum.TestSystemName
+const SYSTEM_NAME: PrincipalName = "TestSystemName"
 export const TestConfigRaw = {
   systemName: SYSTEM_NAME,
   envPrefix: "",
@@ -22,3 +24,7 @@ export const TestConfigRaw = {
   },
 }
 export const TestConfig: RetailCommonConfigProvider = new RetailCommonConfigProvider(TestConfigRaw)
+export const LibTestConfig: LibConfig = ConfigMapper.mapToLoggerConfig(TestConfigRaw)
+export const PrincipalEnum = {
+  TestSystemName: "TestSystemName",
+}

@@ -1,5 +1,5 @@
 import { ConfigLegacyV1 } from "./ConfigLegacyV1"
-import { LoggerConfig } from "../../logger/LoggerConfig"
+import { LibConfig } from "../interface/LibConfig"
 import { RetailCommonConfig } from "../interface/RetailCommonConfig"
 
 const PRODUCTION_ENV_PREFIX = "p"
@@ -9,13 +9,16 @@ function isProduction(envPrefix: string) {
 }
 
 export class ConfigMapper {
-  public static mapToLoggerConfig(appConfig: RetailCommonConfig): LoggerConfig {
+  // Jan 2025: Nikola: This mapping of config is pretty horrible. We should
+  // refactor it one day.
+  public static mapToLoggerConfig(appConfig: RetailCommonConfig): LibConfig {
     return {
       env: appConfig.envPrefix, // `${appConfig.envPrefix}-env`,
       serviceName: appConfig.systemName,
-      enableLogs: appConfig.elk.logstash.isEnabled,
+      enableElkLogs: appConfig.elk.logstash.isEnabled,
       enableConsoleLogs: appConfig.enableConsoleLogs,
-      logstash: {
+      elkRestApi: { ...appConfig.elk.restApi },
+      elkLogstash: {
         isUDPEnabled: true,
         host: appConfig.elk.logstash.host,
         port: appConfig.elk.logstash.port,
