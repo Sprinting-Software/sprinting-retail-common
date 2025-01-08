@@ -16,7 +16,7 @@ export class ElkBufferedTcpLogger implements OnApplicationShutdown {
     }
   }
 
-  log(log: LogMessage): void {
+  sendObject(log: any): void {
     if (!log) {
       RawLogger.debug("Attempted to log undefined")
       return
@@ -35,7 +35,7 @@ export class ElkBufferedTcpLogger implements OnApplicationShutdown {
         this.buffer = [] // Clear the buffer immediately
 
         try {
-          await this.elkApi.postManyDocuments(logsToSend)
+          await this.elkApi.sendManyDocuments(logsToSend)
           RawLogger.debug(`Successfully flushed ${logsToSend.length} logs.`)
         } catch (error) {
           RawLogger.debug("Failed to flush logs to ELK", error)
@@ -72,7 +72,7 @@ export class ElkBufferedTcpLogger implements OnApplicationShutdown {
     const logsToSend = [...this.buffer]
     this.buffer = []
     try {
-      await this.elkApi.postManyDocuments(logsToSend)
+      await this.elkApi.sendManyDocuments(logsToSend)
     } catch (error) {
       RawLogger.debug("Failed to flush remaining logs:", error)
     }

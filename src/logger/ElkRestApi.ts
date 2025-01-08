@@ -12,41 +12,35 @@ export class ElkRestApi {
   constructor(config: ElkRestApiConfig) {
     this.endpoint = config.endpoint
     this.apiKey = config.apiKey
-    this.indexName = config.indexName
+    this.indexName = config.indexName.trim()
   }
 
-  async postManyDocuments(logs: ElkLog[]): Promise<void> {
+  async sendManyDocuments(logs: ElkLog[]): Promise<void> {
     if (logs.length === 0) return
-    await this.postBulkObjects(logs, logs[0].env)
+    await this.postBulkObjects(logs)
   }
 
-  async postSingleDocument(log: ElkLog): Promise<void> {
-    await this.postObject(log, log.env)
-  }
-
-  private async postObject(log: ElkLog, env: string): Promise<void> {
-    const indexName = `${this.indexName}${env}`
-    this.informOnce(indexName)
+  async sendSingleDocument(log: ElkLog): Promise<void> {
+    this.informOnce(this.indexName)
 
     try {
-      await fetchOrFail(`${this.endpoint}/${indexName}/_doc/`, {
+      await fetchOrFail(`${this.endpoint}/${this.indexName}/_doc/`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify(log),
       })
-      RawLogger.debug("Successfully sent record to ELK in index", indexName)
+      RawLogger.debug("Successfully sent record to ELK in index '", this.indexName, "'")
     } catch (error) {
       RawLogger.debug("Failed to post document:", error)
     }
   }
 
-  private async postBulkObjects(logs: ElkLog[], env: string): Promise<void> {
-    const indexName = `${this.indexName}${env}`
-    this.informOnce(indexName)
+  private async postBulkObjects(logs: ElkLog[]): Promise<void> {
+    this.informOnce(this.indexName)
 
     const bulkRequestBody = `${logs
       .map((log) => {
-        return `${JSON.stringify({ index: { _index: indexName } })}\n${JSON.stringify(log)}`
+        return `${JSON.stringify({ index: { _index: this.indexName } })}\n${JSON.stringify(log)}`
       })
       .join("\n")}\n`
 
@@ -61,7 +55,12 @@ export class ElkRestApi {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
 
-      RawLogger.debug(`Successfully sent ${logs.length} records to ELK in index`, indexName)
+      RawLogger.debug(
+        `Successfully sent ${logs.length} records to ELK in index "`,
+        this.indexName,
+        '". The logs were: ',
+        JSON.stringify(logs)
+      )
     } catch (error) {
       RawLogger.debug("Failed to post bulk documents:", error)
     }

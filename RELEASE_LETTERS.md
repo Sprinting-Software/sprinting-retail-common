@@ -1,3 +1,28 @@
+<h2>Release letter for version 7.1.0 - 2025-01-07 Nikola</h2>
+
+- Simplify configuration interfaces by a lot and deprecating a lot of the old complex configuration code related to legacy configurations
+- Adding support of sending of events and errors via the Elastic REST API to overcome the issue of events being limited in size
+- Adding fetchOrFail - a common helper function to take over from Axios. It is based on the built-in fetch function from recent versions of NodeJS
+- Removing the PrincipalEnum and instead adding PrincipalName as a type alias for string. This is to ensure that this library remains "agnostic" meaning it can have no concrete references to anything particular from the sprinting platform so that one day this library could be used on other client projects. PrincipalEnum should still be defined but outside this library.
+- Improve error handling so we will be seeing fewer unrecognized errors
+- Improve logging of errors to avoid the truncation at 800 characters. This is solved by sending them over the REST api like events.
+
+To upgrade from version 6.3 to version 7.0.1:
+
+- Adjust the way configurations are applied. The adoption should be easy enough if you use intellisense to discover how the new config is typed. Everything should be strongly typed. Here are a couple of renaming you should be prepared for:
+  -- labels -> globalLabels (ApmHelper)
+  -- envPrefix -> env
+- If you want to use the new feature for sending of events and/or errors via the REST API, then add this configuration:
+
+```javascript
+{
+  elkRestApi: {
+    useForEvents: true
+    useForErrors: true
+  }
+}
+```
+
 <h2>Release letter for version 6.3.0</h2>
 
 - Small adjustment in wrapping of Errors to provide cleaner error logs without loosing any information
