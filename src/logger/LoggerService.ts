@@ -8,7 +8,7 @@ import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 import ecsFormat from "@elastic/ecs-winston-format"
-import { ICommonLogContext, LogLevel, LogMessage } from "./types"
+import { ICommonLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
 import { ElkBufferedTcpLogger } from "./ElkBufferedTcpLogger"
 import { ElkRestApi } from "./ElkRestApi"
 import { RawLogger } from "./RawLogger"
@@ -39,7 +39,8 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
   private static logger: winston.Logger
   private envDashEnv: string
   private envPrefix: string
-  private tcpLogger: ElkBufferedTcpLogger
+  private tcpLoggerEvents: ElkBufferedTcpLogger
+  private tcpLoggerErrors: ElkBufferedTcpLogger
 
   // private readonly logstashClient: Logstash
 
@@ -58,7 +59,11 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
 
     if (config.elkRestApi?.useForEvents) {
       // Find year and week number
-      this.initTcpLogger(config)
+      this.tcpLoggerEvents = this.initTcpLogger(config, "event")
+    }
+    if (config.elkRestApi?.useForErrors) {
+      // Find year and week number
+      this.tcpLoggerErrors = this.initTcpLogger(config, "error")
     }
     // You can use this to get insight into what is sent to ELK
     /*const consoleLogFormatter = winston.format((info) => {
@@ -86,29 +91,39 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
   }
   onApplicationShutdown() {
-    this.cleanupLogger()
+    this.destroyTcpLoggers()
   }
 
   // Clean up on module destruction
   onModuleDestroy() {
-    this.cleanupLogger()
+    this.destroyTcpLoggers()
   }
 
-  private async cleanupLogger() {
-    if (this.tcpLogger) {
+  private async destroyTcpLoggers() {
+    if (this.tcpLoggerEvents) {
       RawLogger.debug("Cleaning up logger...")
-      await this.tcpLogger.flush() // Ensure remaining logs are flushed
-      this.tcpLogger = null
+      await this.tcpLoggerEvents.flushAndStop() // Ensure remaining logs are flushed
+      this.tcpLoggerEvents = null
+    }
+    if (this.tcpLoggerErrors) {
+      RawLogger.debug("Cleaning up logger...")
+      await this.tcpLoggerErrors.flushAndStop() // Ensure remaining logs are flushed
+      this.tcpLoggerErrors = null
     }
   }
 
-  private initTcpLogger(config: LibConfig) {
+  private initTcpLogger(config: LibConfig, logType: "event" | "error") {
     if (!this.config.elkRestApi) return
     const yyyyww = getYearAndWeek()
-    this.tcpLogger = new ElkBufferedTcpLogger(
-      new ElkRestApi({ ...config.elkRestApi, indexName: `${config.env}-${config.serviceName}-event-${yyyyww}` })
+    const tcpLogger = new ElkBufferedTcpLogger(
+      new ElkRestApi({
+        apiKey: config.elkRestApi.apiKey,
+        endpoint: config.elkRestApi.endpoint,
+        indexName: `${config.env}-${config.serviceName}-${logType}-${yyyyww}`,
+      })
     )
-    this.tcpLogger.start()
+    tcpLogger.start()
+    return tcpLogger
   }
 
   info(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
@@ -156,18 +171,28 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
         transactionName: context.transactionName,
       }
     }
-    if (this.config?.elkRestApi?.useForEvents && this.tcpLogger) {
-      const timestamp = new Date().toISOString()
-      const eventObj = { ...logMessage, "@timestamp": timestamp, timestamp: timestamp }
-      const tx = ApmHelper.Instance.getApmAgent().currentTransaction
-      if (tx) {
-        eventObj["trace.id"] = tx.ids["trace.id"]
-        eventObj["transaction.id"] = tx.ids["transaction.id"]
-      }
-      this.tcpLogger.log(eventObj)
+    if (this.config?.elkRestApi?.useForEvents && this.tcpLoggerEvents) {
+      this.enrichForTcpAndSend(logMessage, "event")
     } else {
       LoggerService.logger.info(logMessage)
     }
+  }
+
+  private enrichForTcpAndSend(logMessage: LogMessage, type: "event" | "error") {
+    const timestamp = new Date().toISOString()
+    const eventObj: LogMessageExtended = {
+      ...logMessage,
+      "@timestamp": timestamp,
+      timestamp: timestamp,
+      meta: { sentViaRestApi: true },
+    }
+    /*const tx = ApmHelper.Instance.getApmAgent().currentTransaction
+    if (tx) {
+      eventObj["trace.id"] = tx.ids["trace.id"]
+      eventObj["transaction.id"] = tx.ids["transaction.id"]
+    }*/
+    if (type === "event") this.tcpLoggerEvents.sendObject(eventObj)
+    else this.tcpLoggerErrors.sendObject(eventObj)
   }
 
   /**
@@ -182,11 +207,19 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     const fileName = LoggerService._getCallerFile()
     let exceptionString = exception.toString()
     if (exceptionString.length > 800) {
-      // truncate to avoid logs being lost
-      exceptionString = `${exceptionString.substring(0, 780)}...(truncated due to UDP limit)`
+      if (this.config.elkRestApi.useForErrors) {
+        // We don't need to truncate when sending errors via the REST API
+      } else {
+        // truncate to avoid logs being lost
+        exceptionString = `${exceptionString.substring(0, 780)}...(truncated due to UDP limit)`
+      }
     }
     const formatedMessage = this.formatMessage(fileName, LogLevel.error, exceptionString)
-    LoggerService.logger.error(formatedMessage)
+    if (this.config.elkRestApi.useForErrors && this.tcpLoggerErrors) {
+      this.enrichForTcpAndSend(formatedMessage, "error")
+    } else {
+      LoggerService.logger.error(formatedMessage)
+    }
   }
 
   /**
@@ -254,6 +287,6 @@ function getYearAndWeek() {
   const firstDayOfYear = new Date(year, 0, 1)
   const dayOfYear = Math.floor((date.getTime() - firstDayOfYear.getTime()) / (24 * 60 * 60 * 1000)) + 1
   const weekNumber = Math.ceil((dayOfYear + firstDayOfYear.getDay()) / 7)
-  const yyyyww = `${year}${weekNumber.toString().padStart(2, "0")}`
+  const yyyyww = `${year}.${weekNumber.toString().padStart(2, "0")}`
   return yyyyww
 }

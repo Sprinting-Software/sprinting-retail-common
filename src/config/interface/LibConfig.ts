@@ -19,6 +19,7 @@ export interface LibConfig {
      * This will remove the limitation of UDP which can only send a limited amount of data per event.
      */
     useForEvents: boolean
+    useForErrors: boolean
     endpoint: string
     apiKey: string
   }

@@ -12,6 +12,6 @@ describe("ElkRestApi integration test", () => {
   })
 
   test("should process logs and send them to ElkRestApi", async () => {
-    await elkRestApi.postSingleDocument(TestUtil.getLogMessages(1)[0])
+    await elkRestApi.sendSingleDocument(TestUtil.getLogMessages(1)[0])
   })
 })

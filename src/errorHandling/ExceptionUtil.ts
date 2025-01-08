@@ -61,7 +61,7 @@ export class ExceptionUtil {
    */
   private static parseGenericErrorUtil(origError: any): Exception {
     RawLogger.debug("Original error", { origError, type: typeof origError, constructor: origError.constructor.name })
-    if (origError.constructor === Object || origError.constructor === Error) {
+    if (origError.constructor === Object || origError.constructor === Error || typeof origError === "object") {
       const contextDataExtra = {}
       let errorName = origError.name || origError.errorName
       const constructorName = origError.constructor.name
@@ -88,7 +88,7 @@ export class ExceptionUtil {
       RawLogger.debug("Wrapped error", { wrappedError })
       return wrappedError
     } else {
-      return new Exception(500, "ReallyUnknownError").setInnerError(origError)
+      return new Exception(500, "UnknownError").setInnerError(origError)
     }
   }
 

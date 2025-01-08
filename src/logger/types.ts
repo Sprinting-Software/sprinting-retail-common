@@ -29,6 +29,12 @@ export interface LogMessage {
   context?: Omit<ICommonLogContext, "tenantId"> & { tenant: string }
 }
 
+export interface LogMessageExtended extends LogMessage {
+  timestamp: string
+  "@timestamp": string
+  meta?: Record<string, string | boolean | number>
+}
+
 export type ElkRestApiConfig = {
   endpoint: string
   apiKey: string

@@ -13,6 +13,7 @@ export interface RetailCommonConfig extends EnvironmentConfig {
     apm: IApmConfig
     restApi?: {
       useForEvents: boolean
+      useForErrors: boolean
       endpoint: string
       apiKey: string
     }
