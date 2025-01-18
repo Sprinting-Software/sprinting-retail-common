@@ -1,2 +1,2 @@
  version=$(grep '"version"' package.json | awk -F '"' '{print $4}')
- npm run build-local && npm pack && cd ../ecobe2/ecobe/ && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz
+ npm run build-local && npm pack && cd ../ecobe/ecobe/ && npm install ../../sprinting-retail-common/sprinting-retail-common-${version}.tgz
