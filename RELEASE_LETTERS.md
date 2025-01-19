@@ -1,4 +1,8 @@
-<h2>Release letter for version 7.1.0 - 2025-01-07 Nikola</h2>
+<h2>Release letter for version 10.0.0 - 2025-01-19 - Nikola</h2>
+
+- Upgrading all NestJS dependencies to Nest 10. A few related dependencies are updated correspondingly.
+
+<h2>Release letter for version 7.1.0 - 2025-01-07 - Nikola</h2>
 
 - Simplify configuration interfaces by a lot and deprecating a lot of the old complex configuration code related to legacy configurations
 - Adding support of sending of events and errors via the Elastic REST API to overcome the issue of events being limited in size
