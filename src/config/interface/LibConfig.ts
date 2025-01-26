@@ -23,6 +23,11 @@ export interface LibConfig {
     endpoint: string
     apiKey: string
   }
+  /**
+   * If set to -1, then no truncation will be done.
+   * Otherwise truncation will be done.
+   */
+  errorTruncationLimit?: number
   elkLogstash: {
     isUDPEnabled: boolean
     host: string

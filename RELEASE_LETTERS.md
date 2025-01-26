@@ -1,3 +1,7 @@
+<h2>Release letter for version 10.0.1 - 2025-01-26 - Nikola</h2>
+
+- Adding the ability to set or disable the truncation limit of errors. This is useful if you want to disable truncation of error messages.
+
 <h2>Release letter for version 10.0.0 - 2025-01-19 - Nikola</h2>
 
 - Upgrading all NestJS dependencies to Nest 10. A few related dependencies are updated correspondingly.

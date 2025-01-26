@@ -15,6 +15,8 @@ import { RawLogger } from "./RawLogger"
 
 const { timestamp, printf, combine } = winston.format
 
+const DEFAULT_TRUNCATION_LIMIT = 800
+
 function getTenantMoniker(tenantId: number) {
   return `tid${tenantId}`
 }
@@ -206,12 +208,22 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     ApmHelper.Instance.captureError(exception)
     const fileName = LoggerService._getCallerFile()
     let exceptionString = exception.toString()
-    if (exceptionString.length > 800) {
-      if (this.config.elkRestApi.useForErrors) {
-        // We don't need to truncate when sending errors via the REST API
-      } else {
-        // truncate to avoid logs being lost
-        exceptionString = `${exceptionString.substring(0, 780)}...(truncated due to UDP limit)`
+
+    if (this.config.elkRestApi.useForErrors) {
+      // We don't need to truncate by default when sending errors via the REST API
+      // But we may still do it if this.config.errorTruncationLimit is explicitly set above 0
+      if (this.config.errorTruncationLimit && this.config.errorTruncationLimit > 0) {
+        exceptionString = this.truncateString(exceptionString, this.config.errorTruncationLimit)
+      }
+    } else {
+      // truncate to avoid logs being lost unless explicitly set to 0 or below.
+      const limit =
+        this.config.errorTruncationLimit !== undefined ? this.config.errorTruncationLimit : DEFAULT_TRUNCATION_LIMIT
+      if (limit > 0) {
+        exceptionString = this.truncateString(
+          exceptionString,
+          this.config.errorTruncationLimit || DEFAULT_TRUNCATION_LIMIT
+        )
       }
     }
     const formatedMessage = this.formatMessage(fileName, LogLevel.error, exceptionString)
@@ -220,6 +232,12 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     } else {
       LoggerService.logger.error(formatedMessage)
     }
+  }
+
+  private truncateString(exceptionString: string, limit: number): string {
+    const TRUNCAION_MESSAGE = "...(truncated due to UDP limit)"
+    if (exceptionString.length <= limit) return exceptionString
+    return `${exceptionString.substring(0, limit - TRUNCAION_MESSAGE.length)}${TRUNCAION_MESSAGE}`
   }
 
   /**
