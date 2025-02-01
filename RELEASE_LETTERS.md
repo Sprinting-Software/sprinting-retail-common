@@ -1,3 +1,7 @@
+<h2>Release letter for version 10.0.2 - 2025-01-26 - Nikola</h2>
+
+- Improving the readbility of stack traces. Before, the stack trace would contain some additional lines of information that would only confuse.
+
 <h2>Release letter for version 10.0.1 - 2025-01-26 - Nikola</h2>
 
 - Adding the ability to set or disable the truncation limit of errors. This is useful if you want to disable truncation of error messages.

@@ -96,8 +96,9 @@ export class Exception extends Error {
         const filePath = match ? match[1] : null
 
         if (!filePath) {
-          // If no valid file path is found, keep the line as-is
-          return line
+          // 2025-01 It produces cleaner stack traces if we drop this.
+          // If no valid file path is found, drop it
+          return null // line
         }
 
         // Make paths relative to `src` or `node_modules`, if applicable
