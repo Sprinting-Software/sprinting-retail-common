@@ -1,6 +1,8 @@
-<h2>Release letter for version 10.0.2 - 2025-01-26 - Nikola</h2>
+<h2>Release letter for version 10.0.3 - 2025-01-26 - Nikola</h2>
 
 - Improving the readbility of stack traces. Before, the stack trace would contain some additional lines of information that would only confuse.
+
+<h2>Release letter for version 10.0.2 - Skipped</h2>
 
 <h2>Release letter for version 10.0.1 - 2025-01-26 - Nikola</h2>
 
