@@ -12,6 +12,7 @@ import { ICommonLogContext, LogLevel, LogMessage, LogMessageExtended } from "./t
 import { ElkBufferedTcpLogger } from "./ElkBufferedTcpLogger"
 import { ElkRestApi } from "./ElkRestApi"
 import { RawLogger } from "./RawLogger"
+import { ExceptionConst } from "../errorHandling/exceptions/ExceptionConst"
 import { ElkBufferedTcpSender } from "./ElkBufferedTcpSender"
 
 const { timestamp, printf, combine } = winston.format
@@ -56,6 +57,9 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
     this.envDashEnv = formatEnvLetterWithDashEnv(config.env)
     this.envPrefix = formatAsEnvLetter(config.env)
+    if (this.config.errorTruncationLimit !== undefined) {
+      ExceptionConst.overrideTruncationLimitForExceptions(this.config.errorTruncationLimit)
+    }
 
     if (config.elkLogstash.isUDPEnabled) {
       transports.push(new UDPTransport(conf))

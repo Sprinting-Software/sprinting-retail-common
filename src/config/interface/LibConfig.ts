@@ -22,6 +22,9 @@ export interface LibConfig {
     useForErrors: boolean
     endpoint: string
     apiKey: string
+    /**
+     * If set to true, then you can send arbitrary objects to the ELK API
+     */
     enableTcpSender: boolean
   }
   /**

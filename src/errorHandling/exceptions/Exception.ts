@@ -2,6 +2,7 @@ import util from "util"
 import { HttpStatus } from "@nestjs/common"
 import { inspect } from "util"
 import { isProduction } from "../../config/interface/EnvironmentConfig"
+import { ExceptionConst } from "./ExceptionConst"
 
 export interface ExceptionHttpResponse {
   httpStatus: number
@@ -15,7 +16,6 @@ export interface ExceptionHttpResponse {
 
 const INSPECT_DEPTH = 3
 const INSPECT_SHOW_HIDDEN = true
-const MSG_LENGTH = 8445 // Max message length for UDP
 
 export class Exception extends Error {
   public readonly errorTraceId: string
@@ -56,8 +56,9 @@ export class Exception extends Error {
     try {
       let msg = this.message
       if (this.stack && includeStackTrace) msg += `\n ${this.generatePrettyStacktrace()}`
-      if (msg.length > MSG_LENGTH) {
-        return `${msg.substring(0, MSG_LENGTH)}...TRUNCATED`
+      const limit = ExceptionConst.getTruncationLimitForExceptions()
+      if (msg.length > limit && limit !== -1) {
+        return `${msg.substring(0, limit)}...TRUNCATED`
       }
       return msg
     } catch (e) {
@@ -85,8 +86,8 @@ export class Exception extends Error {
 
       const stackLines = this.stack.split("\n").slice(1) // Skip the first line (error message)
 
-      const srcPath = "./src/"
-      const nodeModulesPath = "./node_modules/"
+      //const srcPath = "./src/"
+      //const nodeModulesPath = "./node_modules/"
       let externalCount = 0
       const maxExternalLines = 3
 
@@ -102,10 +103,11 @@ export class Exception extends Error {
         }
 
         // Make paths relative to `src` or `node_modules`, if applicable
+        // 2025-02: We are not cutting down the lines anymore, as it makes the developer experience worse (you cannot easily navigate the links)
         if (filePath.includes("/node_modules/")) {
-          return line.replace(filePath, `${nodeModulesPath}${filePath.split("/node_modules/")[1]}`)
+          return line // line.replace(filePath, `${nodeModulesPath}${filePath.split("/node_modules/")[1]}`)
         } else if (filePath.includes("/src/")) {
-          return line.replace(filePath, `${srcPath}${filePath.split("/src/")[1]}`)
+          return line // line.replace(filePath, `${srcPath}${filePath.split("/src/")[1]}`)
         } else {
           // Count and replace lines beyond the max allowed for external code
           externalCount++

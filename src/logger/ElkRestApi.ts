@@ -29,7 +29,8 @@ export class ElkRestApi {
         headers: this.getHeaders(),
         body: JSON.stringify(log),
       })
-      RawLogger.debug("Successfully sent record to ELK in index '", this.indexName, "'")
+      // eslint-disable-next-line prefer-template
+      RawLogger.debug("Successfully sent record to ELK in index '" + this.indexName + "'")
     } catch (error) {
       RawLogger.debug("Failed to post document:", error)
     }
@@ -44,7 +45,8 @@ export class ElkRestApi {
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       })
-      RawLogger.debug("Successfully sent record to ELK in index '", this.indexName, "'")
+      // eslint-disable-next-line prefer-template
+      RawLogger.debug("Successfully sent record to ELK in index '" + this.indexName + "'")
     } catch (error) {
       RawLogger.debug("Failed to post document:", error)
     }
