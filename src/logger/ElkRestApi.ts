@@ -1,6 +1,6 @@
 import { fetchOrFail } from "../http/fetchOrFail"
 import { RawLogger } from "./RawLogger"
-import { ElkRestApiConfig } from "./types"
+import { ElkCustomIndexMessage, ElkLog, ElkRestApiConfig } from "./types"
 
 export class ElkRestApi {
   static hasNotified = false
@@ -28,6 +28,21 @@ export class ElkRestApi {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify(log),
+      })
+      RawLogger.debug("Successfully sent record to ELK in index '", this.indexName, "'")
+    } catch (error) {
+      RawLogger.debug("Failed to post document:", error)
+    }
+  }
+
+  async sendUpsertSingleDocumentCustomIndex({ data, indexName, id }: ElkCustomIndexMessage): Promise<void> {
+    this.informOnce(indexName)
+
+    try {
+      await fetchOrFail(`${this.endpoint}/${indexName}/_doc/${id}`, {
+        method: "PUT",
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
       })
       RawLogger.debug("Successfully sent record to ELK in index '", this.indexName, "'")
     } catch (error) {
@@ -79,10 +94,4 @@ export class ElkRestApi {
       ElkRestApi.hasNotified = true
     }
   }
-}
-
-// Example usage
-interface ElkLog {
-  env: string
-  [key: string]: any
 }

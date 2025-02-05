@@ -16,6 +16,7 @@ export interface RetailCommonConfig extends EnvironmentConfig {
       useForErrors: boolean
       endpoint: string
       apiKey: string
+      enableTcpSender: boolean
     }
     logstash: {
       isEnabled: boolean

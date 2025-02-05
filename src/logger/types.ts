@@ -29,6 +29,17 @@ export interface LogMessage {
   context?: Omit<ICommonLogContext, "tenantId"> & { tenant: string }
 }
 
+export interface ElkLog {
+  env: string
+  [key: string]: any
+}
+
+export interface ElkCustomIndexMessage {
+  indexName: string
+  id: string
+  data: ElkLog
+}
+
 export interface LogMessageExtended extends LogMessage {
   timestamp: string
   "@timestamp": string

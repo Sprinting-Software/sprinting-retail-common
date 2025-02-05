@@ -1,3 +1,7 @@
+<h2>Release letter for version 10.0.4 - 2025-02-05 - Goran</h2>
+
+- Implemented ELK custom index name sender with buffer and error handling with logs 
+
 <h2>Release letter for version 10.0.3 - 2025-01-26 - Nikola</h2>
 
 - Improving the readbility of stack traces. Before, the stack trace would contain some additional lines of information that would only confuse.
