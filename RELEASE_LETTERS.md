@@ -1,4 +1,4 @@
-<h2>Release letter for version 10.1.0 - 2025-02-05 - Nikola</h2>
+<h2>Release letter for version 10.1.1 - 2025-02-05 - Nikola</h2>
 
 - Making it possible to configure the truncation limit for errors. You can set it to -1 if you don't want any truncation.
 
