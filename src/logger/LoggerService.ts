@@ -12,6 +12,7 @@ import { ICommonLogContext, LogLevel, LogMessage, LogMessageExtended } from "./t
 import { ElkBufferedTcpLogger } from "./ElkBufferedTcpLogger"
 import { ElkRestApi } from "./ElkRestApi"
 import { RawLogger } from "./RawLogger"
+import { ElkBufferedTcpSender } from "./ElkBufferedTcpSender"
 
 const { timestamp, printf, combine } = winston.format
 
@@ -43,6 +44,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
   private envPrefix: string
   private tcpLoggerEvents: ElkBufferedTcpLogger
   private tcpLoggerErrors: ElkBufferedTcpLogger
+  private tcpSender: ElkBufferedTcpSender
 
   // private readonly logstashClient: Logstash
 
@@ -60,9 +62,14 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
 
     if (config.elkRestApi?.useForEvents) {
-      // Find year and week number
       this.tcpLoggerEvents = this.initTcpLogger(config, "event")
     }
+
+    if (config.elkRestApi?.enableTcpSender !== false) {
+      // enableTcpSender should be turned on unless distinctly specified otherwise
+      this.tcpSender = this.initTcpSender(config)
+    }
+
     if (config.elkRestApi?.useForErrors) {
       // Find year and week number
       this.tcpLoggerErrors = this.initTcpLogger(config, "error")
@@ -112,6 +119,11 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
       await this.tcpLoggerErrors.flushAndStop() // Ensure remaining logs are flushed
       this.tcpLoggerErrors = null
     }
+    if (this.tcpSender) {
+      RawLogger.debug("Cleaning up logger...")
+      await this.tcpSender.flushAndStop() // Ensure remaining logs are flushed
+      this.tcpSender = null
+    }
   }
 
   private initTcpLogger(config: LibConfig, logType: "event" | "error") {
@@ -124,8 +136,25 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
         indexName: `${config.env}-${config.serviceName}-${logType}-${yyyyww}`,
       })
     )
+
     tcpLogger.start()
     return tcpLogger
+  }
+
+  private initTcpSender(config: LibConfig) {
+    if (!this.config.elkRestApi) return
+    const yyyyww = getYearAndWeek()
+    const logType = "custom-index"
+    const tcpSender = new ElkBufferedTcpSender(
+      new ElkRestApi({
+        apiKey: config.elkRestApi.apiKey,
+        endpoint: config.elkRestApi.endpoint,
+        indexName: `${config.env}-${config.serviceName}-${logType}-${yyyyww}`, // default index name
+      })
+    )
+
+    tcpSender.start()
+    return tcpSender
   }
 
   info(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
@@ -178,6 +207,17 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     } else {
       LoggerService.logger.info(logMessage)
     }
+  }
+
+  sendToIndex({ indexName, id, data }: { indexName: string; id: string; data: Record<string, any> }) {
+    this.tcpSender.sendObject({
+      indexName,
+      id,
+      data: {
+        env: this.envPrefix,
+        ...data,
+      },
+    })
   }
 
   private enrichForTcpAndSend(logMessage: LogMessage, type: "event" | "error") {

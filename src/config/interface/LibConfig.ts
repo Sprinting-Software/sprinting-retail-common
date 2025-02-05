@@ -22,6 +22,7 @@ export interface LibConfig {
     useForErrors: boolean
     endpoint: string
     apiKey: string
+    enableTcpSender: boolean
   }
   /**
    * If set to -1, then no truncation will be done.
