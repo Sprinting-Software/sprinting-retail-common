@@ -41,6 +41,7 @@ function formatAsEnvLetter(env: string): string {
 @Injectable({ scope: Scope.DEFAULT })
 export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
   private static logger: winston.Logger
+  private static loggerConsoleOnly: winston.Logger
   private envDashEnv: string
   private envPrefix: string
   private tcpLoggerEvents: ElkBufferedTcpLogger
@@ -91,15 +92,21 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
       return `${args.timestamp} | ${args["log.level"]} | ${args.message} ${fileName}`
     })
     if (!LoggerService.logger) {
+      const consoleLogger = new winston.transports.Console({
+        format: consoleFormatterForDevelopers,
+      })
+      const logLevel = this.config.logLevel || "debug"
       LoggerService.logger = winston.createLogger({
         format: ecsFormatter, // ecsFormatter,
         silent: !config.enableConsoleLogs,
-        transports: [
-          new winston.transports.Console({
-            format: consoleFormatterForDevelopers,
-          }),
-          ...transports,
-        ],
+        transports: [consoleLogger, ...transports],
+        level: logLevel,
+      })
+      LoggerService.loggerConsoleOnly = winston.createLogger({
+        format: ecsFormatter,
+        silent: !config.enableConsoleLogs,
+        transports: [consoleLogger],
+        level: logLevel,
       })
     }
   }
@@ -166,7 +173,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
   }
 
   debug(fileName: string, message: any, messageData?: Record<string, any>, context?: ICommonLogContext) {
-    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, context))
+    LoggerService.logger.debug(this.formatMessage(fileName, LogLevel.debug, message, messageData, context))
   }
 
   warn(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
@@ -187,6 +194,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
       system: this.config.serviceName,
       component: this.config.serviceName,
       env: this.envPrefix,
+      labels: { envTags: this.config.envTags },
       systemEnv: `${this.envPrefix}-${this.config.serviceName}`,
       logType: LogLevel.event,
       event: {
@@ -195,7 +203,8 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
         domain: eventDomain,
         data: eventData,
       },
-      message: message || eventName,
+      message: message || `EVENT: ${eventName}`,
+      processor: { event: "event" },
     }
     if (context) {
       logMessage.context = {
@@ -208,6 +217,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
     if (this.config?.elkRestApi?.useForEvents && this.tcpLoggerEvents) {
       this.enrichForTcpAndSend(logMessage, "event")
+      LoggerService.loggerConsoleOnly.info(logMessage)
     } else {
       LoggerService.logger.info(logMessage)
     }
@@ -222,6 +232,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
         ...data,
       },
     })
+    LoggerService.loggerConsoleOnly.info("Sent to index", { indexName, id })
   }
 
   private enrichForTcpAndSend(logMessage: LogMessage, type: "event" | "error") {
@@ -273,6 +284,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     const formatedMessage = this.formatMessage(fileName, LogLevel.error, exceptionString)
     if (this.config.elkRestApi.useForErrors && this.tcpLoggerErrors) {
       this.enrichForTcpAndSend(formatedMessage, "error")
+      LoggerService.loggerConsoleOnly.error(formatedMessage)
     } else {
       LoggerService.logger.error(formatedMessage)
     }
@@ -309,7 +321,9 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
       env: this.envPrefix,
       systemEnv: `${this.envPrefix}-${this.config.serviceName}`,
       logType: logLevel,
+      labels: { envTags: this.config.envTags },
       message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
+      processor: { event: "log" },
     }
     if (commonFields) {
       obj.context = {

@@ -13,11 +13,13 @@ export class ConfigMapper {
   // refactor it one day.
   public static mapToLoggerConfig(appConfig: RetailCommonConfig): LibConfig {
     return {
+      logLevel: appConfig.elk.logLevel,
       env: appConfig.envPrefix, // `${appConfig.envPrefix}-env`,
       serviceName: appConfig.systemName,
       enableElkLogs: appConfig.elk.logstash.isEnabled,
       enableConsoleLogs: appConfig.enableConsoleLogs,
       elkRestApi: { ...appConfig.elk.restApi },
+      envTags: appConfig.elk.envTags,
       elkLogstash: {
         isUDPEnabled: true,
         host: appConfig.elk.logstash.host,

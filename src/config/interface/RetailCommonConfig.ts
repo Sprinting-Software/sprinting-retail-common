@@ -10,7 +10,9 @@ export interface RetailCommonConfig extends EnvironmentConfig {
   systemName: PrincipalName
   enableConsoleLogs: boolean
   elk: {
+    logLevel?: string | undefined
     apm: IApmConfig
+    envTags?: string | undefined
     restApi?: {
       useForEvents: boolean
       useForErrors: boolean

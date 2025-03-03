@@ -60,6 +60,12 @@ describe("LoggerService", () => {
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
+      labels: {
+        envTags: undefined,
+      },
+      processor: {
+        event: "log",
+      },
       "log.level": "info",
       logType: "info",
       message: "SomeMessage",
@@ -95,6 +101,12 @@ describe("LoggerService", () => {
       },
       env: "test",
       filename: "test-file",
+      labels: {
+        envTags: undefined,
+      },
+      processor: {
+        event: "log",
+      },
       "log.level": "info",
       logType: "info",
       message: "SomeMessage { someKey: 'someValue' }",
@@ -118,9 +130,16 @@ describe("LoggerService", () => {
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
+      labels: {
+        envTags: undefined,
+      },
+      processor: {
+        event: "event",
+      },
       "log.level": "info",
       logType: "event",
-      message: "SomeEvent",
+      message: "EVENT: SomeEvent",
+
       system: "TestSystemName",
       systemEnv: `test-TestSystemName`,
       event: {
@@ -165,9 +184,15 @@ describe("LoggerService", () => {
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
+      labels: {
+        envTags: undefined,
+      },
       "log.level": "info",
       logType: "event",
       message: "Custom event message",
+      processor: {
+        event: "event",
+      },
       system: "TestSystemName",
       systemEnv: `test-TestSystemName`,
       event: {

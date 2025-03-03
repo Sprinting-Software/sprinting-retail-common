@@ -23,10 +23,12 @@ export interface LogMessage {
   component: string
   env: string
   systemEnv: string
+  labels?: { envTags: string }
   logType: LogLevel
   message: string
   event?: Record<string, any>
   context?: Omit<ICommonLogContext, "tenantId"> & { tenant: string }
+  processor: { event: string }
 }
 
 export interface ElkLog {

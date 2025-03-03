@@ -1,3 +1,12 @@
+<h2>Release letter for version 10.2.0 - 2025-03-03 - Nikola</h2>
+
+- Fix the issue where debug-level logs shows up as warn
+- Make it possible to configure log-levels so you can control whether you want to see all logs, info-level and above, warn-level or above etc.
+- Add an attribute called envTags to make it possible to trace your own logs in ELK
+- Make it possible to unify apm and trace logs by adding processor.event and labels.envTags to messages
+- Make errors and events display on the console when running with errors and events sent over tcp
+- POSSIBLY BREAKING CHANGE: For events, change the message name from simply eventName to "EVENT: " + eventName to make it stand out more clearly in Discover pane. (This can break ELK visualizations or searches of filtering is done by message instead of eventName but this would be considered a bad practice anyway. )
+
 <h2>Release letter for version 10.1.1 - 2025-02-05 - Nikola</h2>
 
 - Making it possible to configure the truncation limit for errors. You can set it to -1 if you don't want any truncation.

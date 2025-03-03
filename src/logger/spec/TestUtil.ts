@@ -24,6 +24,7 @@ export const TestUtil = {
           requestTraceId: "req-7890",
           transactionName: "ProcessPayment",
         },
+        processor: { event: "log" },
       })
     }
     return result

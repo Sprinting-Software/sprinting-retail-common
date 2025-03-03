@@ -4,9 +4,11 @@ import { PrincipalName } from "../../baseData/PrincipalName"
  * This configuration is used to configure the instantiation of this library
  */
 export interface LibConfig {
+  logLevel?: string | undefined
   env: string
   isProdZone?: boolean
   serviceName: PrincipalName
+  envTags?: string | undefined
   /**
    * If set to false, then no logs or events will be sent to ELK.
    * APM may still be sent.
