@@ -1,3 +1,11 @@
+<h2>Release letter for version 10.3.0 - 2025-04-06 - Nikola</h2>
+
+- Add TestUtils to make it easy to create assertions on error handling
+
+- Solving an old bug: Change the logger so logger.debug actually produces debug level logs instead of info.
+
+- Making fetchOrFail able to work with requests with Content-Type other than application/json
+
 <h2>Release letter for version 10.2.0 - 2025-03-03 - Nikola</h2>
 
 - Fix the issue where debug-level logs shows up as warn

@@ -1,5 +1,3 @@
-import { fetchOrFail } from "./src/http/fetchOrFail"
-
 export * from "./src/appModule/CommonAppModule"
 export * from "./src/apm/ApmHelper"
 export { IApmConfig } from "./src/config/interface/IApmConfig"
@@ -30,5 +28,6 @@ export * from "./src/seeder/SeederHelper"
 export * from "./src/baseData/PrincipalName"
 export * from "./src/helpers/LogRedactor"
 export * from "./src/http/fetchOrFail"
+export * from "./src/testUtil/TestUtil"
 
 export { RetailCommonConfigConvict } from "./src/config/interface/RetailCommonConfigConvict"

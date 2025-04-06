@@ -203,7 +203,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
         domain: eventDomain,
         data: eventData,
       },
-      message: message || `EVENT: ${eventName}`,
+      message: message || `EVENT: ${eventName} ${eventCategory} ${eventDomain}`,
       processor: { event: "event" },
     }
     if (context) {
@@ -217,9 +217,9 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
     if (this.config?.elkRestApi?.useForEvents && this.tcpLoggerEvents) {
       this.enrichForTcpAndSend(logMessage, "event")
-      LoggerService.loggerConsoleOnly.info(logMessage)
+      LoggerService.loggerConsoleOnly.debug(logMessage)
     } else {
-      LoggerService.logger.info(logMessage)
+      LoggerService.logger.debug(logMessage)
     }
   }
 

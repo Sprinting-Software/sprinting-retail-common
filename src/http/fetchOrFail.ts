@@ -23,5 +23,10 @@ export async function fetchOrFail(input: RequestInfo, init?: RequestInit) {
       ...myinit,
     })
   }
-  return response.json()
+  const contentType = response.headers.get("Content-Type")
+  if (contentType && contentType.includes("application/json")) {
+    return response.json()
+  } else {
+    return response.text()
+  }
 }
