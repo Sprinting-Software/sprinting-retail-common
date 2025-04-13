@@ -1,4 +1,4 @@
-<h2>Release letter for version 10.4.0 - 2025-04-10 - Nikola</h2>
+<h2>Release letter for version 10.5.0 - 2025-04-10 - Nikola</h2>
 
 - Prevent sending of error details over the wire for all security related errors, also in non-production
 - Do not return the stacktrace or the error description field in non-production (so it acts like production)
