@@ -1,3 +1,18 @@
+<h2>Release letter for version 10.4.0 - 2025-04-10 - Nikola</h2>
+
+- Prevent sending of error details over the wire for all security related errors, also in non-production
+- Do not return the stacktrace or the error description field in non-production (so it acts like production)
+- Adding of debugData to the generic Exception class
+- Added a new convenience wrapper around fetchOrFail called ApiCall which makes the code more readable.
+- For fetchOrFail and ApiCall the default error data is moved to debugData to avoid leaking of error information
+- Allow a serviceName to be passed to fetchOrFail and ApiCall to improve error handling. Now the default error name will be ${serviceName}$Error instead of OutboundHttpCallFailed. This makes error handling easier.
+- Added better support for websockets in APM logs. Now websocket connections (setup with socket.io) will appear in APM with transaction type websocket instead of appearing as type 'request'.
+- Added FunctionResult to represent the result of a function with
+
+Note about the risk of these changes being breaking:
+
+- If some code depends on the output of the stacktrace or the description fields, then it may break. This is very unlikely as these fields would never be available in production.
+
 <h2>Release letter for version 10.3.0 - 2025-04-06 - Nikola</h2>
 
 - Add TestUtils to make it easy to create assertions on error handling

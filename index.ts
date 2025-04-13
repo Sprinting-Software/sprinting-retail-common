@@ -29,5 +29,5 @@ export * from "./src/baseData/PrincipalName"
 export * from "./src/helpers/LogRedactor"
 export * from "./src/http/fetchOrFail"
 export * from "./src/testUtil/TestUtil"
-
+export * from "./src/common/FunctionResult"
 export { RetailCommonConfigConvict } from "./src/config/interface/RetailCommonConfigConvict"

@@ -5,6 +5,17 @@ const apmAgentSingleton = require("elastic-apm-node") as apm.Agent
 let isInitialized = false
 let apmConfigSingleton: IApmConfig
 
+apmAgentSingleton.addFilter((payload) => {
+  if (
+    payload?.transaction?.name?.startsWith("GET /socket.io") ||
+    payload?.transaction?.name?.startsWith("POST /socket.io")
+  ) {
+    payload.transaction.type = "websocket-handshake"
+    payload.transaction.name = "Socket.IO Handshake"
+  }
+  return payload
+})
+
 import { LogContext } from "../logger/LogContext"
 import { Exception } from "../errorHandling/exceptions/Exception"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"

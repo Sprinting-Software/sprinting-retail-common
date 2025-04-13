@@ -1,7 +1,6 @@
 import util from "util"
 import { HttpStatus } from "@nestjs/common"
 import { inspect } from "util"
-import { isProduction } from "../../config/interface/EnvironmentConfig"
 import { ExceptionConst } from "./ExceptionConst"
 
 export interface ExceptionHttpResponse {
@@ -25,7 +24,8 @@ export class Exception extends Error {
     public errorName: string,
     public description?: string,
     public contextData: Record<string, any> = {},
-    public innerError?: Error
+    public innerError?: Error,
+    public debugData: Record<string, any> = {}
   ) {
     super(errorName ?? HttpStatus[httpStatus])
     this.errorName = errorName ?? HttpStatus[httpStatus]
@@ -134,10 +134,11 @@ export class Exception extends Error {
    * @private
    */
   private concatAllRelevantInfo() {
-    const { errorName, httpStatus, description, contextData } = this
+    const { errorName, httpStatus, description, contextData, debugData } = this
     let msg = `${this.constructor.name}(ERROR_NAME: ${errorName} | HTTP_STATUS: ${httpStatus} | ERR_ID: ${this.errorTraceId}`
     if (description) msg += ` | ERROR_DESCRIPTION: ${description}`
     if (contextData) msg += ` | CONTEXT_DATA: ${util.inspect(contextData, INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)})`
+    if (debugData) msg += ` | DEBUG_DATA: ${util.inspect(debugData, INSPECT_SHOW_HIDDEN, INSPECT_DEPTH)})`
     return msg
   }
 
@@ -186,28 +187,48 @@ export class Exception extends Error {
     return this
   }
 
+  /*
+   * Adds additional debug data to the response object. Existing debug data will be merged with the new data.
+   * @param {Record<string, any>} debugData - The debug data to be included with the error.
+   * @returns {AppException} - The modified AppException object with the enriched debug data
+   */
+  setDebugData(debugData: Record<string, any>) {
+    this.debugData = { ...this.debugData, ...debugData }
+    this.refreshMessageField()
+    return this
+  }
+
   /**
    * Returns the response object that will be sent to the client.
    * Please do not change the method name as it matches with the NestJS built-in error interface.
    */
-  getResponse(hideErrorDetails: boolean, isProd = isProduction()): ExceptionHttpResponse {
+  getResponse(hideErrorDetails: boolean): ExceptionHttpResponse {
     const obj: any = {
       httpStatus: this.httpStatus,
       errorName: this.errorName,
       errorTraceId: this.errorTraceId,
     }
-    if (isProd && this.errorName === "SecurityException") {
+    const isSecurityRelated =
+      this.httpStatus === HttpStatus.UNAUTHORIZED || // 401
+      this.httpStatus === HttpStatus.FORBIDDEN || // 403
+      this.httpStatus === HttpStatus.PROXY_AUTHENTICATION_REQUIRED // 407
+    if (this.errorName === "SecurityException" && isSecurityRelated) {
       // Don't leak security information in production
     } else {
-      obj.message = this.description
+      // obj.message = this.description
       obj.contextData = this.contextData
     }
 
     if (!hideErrorDetails) {
-      obj.debugMessage = this.message
-      obj.stacktrace = this.generatePrettyStacktrace()
+      // This will like this until phased out.
+      obj.debugMessage = "REDACTED"
+      obj.stacktrace = "REDACTED"
     } else {
-      obj.note = "Error details can be looked up in Kibana"
+      if (this.debugData && Object.keys(this.debugData).length > 0) {
+        obj.note = "Please lookup error details in the logs. Debug data is available."
+      } else {
+        obj.note = "Please lookup error details in the logs."
+      }
     }
     return obj
   }

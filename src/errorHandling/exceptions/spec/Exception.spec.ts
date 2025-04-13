@@ -14,7 +14,6 @@ describe("AppException", () => {
       expect(response).toEqual({
         httpStatus: HttpStatus.BAD_REQUEST,
         errorName: "ERROR_NAME",
-        message: "ERROR_DESCRIPTION",
         contextData: { key: "value" },
       })
     })
@@ -32,11 +31,10 @@ describe("AppException", () => {
           "contextData": {
             "key": "value",
           },
-          "debugMessage": "Exception(ERROR_NAME: ERROR_NAME | HTTP_STATUS: 400 | ERR_ID: xxx | ERROR_DESCRIPTION: ERROR_DESCRIPTION | CONTEXT_DATA: { key: 'value' }) ",
+          "debugMessage": "REDACTED",
           "errorName": "ERROR_NAME",
           "errorTraceId": "xxx",
           "httpStatus": 400,
-          "message": "ERROR_DESCRIPTION",
           "stacktrace": Any<String>,
         }
       `
@@ -57,8 +55,7 @@ describe("AppException", () => {
           "errorName": "ERROR_NAME",
           "errorTraceId": "xxx",
           "httpStatus": 400,
-          "message": "ERROR_DESCRIPTION",
-          "note": "Error details can be looked up in Kibana",
+          "note": "Please lookup error details in the logs.",
         }
       `)
     })
@@ -73,14 +70,10 @@ describe("AppException", () => {
         { stacktrace: expect.any(String) },
         `
         {
-          "contextData": {
-            "key": "value",
-          },
-          "debugMessage": "SecurityException(ERROR_NAME: SecurityException | HTTP_STATUS: 403 | ERR_ID: xxx | ERROR_DESCRIPTION: Description | CONTEXT_DATA: { key: 'value' }) ",
+          "debugMessage": "REDACTED",
           "errorName": "SecurityException",
           "errorTraceId": "xxx",
           "httpStatus": 403,
-          "message": "Description",
           "stacktrace": Any<String>,
         }
       `
@@ -98,7 +91,7 @@ describe("AppException", () => {
           "errorName": "SecurityException",
           "errorTraceId": "xxx",
           "httpStatus": 403,
-          "note": "Error details can be looked up in Kibana",
+          "note": "Please lookup error details in the logs.",
         }
       `)
     })
