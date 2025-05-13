@@ -1,3 +1,7 @@
+<h2>Release letter for version 10.5.1 - 2025-05-13 Szabi</h2>
+
+- Very small fix when the ELK Rest API config is not defined - logging was throwing an exception
+
 <h2>Release letter for version 10.5.0 - 2025-04-10 - Nikola</h2>
 
 - Prevent sending of error details over the wire for all security related errors, also in non-production
