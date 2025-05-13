@@ -207,7 +207,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     const fileName = LoggerService._getCallerFile()
     let exceptionString = exception.toString()
     if (exceptionString.length > 800) {
-      if (this.config.elkRestApi.useForErrors) {
+      if (this.config.elkRestApi?.useForErrors) {
         // We don't need to truncate when sending errors via the REST API
       } else {
         // truncate to avoid logs being lost
@@ -215,7 +215,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
       }
     }
     const formatedMessage = this.formatMessage(fileName, LogLevel.error, exceptionString)
-    if (this.config.elkRestApi.useForErrors && this.tcpLoggerErrors) {
+    if (this.config.elkRestApi?.useForErrors && this.tcpLoggerErrors) {
       this.enrichForTcpAndSend(formatedMessage, "error")
     } else {
       LoggerService.logger.error(formatedMessage)

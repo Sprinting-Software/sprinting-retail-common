@@ -1,3 +1,7 @@
+<h2>Release letter for version 7.1.2 - 2025-05-13 Szabi</h2>
+
+- Very small fix when the ELK Rest API config is not defined - logging was throwing an exception
+
 <h2>Release letter for version 7.1.0 - 2025-01-07 Nikola</h2>
 
 - Simplify configuration interfaces by a lot and deprecating a lot of the old complex configuration code related to legacy configurations
