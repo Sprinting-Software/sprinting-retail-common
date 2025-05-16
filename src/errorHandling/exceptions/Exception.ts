@@ -217,7 +217,7 @@ export class Exception extends Error {
     if (this.errorName === "SecurityException" && isSecurityRelated) {
       // Don't leak security information in production
     } else {
-      // obj.message = this.description
+      obj.message = this.description
       obj.contextData = this.contextData
     }
     // Additional error details are included for BAD_REQUEST and NOT_FOUND errors
