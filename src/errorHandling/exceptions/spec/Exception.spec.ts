@@ -15,6 +15,7 @@ describe("AppException", () => {
         httpStatus: HttpStatus.BAD_REQUEST,
         errorName: "ERROR_NAME",
         contextData: { key: "value" },
+        message: "ERROR_DESCRIPTION",
       })
     })
 
@@ -35,6 +36,7 @@ describe("AppException", () => {
           "errorName": "ERROR_NAME",
           "errorTraceId": "xxx",
           "httpStatus": 400,
+          "message": "ERROR_DESCRIPTION",
           "stacktrace": Any<String>,
         }
       `
@@ -55,6 +57,7 @@ describe("AppException", () => {
           "errorName": "ERROR_NAME",
           "errorTraceId": "xxx",
           "httpStatus": 400,
+          "message": "ERROR_DESCRIPTION",
           "note": "Please lookup error details in the logs.",
         }
       `)

@@ -218,6 +218,11 @@ export class Exception extends Error {
       // obj.message = this.description
       obj.contextData = this.contextData
     }
+    // Additional error details are included for BAD_REQUEST and NOT_FOUND errors
+    // to provide more context to the client.
+    if (this.httpStatus === HttpStatus.BAD_REQUEST || this.httpStatus === HttpStatus.NOT_FOUND) {
+      obj.message = this.description
+    }
 
     if (!hideErrorDetails) {
       // This will like this until phased out.

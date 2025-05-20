@@ -1,3 +1,7 @@
+<h2>Release letter for version 10.6.0 - 2025-05-20 Nikola</h2>
+
+- Include error.message for 400 and 404 errors.
+
 <h2>Release letter for version 10.5.1 - 2025-05-13 Szabi</h2>
 
 - Very small fix when the ELK Rest API config is not defined - logging was throwing an exception
