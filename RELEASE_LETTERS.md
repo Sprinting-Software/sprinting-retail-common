@@ -1,6 +1,12 @@
+<h2>Release letter for version 10.6.2 - 2025-05-22 Nikola</h2>
+
+- Make it possible to skip the adding of global unhandledRejection and uncaughtException process handlers during bootstrapping of the CommonAppModule. This is useful for CI/CD to avoid the warnings of this kind:
+
+"There is already an 'unhandledRejection' handler..."
+
 <h2>Release letter for version 10.6.1 - 2025-05-20 Nikola</h2>
 
-- Include error.message for 400 and 404 errors.
+- Include error.message for 400 and 404 errors
 
 <h2>Release letter for version 10.5.1 - 2025-05-13 Szabi</h2>
 

@@ -39,4 +39,9 @@ export interface LibConfig {
     host: string
     port: number
   }
+  /**
+   * Set to true if you don't want to set up the global process handlers for uncaught exceptions and unhandled rejections.
+   * This is useful during testing where other libraries may set up their own handlers.
+   */
+  skipGlobalProcessHandlers?: boolean
 }

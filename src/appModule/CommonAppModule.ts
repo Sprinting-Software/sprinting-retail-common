@@ -64,7 +64,7 @@ export class CommonAppModule {
     }
   }
   static forRoot(config: LibConfig): DynamicModule {
-    this.setupGlobalProcessHandlers(config)
+    if (!config.skipGlobalProcessHandlers) this.setupGlobalProcessHandlers(config)
     const _isProduction = LibraryDebugFlags.SimulateProduction() || config.isProdZone
     return {
       module: CommonAppModule, // needed for dynamic modules

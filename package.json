@@ -1,12 +1,8 @@
 {
   "name": "sprinting-retail-common",
-  "version": "10.6.1",
+  "version": "10.6.2",
   "description": "Error handling and logging with APM for NestJS",
-  "contributors": [
-    "Nikola Schou",
-    "Szabolcs Nagy",
-    "Goran Blazin"
-  ],
+  "contributors": [],
   "license": "MIT",
   "keywords": [],
   "main": "dist/index.js",
