@@ -98,8 +98,10 @@ export class ExceptionUtil {
    * @param err
    */
   public static parseAxiosError(err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { httpAgent, httpsAgent, ...restOfAxiosConfig } = err.config || {}
     const context = {
-      config: err.config,
+      config: restOfAxiosConfig,
       status: err.response.status,
       statusText: err.response.statusText,
       ...(err.response?.data?.error &&
