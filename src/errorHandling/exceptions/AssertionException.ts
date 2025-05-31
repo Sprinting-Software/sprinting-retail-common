@@ -2,7 +2,7 @@ import { Exception } from "./Exception"
 import { HttpStatus } from "@nestjs/common"
 
 /**
- * An exception using HTTP status code 403 FORBIDDEN.
+ * An exception using HTTP status code 500 BAD_GATEWAY.
  * Exceptions of this type are treated specially in that the context data, stacktrace and description
  * are never returned to the client, not even in non-production.
  * This is to ensure a minimum amount of information leakage.
