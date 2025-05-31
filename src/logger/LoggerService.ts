@@ -217,9 +217,9 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
     if (this.config?.elkRestApi?.useForEvents && this.tcpLoggerEvents) {
       this.enrichForTcpAndSend(logMessage, "event")
-      LoggerService.loggerConsoleOnly.debug(logMessage)
+      LoggerService.loggerConsoleOnly.info(logMessage)
     } else {
-      LoggerService.logger.debug(logMessage)
+      LoggerService.logger.info(logMessage)
     }
   }
 

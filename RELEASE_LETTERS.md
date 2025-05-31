@@ -1,3 +1,7 @@
+<h2>Release letter for version NEXT - 2025-05-31 Nikola</h2>
+
+- Changing the log-level of ELK events to be info instead of debug so that we have a better developer experience (event logs shows up when running with info-level logs) and we have a more natural control of log-level in environments.
+
 <h2>Release letter for version 10.6.2 - 2025-05-22 Nikola</h2>
 
 - Make it possible to skip the adding of global unhandledRejection and uncaughtException process handlers during bootstrapping of the CommonAppModule. This is useful for CI/CD to avoid the warnings of this kind:

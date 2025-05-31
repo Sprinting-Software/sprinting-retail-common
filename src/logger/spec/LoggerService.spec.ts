@@ -136,7 +136,7 @@ describe("LoggerService", () => {
       processor: {
         event: "event",
       },
-      "log.level": "debug",
+      "log.level": "info",
       logType: "event",
       message: "EVENT: SomeEvent Payment SomeDomain",
 
@@ -187,7 +187,7 @@ describe("LoggerService", () => {
       labels: {
         envTags: undefined,
       },
-      "log.level": "debug",
+      "log.level": "info",
       logType: "event",
       message: "Custom event message",
       processor: {
