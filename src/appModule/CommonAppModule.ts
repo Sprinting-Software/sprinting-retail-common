@@ -14,6 +14,7 @@ import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider
 import { ApmHelper } from "../apm/ApmHelper"
 import { SeederModule } from "../seeder/SeederModule"
 import { LibraryDebugFlags } from "../config/LibraryDebugFlags"
+import { GlobalProcessHandlerProvider } from "./GlobalProcessHandlerProvider"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -64,12 +65,24 @@ export class CommonAppModule {
     }
   }
   static forRoot(config: LibConfig): DynamicModule {
-    if (!config.skipGlobalProcessHandlers) this.setupGlobalProcessHandlers(config)
+    //if (!config.skipGlobalProcessHandlers) this.setupGlobalProcessHandlers(config)
     const _isProduction = LibraryDebugFlags.SimulateProduction() || config.isProdZone
+    const conditionalProvider = config.skipGlobalProcessHandlers
+      ? []
+      : [
+          {
+            provide: GlobalProcessHandlerProvider,
+            useFactory: (loggerService: LoggerService) => {
+              return new GlobalProcessHandlerProvider(loggerService)
+            },
+            inject: [LoggerService],
+          },
+        ]
     return {
       module: CommonAppModule, // needed for dynamic modules
       imports: [LoggerModule.forRootV2(config), SeederModule],
       providers: [
+        ...conditionalProvider,
         {
           provide: ApmHelper,
           useValue: ApmHelper.Instance,
@@ -108,44 +121,8 @@ export class CommonAppModule {
     CommonAppModule.setupGlobalProcessHandlers(loggerConfig)
   }
 
-  public static setupGlobalProcessHandlers(loggerConfig: LibConfig) {
+  private static setupGlobalProcessHandlers(loggerConfig: LibConfig) {
     const logger = new LoggerService(loggerConfig)
-
-    if (process.listenerCount("unhandledRejection") > 0) {
-      try {
-        logger.warn(
-          "CommonAppModule",
-          "There is already an 'unhandledRejection' handler, not adding sprinting-retail-common one."
-        )
-      } catch (err) {
-        //Suppress errors in error handling
-        // eslint-disable-next-line no-console
-        console.log("There is already an 'unhandledRejection' handler, not adding sprinting-retail-common one.")
-      }
-    } else {
-      process
-        .on("unhandledRejection", (reason) => {
-          const msg = "A Promise rejection was not handled."
-          // eslint-disable-next-line no-console
-          console.log("UnhandledRejectionError", msg, reason)
-          try {
-            logger.logException("UnhandledRejectionError", msg, undefined, <Error>reason)
-          } catch (err) {
-            // eslint-disable-next-line no-console
-            console.log("Error while trying to report an UnhandledRejectionError", err)
-          }
-        })
-        .on("uncaughtException", (reason) => {
-          const msg = "An exception was not caught properly."
-          // eslint-disable-next-line no-console
-          console.log("UncaughtException", msg, reason)
-          try {
-            logger.logException("UncaughtException", msg, undefined, <Error>reason)
-          } catch (err) {
-            // eslint-disable-next-line no-console
-            console.log("Error while trying to report an UncaughtException", err)
-          }
-        })
-    }
+    GlobalProcessHandlerProvider.setupGlobalProcessHandlersWithLogger(logger)
   }
 }

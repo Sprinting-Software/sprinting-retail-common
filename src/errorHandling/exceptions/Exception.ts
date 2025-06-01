@@ -24,7 +24,7 @@ export class Exception extends Error {
     public errorName: string,
     public description?: string,
     public contextData: Record<string, any> = {},
-    public innerError?: Error,
+    public innerError?: Error | unknown,
     public debugData: Record<string, any> = {}
   ) {
     super(errorName ?? HttpStatus[httpStatus])
@@ -39,8 +39,8 @@ export class Exception extends Error {
    * We need this to preserve the original stack trace in ELK when errors are wrapped to get proper error reporting.
    * @private
    */
-  public setStacktraceFromAnotherError(error: Error) {
-    if (error) {
+  public setStacktraceFromAnotherError(error: unknown) {
+    if (error instanceof Error) {
       this.stack = error.stack
     }
   }

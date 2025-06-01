@@ -11,7 +11,7 @@ export class AssertionException extends Exception {
   constructor(
     public readonly description?: string,
     public readonly contextData: Record<string, any> = {},
-    public readonly innerError?: Error
+    public readonly innerError?: Error | unknown
   ) {
     super(HttpStatus.BAD_GATEWAY, "AssertionException", description, contextData, innerError)
     Object.setPrototypeOf(this, AssertionException.prototype)

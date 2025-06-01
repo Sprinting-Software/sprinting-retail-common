@@ -12,7 +12,8 @@ export class ExceptionUtil {
    * Parses an error and returns an AppException.
    * @param error
    */
-  public static parse(error: Error): Exception {
+  public static parse(_error: unknown): Exception {
+    const error = _error as Error
     if (error instanceof Exception) {
       return error
     }

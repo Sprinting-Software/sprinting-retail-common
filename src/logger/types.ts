@@ -9,6 +9,8 @@ export interface ICommonLogContext {
   transactionName?: string
 }
 
+export type IEventLogContext = Record<string, string | null | undefined> | undefined
+
 export const enum LogLevel {
   info = "info",
   event = "event",

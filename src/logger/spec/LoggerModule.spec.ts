@@ -5,6 +5,7 @@ import { LoggerModule } from "../LoggerModule"
 import { LoggerService } from "../LoggerService"
 import { ApmHelper } from "../../apm/ApmHelper"
 import { LibTestConfig, TestConfig } from "../../config/spec/TestConfig"
+import { LoggerServiceV2 } from "../LoggerServiceV2"
 
 describe("LoggerModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -37,6 +38,16 @@ describe("LoggerModule", () => {
       const apmHelper = app.get<ApmHelper>(ApmHelper)
       expect(apmHelper).toBeDefined()
       expect(apmHelper).toBeInstanceOf(ApmHelper)
+    })
+
+    it("loggerServiceV2 should work", async () => {
+      const app = await Test.createTestingModule({
+        imports: [LoggerModule.forRootV2(LibTestConfig)],
+      }).compile()
+      const loggerService = app.get<LoggerServiceV2>(LoggerServiceV2)
+      expect(loggerService).toBeDefined()
+      expect(loggerService).toBeInstanceOf(LoggerServiceV2)
+      loggerService.info(__filename, "some info message")
     })
   })
 })

@@ -9,7 +9,7 @@ export class ClientException extends Exception {
     public readonly errorName: string,
     public readonly description?: string,
     public readonly contextData: Record<string, any> = {},
-    public readonly innerError?: Error
+    public readonly innerError?: Error | unknown
   ) {
     super(HttpStatus.BAD_REQUEST, errorName, description, contextData, innerError)
     Object.setPrototypeOf(this, ClientException.prototype)

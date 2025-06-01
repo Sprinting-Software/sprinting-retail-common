@@ -1,14 +1,14 @@
 import { UDPTransport } from "udp-transport-winston"
 import * as winston from "winston"
 import { ApmHelper } from "../apm/ApmHelper"
-import { Injectable, OnApplicationShutdown, OnModuleDestroy, Scope } from "@nestjs/common"
+import { Injectable, OnApplicationShutdown, Scope } from "@nestjs/common"
 import { Exception } from "../errorHandling/exceptions/Exception"
 import { LibConfig } from "../config/interface/LibConfig"
 import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 import ecsFormat from "@elastic/ecs-winston-format"
-import { ICommonLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
+import { ICommonLogContext, IEventLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
 import { ElkBufferedTcpLogger } from "./ElkBufferedTcpLogger"
 import { ElkRestApi } from "./ElkRestApi"
 import { RawLogger } from "./RawLogger"
@@ -39,7 +39,7 @@ function formatAsEnvLetter(env: string): string {
   } else return env
 }
 @Injectable({ scope: Scope.DEFAULT })
-export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
+export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown {
   private static logger: winston.Logger
   private static loggerConsoleOnly: winston.Logger
   private envDashEnv: string
@@ -47,6 +47,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
   private tcpLoggerEvents: ElkBufferedTcpLogger
   private tcpLoggerErrors: ElkBufferedTcpLogger
   private tcpSender: ElkBufferedTcpSender
+  udpTransport: UDPTransport
 
   // private readonly logstashClient: Logstash
 
@@ -63,7 +64,9 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
 
     if (config.elkLogstash.isUDPEnabled) {
-      transports.push(new UDPTransport(conf))
+      const udpTransport = new UDPTransport(conf)
+      this.udpTransport = udpTransport
+      transports.push(udpTransport)
     }
 
     if (config.elkRestApi?.useForEvents) {
@@ -111,13 +114,24 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     }
   }
   onApplicationShutdown() {
-    this.destroyTcpLoggers()
+    this.destroyTcpLoggers().catch((err) => {
+      RawLogger.debug("Error during logger cleanup", { error: err })
+    })
+    if (this.udpTransport) {
+      try {
+        this.udpTransport.close() // Important: prevent unhandled socket state
+        this.udpTransport = null
+      } catch (err) {
+        RawLogger.debug("Error during UDP transport cleanup", { err })
+      }
+    }
+    /*this.destroyTcpLoggers().catch((err) => {
+      RawLogger.debug("Error during logger cleanup", { error: err })
+    })*/
   }
 
   // Clean up on module destruction
-  onModuleDestroy() {
-    this.destroyTcpLoggers()
-  }
+  //onModuleDestroy() {}
 
   private async destroyTcpLoggers() {
     if (this.tcpLoggerEvents) {
@@ -187,8 +201,15 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
     eventDomain: string,
     eventData: any,
     message?: string,
-    context?: ICommonLogContext
+    context?: ICommonLogContext,
+    eventContext?: IEventLogContext
   ) {
+    const ctx = !context
+      ? undefined
+      : {
+          ...mapTenantIdToTenantMoniker(context),
+        }
+
     const logMessage: LogMessage = {
       filename: fileName,
       system: this.config.serviceName,
@@ -202,18 +223,13 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
         category: eventCategory,
         domain: eventDomain,
         data: eventData,
+        context: eventContext,
       },
       message: message || `EVENT: ${eventName} ${eventCategory} ${eventDomain}`,
       processor: { event: "event" },
     }
-    if (context) {
-      logMessage.context = {
-        clientTraceId: context.clientTraceId,
-        tenant: getTenantMoniker(context.tenantId),
-        userId: context.userId,
-        requestTraceId: context.requestTraceId,
-        transactionName: context.transactionName,
-      }
+    if (ctx) {
+      logMessage.context = ctx
     }
     if (this.config?.elkRestApi?.useForEvents && this.tcpLoggerEvents) {
       this.enrichForTcpAndSend(logMessage, "event")
@@ -257,7 +273,7 @@ export class LoggerService implements OnModuleDestroy, OnApplicationShutdown {
    * @param error
    * @param contextData For some additional data relevant to the error. This context data will be added to the exceptions context data.
    */
-  logError(error: Exception | Error, contextData?: Record<string, any>) {
+  logError(error: Exception | Error | unknown, contextData?: Record<string, any>) {
     const exception = ExceptionUtil.parse(error)
     if (contextData) exception.setContextData(contextData)
     ApmHelper.Instance.captureError(exception)
@@ -365,4 +381,19 @@ function getYearAndWeek() {
   const weekNumber = Math.ceil((dayOfYear + firstDayOfYear.getDay()) / 7)
   const yyyyww = `${year}.${weekNumber.toString().padStart(2, "0")}`
   return yyyyww
+}
+
+/**
+ * Will change the object from having a tenantId number field to a tenant moniker string field.
+ * @param x Input object possibly containing tenantId
+ * @returns A new object with tenant field instead of tenantId, or the input unchanged if not applicable
+ */
+function mapTenantIdToTenantMoniker(x: any) {
+  if (!x || typeof x !== "object" || typeof x.tenantId !== "number") return x
+
+  const { tenantId, ...rest } = x
+  return {
+    ...rest,
+    tenant: getTenantMoniker(tenantId),
+  }
 }

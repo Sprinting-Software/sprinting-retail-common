@@ -1,6 +1,13 @@
-<h2>Release letter for version NEXT - 2025-05-31 Nikola</h2>
+<h2>Release letter for version 10.7.0 - 2025-05-31 Nikola</h2>
 
 - Changing the log-level of ELK events to be info instead of debug so that we have a better developer experience (event logs shows up when running with info-level logs) and we have a more natural control of log-level in environments.
+- Added eventContext as optional extra argument to the event function
+- Made the types of various functions compatible with the NodeJS convention that errors has type unknown (the type of an object in a catch block is unknown, not Error)
+- Added LoggerServiceV2 to the LoggerModule. This is a context aware version of LoggerService. Also the signatures of LoggerServiceV2 are slightly different as we no longer need to pass in commonContext ourselves.
+- Added ApplicationContextModule which allows for sharing of context such as tenantId via AsyncLocalStorage.
+- Improved the attachment of process handlers (unhandledRejection and uncaughtException) so they rely on the same LoggerService instance (and hence share the same module tear-down logic)
+
+All the changes are believed to be backward compatible.
 
 <h2>Release letter for version 10.6.2 - 2025-05-22 Nikola</h2>
 
