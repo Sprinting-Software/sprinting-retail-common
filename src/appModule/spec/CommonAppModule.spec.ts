@@ -4,6 +4,7 @@ import { LoggerService } from "../../logger/LoggerService"
 import { ApmHelper } from "../../apm/ApmHelper"
 import { LibTestConfig } from "../../config/spec/TestConfig"
 import { CommonAppModule } from "../CommonAppModule"
+import { AsyncContextModule } from "../../asyncLocalContext/AsyncContextModule"
 
 describe("CommonAppModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -15,7 +16,7 @@ describe("CommonAppModule", () => {
 
   it("should provide an instance of ApmHelper", async () => {
     const app = await Test.createTestingModule({
-      imports: [CommonAppModule.forRoot(LibTestConfig)],
+      imports: [AsyncContextModule.forRoot(), CommonAppModule.forRoot(LibTestConfig)],
     }).compile()
     const loggerService = app.get<LoggerService>(LoggerService)
     expect(loggerService).toBeInstanceOf(LoggerService)
@@ -27,11 +28,11 @@ describe("CommonAppModule", () => {
     const warnMock = jest.spyOn(LoggerService.prototype, "warn")
     const countPre = process.listenerCount("unhandledRejection")
     await Test.createTestingModule({
-      imports: [CommonAppModule.forRoot(LibTestConfig)],
+      imports: [AsyncContextModule.forRoot(), CommonAppModule.forRoot(LibTestConfig)],
     }).compile()
     const countPost1 = process.listenerCount("unhandledRejection")
     await Test.createTestingModule({
-      imports: [CommonAppModule.forRoot(LibTestConfig)],
+      imports: [AsyncContextModule.forRoot(), CommonAppModule.forRoot(LibTestConfig)],
     }).compile()
     const countPost2 = process.listenerCount("unhandledRejection")
 

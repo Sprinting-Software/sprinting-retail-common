@@ -1,5 +1,8 @@
 import TenantContext from "./TenantContext"
 
+/**
+ * @deprecated Use the new framework for async local context
+ */
 export class TenantContextFactory {
   public static getTenantContext(request: Request) {
     const t: string = request.headers["x-tenantid"]

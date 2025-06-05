@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common"
 import { ClientException } from "../errorHandling/exceptions/ClientException"
 
+/**
+ * @deprecated Use the new framework for async local context
+ */
 @Injectable()
 export default class TenantContext {
   constructor(tenantId?: number) {

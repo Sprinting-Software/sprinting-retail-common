@@ -8,20 +8,17 @@ import util from "util"
 import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 import ecsFormat from "@elastic/ecs-winston-format"
-import { ICommonLogContext, IEventLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
+import { IEventLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
 import { ElkBufferedTcpLogger } from "./ElkBufferedTcpLogger"
 import { ElkRestApi } from "./ElkRestApi"
 import { RawLogger } from "./RawLogger"
 import { ExceptionConst } from "../errorHandling/exceptions/ExceptionConst"
 import { ElkBufferedTcpSender } from "./ElkBufferedTcpSender"
+import { AsyncContext } from "../asyncLocalContext/AsyncContext"
 
 const { timestamp, printf, combine } = winston.format
 
 const DEFAULT_TRUNCATION_LIMIT = 800
-
-function getTenantMoniker(tenantId: number) {
-  return `tid${tenantId}`
-}
 
 function formatEnvLetterWithDashEnv(env: string): string {
   if (env.length === 1) {
@@ -51,7 +48,11 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
 
   // private readonly logstashClient: Logstash
 
-  constructor(private readonly config: LibConfig, transports: any[] = []) {
+  constructor(
+    private readonly config: LibConfig,
+    transports: any[] = [],
+    private readonly contextProvider?: AsyncContext
+  ) {
     const conf = {
       systemName: config.serviceName,
       host: config.elkLogstash.host,
@@ -182,16 +183,29 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
     return tcpSender
   }
 
-  info(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
-    LoggerService.logger.info(this.formatMessage(fileName, LogLevel.info, message, messageData, context))
+  info(fileName: string, message: string, messageData?: Record<string, any>) {
+    const doc = this.formatMessage(
+      fileName,
+      LogLevel.info,
+      message,
+      messageData,
+      this.contextProvider?.getContextOrUndefined()
+    )
+    LoggerService.logger.info(doc)
   }
 
-  debug(fileName: string, message: any, messageData?: Record<string, any>, context?: ICommonLogContext) {
-    LoggerService.logger.debug(this.formatMessage(fileName, LogLevel.debug, message, messageData, context))
+  debug(fileName: string, message: any, messageData?: Record<string, any>) {
+    LoggerService.logger.debug(
+      this.formatMessage(fileName, LogLevel.debug, message, messageData, this.contextProvider?.getContextOrUndefined())
+    )
   }
 
-  warn(fileName: string, message: string, messageData?: Record<string, any>, context?: ICommonLogContext) {
-    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, context))
+  warn(fileName: string, message: string, messageData?: Record<string, any>) {
+    LoggerService.logger.warn(this.formatMessage(fileName, LogLevel.warn, message, messageData, this.getAsyncContext()))
+  }
+
+  private getAsyncContext(): Record<string, any> {
+    return this.contextProvider?.getContextOrUndefined()
   }
 
   event(
@@ -201,14 +215,9 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
     eventDomain: string,
     eventData: any,
     message?: string,
-    context?: ICommonLogContext,
     eventContext?: IEventLogContext
   ) {
-    const ctx = !context
-      ? undefined
-      : {
-          ...mapTenantIdToTenantMoniker(context),
-        }
+    const ctx = this.getAsyncContext()
 
     const logMessage: LogMessage = {
       filename: fileName,
@@ -297,7 +306,14 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
         )
       }
     }
-    const formatedMessage = this.formatMessage(fileName, LogLevel.error, exceptionString)
+    const fullContextData = exception.contextData
+    const formatedMessage = this.formatMessage(
+      fileName,
+      LogLevel.error,
+      exceptionString,
+      fullContextData,
+      this.getAsyncContext()
+    )
     if (this.config.elkRestApi?.useForErrors && this.tcpLoggerErrors) {
       this.enrichForTcpAndSend(formatedMessage, "error")
       LoggerService.loggerConsoleOnly.error(formatedMessage)
@@ -328,7 +344,7 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
     logLevel: LogLevel,
     message: string,
     data?: Record<string, any>,
-    commonFields?: ICommonLogContext
+    context?: Record<string, any> | undefined
   ): LogMessage {
     const obj: LogMessage = {
       filename: fileName,
@@ -341,14 +357,8 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
       message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
       processor: { event: "log" },
     }
-    if (commonFields) {
-      obj.context = {
-        clientTraceId: commonFields.clientTraceId,
-        tenant: getTenantMoniker(commonFields.tenantId),
-        userId: commonFields.userId,
-        requestTraceId: commonFields.requestTraceId,
-        transactionName: commonFields.transactionName,
-      }
+    if (context) {
+      obj.context = context
     }
     return obj
   }
@@ -381,19 +391,4 @@ function getYearAndWeek() {
   const weekNumber = Math.ceil((dayOfYear + firstDayOfYear.getDay()) / 7)
   const yyyyww = `${year}.${weekNumber.toString().padStart(2, "0")}`
   return yyyyww
-}
-
-/**
- * Will change the object from having a tenantId number field to a tenant moniker string field.
- * @param x Input object possibly containing tenantId
- * @returns A new object with tenant field instead of tenantId, or the input unchanged if not applicable
- */
-function mapTenantIdToTenantMoniker(x: any) {
-  if (!x || typeof x !== "object" || typeof x.tenantId !== "number") return x
-
-  const { tenantId, ...rest } = x
-  return {
-    ...rest,
-    tenant: getTenantMoniker(tenantId),
-  }
 }

@@ -8,7 +8,7 @@ import { ExceptionUtil } from "./ExceptionUtil"
 export class GlobalErrorFilter implements ExceptionFilter {
   constructor(
     private readonly logger: LoggerService,
-    private readonly logContext: LogContext,
+    private readonly logContext: LogContext | undefined,
     private readonly hideErrorDetailsInHttpResponse: boolean
   ) {}
 

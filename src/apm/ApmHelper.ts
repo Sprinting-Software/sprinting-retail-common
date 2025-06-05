@@ -22,6 +22,7 @@ import { ExceptionUtil } from "../errorHandling/ExceptionUtil"
 import { DEFAULT_APM_CONFIG } from "../config/interface/RetailCommonConfigConvict"
 import apm from "elastic-apm-node"
 import { IApmConfig } from "../config/interface/IApmConfig"
+import { RawLogger } from "../logger/RawLogger"
 
 /**
  * Used to encapsulate the ApmAgent and allow for easy dependency injection.
@@ -32,6 +33,19 @@ export class ApmHelper {
    * Until you call ApmHelper.initialize(...), this Instance will be "dead"
    */
   public static readonly Instance = new ApmHelper()
+
+  /**
+   * Returns the labels of the current transaction.
+   * This relies on an internal property `_labels` of the transaction, and it may break in the future if the APM library changes.
+   * @returns
+   */
+  public static getLabelsOfCurrentTransaction() {
+    if (!isInitialized) return {}
+    if (!apmAgentSingleton.currentTransaction) {
+      return {}
+    }
+    return (apmAgentSingleton.currentTransaction as any)?._labels
+  }
 
   /**
    * Must be called as the first line of code in the top-most index.ts or main.ts file in the project
@@ -97,7 +111,17 @@ export class ApmHelper {
         errorLabels[key] = value
       })
     }
-
+    try {
+      const txLabels = ApmHelper.getLabelsOfCurrentTransaction()
+      if (txLabels) {
+        Object.entries(txLabels).forEach(([key, value]) => {
+          errorLabels[key] = value
+        })
+      }
+    } catch (err) {
+      // Skip
+      RawLogger.debug("Failed to get labels of current transaction", { error: err })
+    }
     if (logContext?.tenantId) errorLabels.tenantId = `tid${logContext.tenantId}`
     if (logContext?.userId) errorLabels.userId = logContext.userId
 
@@ -144,11 +168,7 @@ export class ApmHelper {
    * @param value
    */
   public setLabelOnCurrentTransaction(field: string, value: string) {
-    if (!isInitialized) return
-    if (!apmAgentSingleton.currentTransaction) {
-      return
-    }
-    apmAgentSingleton.currentTransaction.setLabel(field, value)
+    apmAgentSingleton?.currentTransaction?.setLabel(field, value)
   }
 
   /**

@@ -1,15 +1,15 @@
 /**
  * Shared context data for all log records
  */
-export interface ICommonLogContext {
+/*export interface ICommonLogContext {
   tenantId: number
   clientTraceId?: string
   userId?: string
   requestTraceId?: string
   transactionName?: string
-}
+}*/
 
-export type IEventLogContext = Record<string, string | null | undefined> | undefined
+export type IEventLogContext = Record<string, string | null | undefined | number> | undefined
 
 export const enum LogLevel {
   info = "info",
@@ -29,7 +29,7 @@ export interface LogMessage {
   logType: LogLevel
   message: string
   event?: Record<string, any>
-  context?: Omit<ICommonLogContext, "tenantId"> & { tenant: string }
+  context?: Record<string, any> // Omit<ICommonLogContext, "tenantId"> & { tenant: string }
   processor: { event: string }
 }
 

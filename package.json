@@ -1,6 +1,6 @@
 {
   "name": "sprinting-retail-common",
-  "version": "10.7.1",
+  "version": "11.0.0",
   "description": "Error handling and logging with APM for NestJS",
   "contributors": [],
   "license": "MIT",
@@ -34,6 +34,7 @@
     "convict": "^6.2.4",
     "convict-format-with-validator": "^6.2.0",
     "elastic-apm-node": "4.1.0",
+    "express": "^5.1.0",
     "logstash-client": "1.1.1",
     "reflect-metadata": "^0.1.13",
     "udp-transport-winston": "^1.2.11",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^10.4.15",
+    "@types/express": "^5.0.2",
     "@types/jest": "^29.4.0",
     "@types/node": "^18.19.64",
     "@typescript-eslint/eslint-plugin": "^5.54.0",

@@ -1,3 +1,29 @@
+<h2>Release letter for version 11.0.0 - 2025-06-07 Nikola</h2>
+
+Although we are introducing a new major version, the upgrade from v10.x to v11.x should be backward compatible. Rather, it is a major version number because we introduce the new context framework.
+
+- Introducing the new context framework based on AsyncLocalContext. It makes it easy and safe to rely on a shared kernel of context data
+  such as tenantId, userId and userType.
+
+  The new framework should be backward compatible with the old TenantContext. To adopt the new context framework, you should remove dependencies on TenantContext
+  and instead add SystemContextBase. You may also extend SystemContextBase or build
+  your own SystemContext class by building on top of SystemContextBase (injecting it).
+
+- To set up the context framework, add this as the first import of you AppModule:
+
+  `imports: [AsyncContextModule.forRoot(...)]`
+
+- Introducing the TenantContextGuard which will set the tenantId context from the X-TenantId header. Furthermore, if the strictHandlingOfTenantIdHeader flag is set to true in the forRoot call like shown here:
+
+  `imports: [AsyncContextModule.forRoot(..., { strictHandlingOfTenantIdHeader: true })]`
+
+  then the guard will fail hard if the X-TenantId header is omitted unless you put the AllowMissingTenantIdHeader decorator on the endpoint like shown here:
+
+  ```
+  @AllowMissingTenantIdHeader
+  @Get(...)
+  ```
+
 <h2>Release letter for version 10.7.1 - 2025-05-31 Nikola</h2>
 
 - Changing the log-level of ELK events to be info instead of debug so that we have a better developer experience (event logs shows up when running with info-level logs) and we have a more natural control of log-level in environments.

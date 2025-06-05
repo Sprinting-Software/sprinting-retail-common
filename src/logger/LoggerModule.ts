@@ -5,12 +5,28 @@ import { DynamicModule, Global, Module } from "@nestjs/common"
 import { ConfigModule } from "../config/ConfigModule"
 import { LibConfig } from "../config/interface/LibConfig"
 import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
-import { LoggerServiceV2 } from "./LoggerServiceV2"
-import { ApplicationAsyncContextModule } from "../localasynccontext/ApplicationAsyncContextModule"
+import { LoggerService2 } from "./LoggerService2"
 
 @Module({})
 @Global()
 export class LoggerModule {
+  static forRootV2(config: LibConfig): DynamicModule {
+    return {
+      module: LoggerModule,
+      providers: [
+        {
+          provide: LoggerService,
+          useValue: new LoggerService(config),
+        },
+        LoggerService2,
+        {
+          provide: ApmHelper,
+          useValue: ApmHelper.Instance,
+        },
+      ],
+      exports: [LoggerService, LoggerService2, ApmHelper],
+    }
+  }
   /**
    * @deprecated Use `forRootV2` instead.
    * We need to use the forRoot pattern here, because we need the ApmHelper to be instantiated via useValue instead of useFactory
@@ -21,7 +37,7 @@ export class LoggerModule {
   static forRoot(provider: RetailCommonConfigProvider): DynamicModule {
     return {
       module: LoggerModule,
-      imports: [ConfigModule, ApplicationAsyncContextModule],
+      imports: [ConfigModule],
       providers: [
         {
           provide: LoggerService,
@@ -30,31 +46,13 @@ export class LoggerModule {
             return new LoggerService(loggerConfig)
           },
         },
-        LoggerServiceV2,
+        LoggerService2,
         {
           provide: ApmHelper,
           useValue: ApmHelper.Instance,
         },
       ],
-      exports: [LoggerService, LoggerServiceV2, ApmHelper],
-    }
-  }
-  static forRootV2(config: LibConfig): DynamicModule {
-    return {
-      module: LoggerModule,
-      imports: [ApplicationAsyncContextModule],
-      providers: [
-        {
-          provide: LoggerService,
-          useValue: new LoggerService(config),
-        },
-        LoggerServiceV2,
-        {
-          provide: ApmHelper,
-          useValue: ApmHelper.Instance,
-        },
-      ],
-      exports: [LoggerService, LoggerServiceV2, ApmHelper],
+      exports: [LoggerService, LoggerService2, ApmHelper],
     }
   }
 }

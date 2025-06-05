@@ -1,3 +1,4 @@
+import { AsyncContext } from "../../asyncLocalContext/AsyncContext"
 import { LoggerService } from "../LoggerService"
 
 import Transport from "winston-transport"
@@ -24,6 +25,7 @@ function clean(obj) {
   delete obj["@timestamp"]
   delete obj[Symbol.for("level")]
   delete obj[Symbol.for("message")]
+  //delete obj["context"]
 }
 
 describe("LoggerService", () => {
@@ -40,7 +42,11 @@ describe("LoggerService", () => {
   }
 
   const mockTransport = new MockTransport()
-  const loggerService = new LoggerService(mockConfig, [mockTransport])
+  const asyncContext = new AsyncContext(
+    {},
+    { allowDefaultContextPropertyInitialization: true, allowDefaultContextPropertyInitializationRepeatedly: true }
+  )
+  const loggerService = new LoggerService(mockConfig, [mockTransport], asyncContext)
 
   afterEach(() => {
     jest.clearAllMocks()
@@ -57,6 +63,7 @@ describe("LoggerService", () => {
     delete actual[Symbol.for("message")]
     expect(actual).toEqual({
       component: "TestSystemName",
+      context: {},
       "ecs.version": "8.10.0",
       env: "test",
       filename: "test-file",
@@ -75,21 +82,43 @@ describe("LoggerService", () => {
   })
 
   it("should send info correctly 2", () => {
-    loggerService.info(
-      "test-file",
-      "SomeMessage",
-      { someKey: "someValue" },
-      {
-        tenantId: 100,
-        clientTraceId: "CT-2342",
-        userId: "userId",
-        requestTraceId: "RQ-dsfsdf",
-        transactionName: "txname",
-      }
-    )
+    asyncContext.initProperties({
+      clientTraceId: "CT-2342",
+      requestTraceId: "RQ-dsfsdf",
+      tenant: "tid100",
+      transactionName: "txname",
+      userId: "userId",
+    })
+    loggerService.info("test-file", "SomeMessage", { someKey: "someValue" })
     const obj = mockTransport.logMessages.pop()
     clean(obj)
-    expect(obj).toEqual({
+    expect(obj).toMatchInlineSnapshot(`
+      {
+        "component": "TestSystemName",
+        "context": {
+          "clientTraceId": "CT-2342",
+          "requestTraceId": "RQ-dsfsdf",
+          "tenant": "tid100",
+          "transactionName": "txname",
+          "userId": "userId",
+        },
+        "ecs.version": "8.10.0",
+        "env": "test",
+        "filename": "test-file",
+        "labels": {
+          "envTags": undefined,
+        },
+        "log.level": "info",
+        "logType": "info",
+        "message": "SomeMessage { someKey: 'someValue' }",
+        "processor": {
+          "event": "log",
+        },
+        "system": "TestSystemName",
+        "systemEnv": "test-TestSystemName",
+      }
+    `)
+    /*expect(obj).toEqual({
       component: "TestSystemName",
       "ecs.version": "8.10.0",
       context: {
@@ -112,20 +141,103 @@ describe("LoggerService", () => {
       message: "SomeMessage { someKey: 'someValue' }",
       system: "TestSystemName",
       systemEnv: `test-TestSystemName`,
-    })
+    })*/
   })
 
   it("should send events correctly", () => {
-    loggerService.event("test-file", "SomeEvent", "Payment", "SomeDomain", { someKey: "someValue" }, undefined, {
-      tenantId: 100,
-      clientTraceId: "xxx",
-      userId: "userId",
+    asyncContext.initProperties({
+      clientTraceId: "CT-2342",
       requestTraceId: "RQ-dsfsdf",
+      tenant: "tid100",
       transactionName: "txname",
+      userId: "userId",
     })
+    loggerService.event(
+      "test-file",
+      "SomeEvent",
+      "Payment",
+      "SomeDomain",
+      { someKey: "someValue", someKey2: "someValue2" },
+      undefined,
+      {
+        weightKg: 100,
+        weighingId: "324234-23423423",
+      }
+    )
     const obj = mockTransport.logMessages.pop()
     clean(obj)
-    expect(obj).toEqual({
+    expect(obj).toMatchInlineSnapshot(`
+      {
+        "component": "TestSystemName",
+        "context": {
+          "clientTraceId": "CT-2342",
+          "requestTraceId": "RQ-dsfsdf",
+          "tenant": "tid100",
+          "transactionName": "txname",
+          "userId": "userId",
+        },
+        "ecs.version": "8.10.0",
+        "env": "test",
+        "event": {
+          "category": "Payment",
+          "context": {
+            "weighingId": "324234-23423423",
+            "weightKg": 100,
+          },
+          "data": {
+            "someKey": "someValue",
+            "someKey2": "someValue2",
+          },
+          "domain": "SomeDomain",
+          "name": "SomeEvent",
+        },
+        "filename": "test-file",
+        "labels": {
+          "envTags": undefined,
+        },
+        "log.level": "info",
+        "logType": "event",
+        "message": "EVENT: SomeEvent Payment SomeDomain",
+        "processor": {
+          "event": "event",
+        },
+        "system": "TestSystemName",
+        "systemEnv": "test-TestSystemName",
+      }
+    `)
+    /*expect(obj).toEqual({
+      component: "TestSystemName",
+      "ecs.version": "8.10.0",
+      env: "test",
+      event: {
+        category: "Payment",
+        context: {
+          clientTraceId: "xxx",
+          requestTraceId: "RQ-dsfsdf",
+          tenantId: 100,
+          transactionName: "txname",
+          userId: "userId",
+        },
+        data: {
+          someKey: "someValue",
+        },
+        domain: "SomeDomain",
+        name: "SomeEvent",
+      },
+      filename: "test-file",
+      labels: {
+        envTags: undefined,
+      },
+      "log.level": "info",
+      logType: "event",
+      message: "EVENT: SomeEvent Payment SomeDomain",
+      processor: {
+        event: "event",
+      },
+      system: "TestSystemName",
+      systemEnv: "test-TestSystemName",
+    })*/
+    /*expect(obj).toEqual({
       component: "TestSystemName",
       "ecs.version": "8.10.0",
       env: "test",
@@ -157,11 +269,18 @@ describe("LoggerService", () => {
         transactionName: "txname",
         userId: "userId",
       },
-    })
+    })*/
     // Add more assertions as needed
   })
 
   it("should log an event", () => {
+    asyncContext.initProperties({
+      clientTraceId: "CT-2342",
+      requestTraceId: "RQ-dsfsdf",
+      tenant: "tid100",
+      transactionName: "txname",
+      userId: "userId",
+    })
     loggerService.event(
       "test-file",
       "SomeEvent",
@@ -170,11 +289,8 @@ describe("LoggerService", () => {
       { someKey: "someValue" },
       "Custom event message",
       {
-        tenantId: 100,
-        clientTraceId: "xxx",
-        userId: "userId",
-        requestTraceId: "RQ-dsfsdf",
-        transactionName: "txname",
+        weightKg: 100,
+        weighingId: "324234-23423423",
       }
     )
     const obj = mockTransport.logMessages.pop()
@@ -202,9 +318,13 @@ describe("LoggerService", () => {
         data: {
           someKey: "someValue",
         },
+        context: {
+          weighingId: "324234-23423423",
+          weightKg: 100,
+        },
       },
       context: {
-        clientTraceId: "xxx",
+        clientTraceId: "CT-2342",
         requestTraceId: "RQ-dsfsdf",
         tenant: "tid100",
         transactionName: "txname",

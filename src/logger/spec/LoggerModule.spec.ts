@@ -5,7 +5,8 @@ import { LoggerModule } from "../LoggerModule"
 import { LoggerService } from "../LoggerService"
 import { ApmHelper } from "../../apm/ApmHelper"
 import { LibTestConfig, TestConfig } from "../../config/spec/TestConfig"
-import { LoggerServiceV2 } from "../LoggerServiceV2"
+import { LoggerService2 } from "../LoggerService2"
+import { AsyncContextModule } from "../../asyncLocalContext/AsyncContextModule"
 
 describe("LoggerModule", () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -14,7 +15,7 @@ describe("LoggerModule", () => {
   describe("LoggerModule", () => {
     it("should provide an instance of LoggerService and ApmHelper", async () => {
       const app = await Test.createTestingModule({
-        imports: [ConfigModule.forRoot(TestConfig), LoggerModule.forRoot(TestConfig)],
+        imports: [AsyncContextModule.forRoot(), ConfigModule.forRoot(TestConfig), LoggerModule.forRoot(TestConfig)],
       }).compile()
       const loggerService = app.get<LoggerService>(LoggerService)
       expect(loggerService).toBeDefined()
@@ -28,7 +29,7 @@ describe("LoggerModule", () => {
 
     it("forRootV2 should work", async () => {
       const app = await Test.createTestingModule({
-        imports: [LoggerModule.forRootV2(LibTestConfig)],
+        imports: [AsyncContextModule.forRoot(), LoggerModule.forRootV2(LibTestConfig)],
       }).compile()
       const loggerService = app.get<LoggerService>(LoggerService)
       expect(loggerService).toBeDefined()
@@ -42,11 +43,11 @@ describe("LoggerModule", () => {
 
     it("loggerServiceV2 should work", async () => {
       const app = await Test.createTestingModule({
-        imports: [LoggerModule.forRootV2(LibTestConfig)],
+        imports: [AsyncContextModule.forRoot(), LoggerModule.forRootV2(LibTestConfig)],
       }).compile()
-      const loggerService = app.get<LoggerServiceV2>(LoggerServiceV2)
+      const loggerService = app.get<LoggerService2>(LoggerService2)
       expect(loggerService).toBeDefined()
-      expect(loggerService).toBeInstanceOf(LoggerServiceV2)
+      expect(loggerService).toBeInstanceOf(LoggerService2)
       loggerService.info(__filename, "some info message")
     })
   })
