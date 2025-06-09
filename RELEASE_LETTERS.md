@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.0.1 - 2025-06-09 Nikola</h2>
+
+- Allow for boolean and Date values to be passed as eventContext in calling logger.event(..)
+
 <h2>Release letter for version 11.0.0 - 2025-06-07 Nikola</h2>
 
 Although we are introducing a new major version, the upgrade from v10.x to v11.x should be backward compatible. Rather, it is a major version number because we introduce the new context framework.
