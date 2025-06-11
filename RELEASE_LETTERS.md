@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.0.2 - 2025-06-11 Nikola</h2>
+
+- Changing the new formatting slightly so it is compatible with the APM data format.
+
 <h2>Release letter for version 11.0.1 - 2025-06-09 Nikola</h2>
 
 - Allow for boolean and Date values to be passed as eventContext in calling logger.event(..)

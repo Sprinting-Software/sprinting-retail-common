@@ -31,6 +31,7 @@ export interface LogMessage {
   event?: Record<string, any>
   context?: Record<string, any> // Omit<ICommonLogContext, "tenantId"> & { tenant: string }
   processor: { event: string }
+  service?: { name: string; environment: string } | undefined // 2025-06 Nikola: We need this to make the logs compatible with ELK APM
 }
 
 export interface ElkLog {

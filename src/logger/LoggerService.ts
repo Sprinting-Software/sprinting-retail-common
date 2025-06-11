@@ -219,27 +219,23 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
   ) {
     const ctx = this.getAsyncContext()
 
-    const logMessage: LogMessage = {
-      filename: fileName,
-      system: this.config.serviceName,
-      component: this.config.serviceName,
-      env: this.envPrefix,
-      labels: { envTags: this.config.envTags },
-      systemEnv: `${this.envPrefix}-${this.config.serviceName}`,
-      logType: LogLevel.event,
-      event: {
-        name: eventName,
-        category: eventCategory,
-        domain: eventDomain,
-        data: eventData,
-        context: eventContext,
-      },
-      message: message || `EVENT: ${eventName} ${eventCategory} ${eventDomain}`,
-      processor: { event: "event" },
+    const logMessage = this.formatMessage(
+      fileName,
+      LogLevel.event,
+      message || `EVENT: ${eventName} ${eventCategory} ${eventDomain}`,
+      undefined,
+      ctx,
+      true
+    )
+
+    logMessage.event = {
+      name: eventName,
+      category: eventCategory,
+      domain: eventDomain,
+      data: eventData,
+      context: eventContext,
     }
-    if (ctx) {
-      logMessage.context = ctx
-    }
+
     if (this.config?.elkRestApi?.useForEvents && this.tcpLoggerEvents) {
       this.enrichForTcpAndSend(logMessage, "event")
       LoggerService.loggerConsoleOnly.info(logMessage)
@@ -338,13 +334,13 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
   logException(errorName: string, description?: string, contextData: Record<string, any> = {}, innerError?: Error) {
     this.logError(new ServerException(errorName, description, contextData, innerError))
   }
-
   formatMessage(
     fileName: string,
     logLevel: LogLevel,
     message: string,
     data?: Record<string, any>,
-    context?: Record<string, any> | undefined
+    context?: Record<string, any> | undefined,
+    isEvent = false
   ): LogMessage {
     const obj: LogMessage = {
       filename: fileName,
@@ -355,10 +351,12 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
       logType: logLevel,
       labels: { envTags: this.config.envTags },
       message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
-      processor: { event: "log" },
+      service: { name: this.config.serviceName, environment: this.envPrefix }, // Add these fields to make it compliant with APM ELK
+      processor: { event: isEvent ? "event" : logLevel },
     }
     if (context) {
-      obj.context = context
+      // Add the context to the labels to make it compliant with APM ELK
+      obj.labels = { ...obj.labels, ...context }
     }
     return obj
   }

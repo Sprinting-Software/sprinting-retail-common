@@ -61,24 +61,29 @@ describe("LoggerService", () => {
     delete actual["@timestamp"]
     delete actual[Symbol.for("level")]
     delete actual[Symbol.for("message")]
-    expect(actual).toEqual({
-      component: "TestSystemName",
-      context: {},
-      "ecs.version": "8.10.0",
-      env: "test",
-      filename: "test-file",
-      labels: {
-        envTags: undefined,
-      },
-      processor: {
-        event: "log",
-      },
-      "log.level": "info",
-      logType: "info",
-      message: "SomeMessage",
-      system: "TestSystemName",
-      systemEnv: `test-TestSystemName`,
-    })
+    expect(actual).toMatchInlineSnapshot(`
+      {
+        "component": "TestSystemName",
+        "ecs.version": "8.10.0",
+        "env": "test",
+        "filename": "test-file",
+        "labels": {
+          "envTags": undefined,
+        },
+        "log.level": "info",
+        "logType": "info",
+        "message": "SomeMessage",
+        "processor": {
+          "event": "info",
+        },
+        "service": {
+          "environment": "test",
+          "name": "TestSystemName",
+        },
+        "system": "TestSystemName",
+        "systemEnv": "test-TestSystemName",
+      }
+    `)
   })
 
   it("should send info correctly 2", () => {
@@ -95,53 +100,31 @@ describe("LoggerService", () => {
     expect(obj).toMatchInlineSnapshot(`
       {
         "component": "TestSystemName",
-        "context": {
+        "ecs.version": "8.10.0",
+        "env": "test",
+        "filename": "test-file",
+        "labels": {
           "clientTraceId": "CT-2342",
+          "envTags": undefined,
           "requestTraceId": "RQ-dsfsdf",
           "tenant": "tid100",
           "transactionName": "txname",
           "userId": "userId",
         },
-        "ecs.version": "8.10.0",
-        "env": "test",
-        "filename": "test-file",
-        "labels": {
-          "envTags": undefined,
-        },
         "log.level": "info",
         "logType": "info",
         "message": "SomeMessage { someKey: 'someValue' }",
         "processor": {
-          "event": "log",
+          "event": "info",
+        },
+        "service": {
+          "environment": "test",
+          "name": "TestSystemName",
         },
         "system": "TestSystemName",
         "systemEnv": "test-TestSystemName",
       }
     `)
-    /*expect(obj).toEqual({
-      component: "TestSystemName",
-      "ecs.version": "8.10.0",
-      context: {
-        clientTraceId: "CT-2342",
-        requestTraceId: "RQ-dsfsdf",
-        tenant: "tid100",
-        transactionName: "txname",
-        userId: "userId",
-      },
-      env: "test",
-      filename: "test-file",
-      labels: {
-        envTags: undefined,
-      },
-      processor: {
-        event: "log",
-      },
-      "log.level": "info",
-      logType: "info",
-      message: "SomeMessage { someKey: 'someValue' }",
-      system: "TestSystemName",
-      systemEnv: `test-TestSystemName`,
-    })*/
   })
 
   it("should send events correctly", () => {
@@ -169,13 +152,6 @@ describe("LoggerService", () => {
     expect(obj).toMatchInlineSnapshot(`
       {
         "component": "TestSystemName",
-        "context": {
-          "clientTraceId": "CT-2342",
-          "requestTraceId": "RQ-dsfsdf",
-          "tenant": "tid100",
-          "transactionName": "txname",
-          "userId": "userId",
-        },
         "ecs.version": "8.10.0",
         "env": "test",
         "event": {
@@ -193,13 +169,22 @@ describe("LoggerService", () => {
         },
         "filename": "test-file",
         "labels": {
+          "clientTraceId": "CT-2342",
           "envTags": undefined,
+          "requestTraceId": "RQ-dsfsdf",
+          "tenant": "tid100",
+          "transactionName": "txname",
+          "userId": "userId",
         },
         "log.level": "info",
         "logType": "event",
         "message": "EVENT: SomeEvent Payment SomeDomain",
         "processor": {
           "event": "event",
+        },
+        "service": {
+          "environment": "test",
+          "name": "TestSystemName",
         },
         "system": "TestSystemName",
         "systemEnv": "test-TestSystemName",
@@ -302,6 +287,11 @@ describe("LoggerService", () => {
       filename: "test-file",
       labels: {
         envTags: undefined,
+        clientTraceId: "CT-2342",
+        requestTraceId: "RQ-dsfsdf",
+        tenant: "tid100",
+        transactionName: "txname",
+        userId: "userId",
       },
       "log.level": "info",
       logType: "event",
@@ -323,12 +313,9 @@ describe("LoggerService", () => {
           weightKg: 100,
         },
       },
-      context: {
-        clientTraceId: "CT-2342",
-        requestTraceId: "RQ-dsfsdf",
-        tenant: "tid100",
-        transactionName: "txname",
-        userId: "userId",
+      service: {
+        environment: "test",
+        name: "TestSystemName",
       },
     })
   })

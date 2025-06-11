@@ -6,6 +6,7 @@ import { ConfigModule } from "../config/ConfigModule"
 import { LibConfig } from "../config/interface/LibConfig"
 import { RetailCommonConfigProvider } from "../config/RetailCommonConfigProvider"
 import { LoggerService2 } from "./LoggerService2"
+import { AsyncContext } from "../asyncLocalContext/AsyncContext"
 
 @Module({})
 @Global()
@@ -16,7 +17,10 @@ export class LoggerModule {
       providers: [
         {
           provide: LoggerService,
-          useValue: new LoggerService(config),
+          useFactory: (asyncContext: AsyncContext) => {
+            return new LoggerService(config, undefined, asyncContext)
+          },
+          inject: [AsyncContext],
         },
         LoggerService2,
         {
@@ -41,10 +45,11 @@ export class LoggerModule {
       providers: [
         {
           provide: LoggerService,
-          useFactory: () => {
+          useFactory: (asyncContext: AsyncContext) => {
             const loggerConfig = ConfigMapper.mapToLoggerConfig(provider.config)
-            return new LoggerService(loggerConfig)
+            return new LoggerService(loggerConfig, undefined, asyncContext)
           },
+          inject: [AsyncContext],
         },
         LoggerService2,
         {
