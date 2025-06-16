@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.0.2 - 2025-06-16 Nikola</h2>
+
+- Introduce the TraceContext helper class to make adding of trace context cleaner.
+
 <h2>Release letter for version 11.0.2 - 2025-06-11 Nikola</h2>
 
 - Changing the new formatting slightly so it is compatible with the APM data format.

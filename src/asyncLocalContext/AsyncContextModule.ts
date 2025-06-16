@@ -7,6 +7,7 @@ import { ApmHelper } from "../apm/ApmHelper"
 import { TenantContextGuard } from "./TenantContextGuard"
 import { TraceContextMiddleware } from "./TraceContextMiddleware"
 import { SystemContextBase } from "./SystemContextBase"
+import { TraceContext } from "./TraceContext"
 @Global()
 @Module({})
 export class AsyncContextModule implements NestModule {
@@ -40,8 +41,8 @@ export class AsyncContextModule implements NestModule {
           useFactory: () => new AsyncContext(defaultContext, options, _setApmLabel),
         },
         AsyncContextMiddleware,
+        TraceContext,
         SystemContextBase,
-
         {
           provide: APP_GUARD,
           inject: [SystemContextBase, Reflector],
@@ -49,7 +50,7 @@ export class AsyncContextModule implements NestModule {
             new TenantContextGuard(systemContext, reflector, options?.strictHandlingOfTenantIdHeader),
         },
       ],
-      exports: [AsyncContext],
+      exports: [AsyncContext, TraceContext],
     }
   }
 }
