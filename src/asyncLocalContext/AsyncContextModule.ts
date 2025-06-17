@@ -8,6 +8,7 @@ import { TenantContextGuard } from "./TenantContextGuard"
 import { TraceContextMiddleware } from "./TraceContextMiddleware"
 import { SystemContextBase } from "./SystemContextBase"
 import { TraceContext } from "./TraceContext"
+import { RawLogger } from "../logger/RawLogger"
 @Global()
 @Module({})
 export class AsyncContextModule implements NestModule {
@@ -30,8 +31,22 @@ export class AsyncContextModule implements NestModule {
       ? setApmLabel
       : (key: string, value: string) => {
           if (value === undefined || value === null) return
-          const valueStr = value.toString()
-          return ApmHelper.Instance.setLabelOnCurrentTransaction(key, valueStr)
+          try {
+            const valueStr = maskIfNeeded(key, value.toString())
+            if (key.toLowerCase() === "userid") {
+              ApmHelper.Instance.getApmAgent().setUserContext({ id: valueStr })
+            }
+            if (key.toLowerCase() === "email") {
+              ApmHelper.Instance.getApmAgent().setUserContext({ email: valueStr })
+            }
+            if (key.toLowerCase() === "username") {
+              ApmHelper.Instance.getApmAgent().setUserContext({ username: valueStr })
+            }
+          } catch (e) {
+            // Suppress errors in setting APM labels
+            RawLogger.error(e)
+          }
+          ApmHelper.Instance.setLabelOnCurrentTransaction(key, value?.toString())
         }
     return {
       module: AsyncContextModule,
@@ -53,4 +68,36 @@ export class AsyncContextModule implements NestModule {
       exports: [AsyncContext, TraceContext],
     }
   }
+}
+
+/**
+ * Masks or redacts sensitive values based on the key.
+ * - Redacts values if the key suggests passwords or secrets.
+ * - Masks emails like abc@efgh.com → a*2@e*3.com
+ * @param key - The key name (e.g. "userPassword", "emailAddress")
+ * @param value - The value to be masked/redacted
+ * @returns A masked or redacted string
+ */
+function maskIfNeeded(key: string, value: string): string {
+  const lowerKey = key.toLowerCase()
+
+  if (lowerKey.includes("password") || lowerKey.includes("secret")) {
+    return "REDACTED"
+  }
+
+  if (lowerKey.includes("email")) {
+    const [user, domain] = value.split("@")
+    if (!user || !domain) return value
+
+    const userMasked = `${user[0]}*${user.length - 1}`
+    const domainParts = domain.split(".")
+    const domainMasked =
+      domainParts.length > 1
+        ? `${domainParts[0][0]}*${domainParts[0].length - 1}.${domainParts.slice(1).join(".")}`
+        : domain
+
+    return `${userMasked}@${domainMasked}`
+  }
+
+  return value
 }

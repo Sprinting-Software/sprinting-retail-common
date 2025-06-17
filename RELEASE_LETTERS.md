@@ -1,4 +1,9 @@
-<h2>Release letter for version 11.0.2 - 2025-06-16 Nikola</h2>
+<h2>Release letter for version 11.0.4 - 2025-06-17 Nikola</h2>
+
+- The following labels will also be set on the APM user object: userId, email and username.
+- The email will be masked
+
+<h2>Release letter for version 11.0.3 - 2025-06-16 Nikola</h2>
 
 - Introduce the TraceContext helper class to make adding of trace context cleaner.
 
