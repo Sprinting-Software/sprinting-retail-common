@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.0.5 - 2025-06-26 Nikola</h2>
+
+- Fixing a bug in the logger happening when context data included a BigInt.
+
 <h2>Release letter for version 11.0.4 - 2025-06-17 Nikola</h2>
 
 - The following labels will also be set on the APM user object: userId, email and username.
