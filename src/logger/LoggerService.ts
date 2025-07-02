@@ -93,7 +93,19 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
     const ecsFormatter = combine(timestamp(), ecsFormat({ convertReqRes: true, apmIntegration: true }))
     const consoleFormatterForDevelopers = printf((args) => {
       const fileName = args.filename ? `| ${args.filename.split("/").pop()}` : ""
-      return `${args.timestamp} | ${args["log.level"]} | ${args.message} ${fileName}`
+      /*
+      If we want to include the trace context in the console logs, we can do it like this:
+      const traceContext = this.getAsyncContext()
+      const traceContextString = traceContext
+        ? // eslint-disable-next-line prefer-template
+          " | TraceContext(" +
+          Object.entries(traceContext)
+            .map(([key, value]) => `${key}:${value}`)
+            .join(", ") +
+          ")"
+        : ""*/
+      const traceContextString = ""
+      return `${args.timestamp} | ${args["log.level"]} | ${args.message} ${traceContextString} | ${fileName}`
     })
     if (!LoggerService.logger) {
       const consoleLogger = new winston.transports.Console({

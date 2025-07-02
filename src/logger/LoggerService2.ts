@@ -2,11 +2,7 @@ import { LoggerService } from "./LoggerService"
 import { IEventLogContext } from "./types"
 import { LoggerHelper } from "./LoggerHelper"
 import { Injectable } from "@nestjs/common"
-
-const BIG_INT_REPLACER: (this: any, key: string, value: any) => any = (key, value) =>
-  typeof value === "bigint"
-    ? value.toString() // or: `${value}n` if you want the “n” suffix
-    : value
+import { StringUtil } from "../helpers/StringUtil"
 
 /**
  *
@@ -50,7 +46,7 @@ export class LoggerService2 {
       undefined,
       eventDomain,
       {
-        json: JSON.stringify(eventData, BIG_INT_REPLACER, 4),
+        json: StringUtil.stringifySafeWithFallback(eventData, 4),
       },
       message,
       eventContext

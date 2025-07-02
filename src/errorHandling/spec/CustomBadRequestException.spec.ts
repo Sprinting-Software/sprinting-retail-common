@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common"
 import { CustomBadRequestException } from "../exceptions/CustomBadRequestException"
 import { ExceptionHttpResponse } from "../exceptions/Exception"
+import { StringUtil } from "../../helpers/StringUtil"
 
 describe("CustomBadRequestException", () => {
   describe("constructor", () => {
@@ -54,7 +55,7 @@ describe("CustomBadRequestException", () => {
       expect(result).toContain(customException.errorName)
       expect(result).toContain(customException.httpStatus.toString())
       expect(result).toContain(customException.description)
-      expect(result).toContain(JSON.stringify(customException.errors))
+      expect(result).toContain(StringUtil.stringifySafeWithFallback(customException.errors))
     })
   })
 

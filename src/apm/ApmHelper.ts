@@ -23,6 +23,7 @@ import { DEFAULT_APM_CONFIG } from "../config/interface/RetailCommonConfigConvic
 import apm from "elastic-apm-node"
 import { IApmConfig } from "../config/interface/IApmConfig"
 import { RawLogger } from "../logger/RawLogger"
+import { StringUtil } from "../helpers/StringUtil"
 
 /**
  * Used to encapsulate the ApmAgent and allow for easy dependency injection.
@@ -70,10 +71,12 @@ export class ApmHelper {
     try {
       apmAgentSingleton.start(apmConfigSingleton)
     } catch (err) {
-      throw new Error(`Failed to start APM: ${err} having config ${JSON.stringify(apmConfigSingleton)}`)
+      throw new Error(
+        `Failed to start APM: ${err} having config ${StringUtil.stringifySafeWithFallback(apmConfigSingleton)}`
+      )
     }
 
-    myConsole(`Transaction data ARE SENT to APM: ${JSON.stringify(apmConfigSingleton.serverUrl)}`)
+    myConsole(`Transaction data ARE SENT to APM: ${StringUtil.stringifySafeWithFallback(apmConfigSingleton.serverUrl)}`)
     myConsole(
       `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${apmConfigSingleton.serviceName}.`
     )
@@ -233,7 +236,7 @@ function emitWarningIfConfigIsChanged(config0: Partial<IApmConfig>) {
   })
   if (Object.keys(changedConfig).length > 0) {
     myConsole(
-      `WARNING ******: ApmHelper.init() is called twice with config that differs. The second call will not take effect.: ${JSON.stringify(
+      `WARNING ******: ApmHelper.init() is called twice with config that differs. The second call will not take effect.: ${StringUtil.stringifySafeWithFallback(
         changedConfig
       )}`
     )
@@ -243,5 +246,5 @@ function emitWarningIfConfigIsChanged(config0: Partial<IApmConfig>) {
 function logConfigToConsole(config: any) {
   const configToBeLogged = { ...config }
   if (configToBeLogged.secretToken) configToBeLogged.secretToken = "********"
-  myConsole(`ApmHelper.init() called with config: ${JSON.stringify(configToBeLogged)}`)
+  myConsole(`ApmHelper.init() called with config: ${StringUtil.stringifySafeWithFallback(configToBeLogged)}`)
 }

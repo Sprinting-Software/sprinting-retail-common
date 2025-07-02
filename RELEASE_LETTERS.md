@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.0.7 - 2025-07-02 Nikola</h2>
+
+- Fixing the issue with JSON.stringify not working with bigint types
+
 <h2>Release letter for version 11.0.6 - 2025-06-26 Nikola</h2>
 
 - Allow log context to have bigint values in addition to other primitive values
