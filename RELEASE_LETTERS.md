@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.0.6 - 2025-06-26 Nikola</h2>
+
+- Allow log context to have bigint values in addition to other primitive values
+
 <h2>Release letter for version 11.0.5 - 2025-06-26 Nikola</h2>
 
 - Fixing a bug in the logger happening when context data included a BigInt.

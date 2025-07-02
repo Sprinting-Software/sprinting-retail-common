@@ -9,7 +9,7 @@
   transactionName?: string
 }*/
 
-export type IEventLogContext = Record<string, string | boolean | Date | null | undefined | number> | undefined
+export type IEventLogContext = Record<string, string | boolean | Date | null | undefined | number | bigint> | undefined
 
 export const enum LogLevel {
   info = "info",
