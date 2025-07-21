@@ -1,4 +1,4 @@
-import { StringUtil } from "../helpers/StringUtil"
+import { StringUtils } from "../helpers/StringUtils"
 import { fetchOrFail } from "../http/fetchOrFail"
 import { RawLogger } from "./RawLogger"
 import { ElkCustomIndexMessage, ElkLog, ElkRestApiConfig } from "./types"
@@ -28,7 +28,7 @@ export class ElkRestApi {
       await fetchOrFail(`${this.endpoint}/${this.indexName}/_doc/`, {
         method: "POST",
         headers: this.getHeaders(),
-        body: StringUtil.stringifySafe(log),
+        body: StringUtils.stringifySafe(log),
       })
       // eslint-disable-next-line prefer-template
       RawLogger.debug("Successfully sent record to ELK in index '" + this.indexName + "'")
@@ -44,7 +44,7 @@ export class ElkRestApi {
       await fetchOrFail(`${this.endpoint}/${indexName}/_doc/${id}`, {
         method: "PUT",
         headers: this.getHeaders(),
-        body: StringUtil.stringifySafe(data),
+        body: StringUtils.stringifySafe(data),
       })
       // eslint-disable-next-line prefer-template
       RawLogger.debug("Successfully sent record to ELK in index '" + this.indexName + "'")
@@ -58,7 +58,7 @@ export class ElkRestApi {
 
     const bulkRequestBody = `${logs
       .map((log) => {
-        return `${StringUtil.stringifySafe({ index: { _index: this.indexName } })}\n${StringUtil.stringifySafe(log)}`
+        return `${StringUtils.stringifySafe({ index: { _index: this.indexName } })}\n${StringUtils.stringifySafe(log)}`
       })
       .join("\n")}\n`
 
@@ -77,7 +77,7 @@ export class ElkRestApi {
         `Successfully sent ${logs.length} records to ELK in index "`,
         this.indexName,
         '". The logs were: ',
-        StringUtil.stringifySafe(logs)
+        StringUtils.stringifySafe(logs)
       )
     } catch (error) {
       RawLogger.debug("Failed to post bulk documents:", error)

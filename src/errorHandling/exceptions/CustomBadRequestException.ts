@@ -1,6 +1,6 @@
 import { BadRequestException } from "@nestjs/common"
 import { Exception, ExceptionHttpResponse } from "./Exception"
-import { StringUtil } from "../../helpers/StringUtil"
+import { StringUtils } from "../../helpers/StringUtils"
 
 export class CustomBadRequestException extends Exception {
   public readonly errors: Record<string, string[]> = {}
@@ -18,7 +18,7 @@ export class CustomBadRequestException extends Exception {
     message += ` ERROR_NAME - ${this.errorName}`
     message += ` ERROR_MESSAGE - ${this.description}`
 
-    if (this.errors) message += ` VALIDATION_ERRORS - ${StringUtil.stringifySafeWithFallback(this.errors)}`
+    if (this.errors) message += ` VALIDATION_ERRORS - ${StringUtils.stringifySafeWithFallback(this.errors)}`
 
     return message
   }

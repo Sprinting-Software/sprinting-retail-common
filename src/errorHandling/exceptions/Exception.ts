@@ -2,6 +2,7 @@ import util from "util"
 import { HttpStatus } from "@nestjs/common"
 import { inspect } from "util"
 import { ExceptionConst } from "./ExceptionConst"
+import { StringUtils } from "../../helpers/StringUtils"
 
 export interface ExceptionHttpResponse {
   httpStatus: number
@@ -193,7 +194,8 @@ export class Exception extends Error {
    * @returns {AppException} - The modified AppException object with the enriched debug data
    */
   setDebugData(debugData: Record<string, any>) {
-    this.debugData = { ...this.debugData, ...debugData }
+    const debugDataRedacted = StringUtils.redactAndTruncateForLogging(debugData)
+    this.debugData = { ...this.debugData, ...debugDataRedacted }
     this.refreshMessageField()
     return this
   }

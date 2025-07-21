@@ -1,3 +1,9 @@
+<h2>Release letter for version 11.1.0 - 2025-07-19 Nikola</h2>
+
+- Increase the size of contextData to 30 fields from 10 fields
+- Redact debug data so secrets and passwords are not leaked (as easily)
+- Truncate debug data so we don't flood the logs
+
 <h2>Release letter for version 11.0.7 - 2025-07-02 Nikola</h2>
 
 - Fixing the issue with JSON.stringify not working with bigint types

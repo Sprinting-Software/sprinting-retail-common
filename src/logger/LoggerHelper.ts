@@ -37,9 +37,9 @@ export const LoggerHelper = {
             }
           })
           .filter((part) => part) //Remove any undefined parts
-        if (keys.length > 10) {
+        if (keys.length > MAX_NUMBER_OF_FIELDS_IN_CONTEXT) {
           objectParts.push(
-            "...all fields beyond the first 10 are omitted, please make a more narrow context for the event..."
+            `...all fields beyond the first ${MAX_NUMBER_OF_FIELDS_IN_CONTEXT} are omitted, please make a more narrow context for the event...`
           )
         }
 

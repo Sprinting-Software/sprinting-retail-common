@@ -1,4 +1,4 @@
-import { StringUtil } from "./StringUtil"
+import { StringUtils } from "./StringUtils"
 
 const escapeString = (string) => string.replace(/'/g, "''")
 export const encodeValue = (value, options: any = {}) => {
@@ -12,7 +12,7 @@ export const encodeValue = (value, options: any = {}) => {
     if (value === null) {
       return `null`
     } else {
-      const jsonString = `'${escapeString(StringUtil.stringifySafeWithFallback(value))}'`
+      const jsonString = `'${escapeString(StringUtils.stringifySafeWithFallback(value))}'`
       if (objectsToJsonb) {
         return `${jsonString}::jsonb`
       } else {

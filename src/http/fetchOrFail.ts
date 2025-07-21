@@ -1,5 +1,5 @@
 import { Exception } from "../errorHandling/exceptions/Exception"
-import { StringUtil } from "../helpers/StringUtil"
+import { StringUtils } from "../helpers/StringUtils"
 
 export type FetchResponse<T = any> = {
   httpStatus: number
@@ -147,7 +147,7 @@ export const ApiCall = (serviceName: string, authorizationHeader?: string, conte
 function stringify(body: any): BodyInit {
   if (typeof body === "string") return body as BodyInit
   if (body === null || body === undefined) return undefined
-  else return StringUtil.stringifySafe(body)
+  else return StringUtils.stringifySafe(body)
 }
 
 function headersToObject(headers: Headers): Record<string, string> {

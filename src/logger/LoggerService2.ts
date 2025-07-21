@@ -2,7 +2,7 @@ import { LoggerService } from "./LoggerService"
 import { IEventLogContext } from "./types"
 import { LoggerHelper } from "./LoggerHelper"
 import { Injectable } from "@nestjs/common"
-import { StringUtil } from "../helpers/StringUtil"
+import { StringUtils } from "../helpers/StringUtils"
 
 /**
  *
@@ -46,7 +46,7 @@ export class LoggerService2 {
       undefined,
       eventDomain,
       {
-        json: StringUtil.stringifySafeWithFallback(eventData, 4),
+        json: StringUtils.stringifySafeWithFallback(eventData, 4),
       },
       message,
       eventContext

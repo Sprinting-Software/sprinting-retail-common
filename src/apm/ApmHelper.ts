@@ -23,7 +23,7 @@ import { DEFAULT_APM_CONFIG } from "../config/interface/RetailCommonConfigConvic
 import apm from "elastic-apm-node"
 import { IApmConfig } from "../config/interface/IApmConfig"
 import { RawLogger } from "../logger/RawLogger"
-import { StringUtil } from "../helpers/StringUtil"
+import { StringUtils } from "../helpers/StringUtils"
 
 /**
  * Used to encapsulate the ApmAgent and allow for easy dependency injection.
@@ -72,11 +72,13 @@ export class ApmHelper {
       apmAgentSingleton.start(apmConfigSingleton)
     } catch (err) {
       throw new Error(
-        `Failed to start APM: ${err} having config ${StringUtil.stringifySafeWithFallback(apmConfigSingleton)}`
+        `Failed to start APM: ${err} having config ${StringUtils.stringifySafeWithFallback(apmConfigSingleton)}`
       )
     }
 
-    myConsole(`Transaction data ARE SENT to APM: ${StringUtil.stringifySafeWithFallback(apmConfigSingleton.serverUrl)}`)
+    myConsole(
+      `Transaction data ARE SENT to APM: ${StringUtils.stringifySafeWithFallback(apmConfigSingleton.serverUrl)}`
+    )
     myConsole(
       `Transaction data can be found here: https://kibana.sprinting.io/ under APM. Look for the service named ${apmConfigSingleton.serviceName}.`
     )
@@ -236,7 +238,7 @@ function emitWarningIfConfigIsChanged(config0: Partial<IApmConfig>) {
   })
   if (Object.keys(changedConfig).length > 0) {
     myConsole(
-      `WARNING ******: ApmHelper.init() is called twice with config that differs. The second call will not take effect.: ${StringUtil.stringifySafeWithFallback(
+      `WARNING ******: ApmHelper.init() is called twice with config that differs. The second call will not take effect.: ${StringUtils.stringifySafeWithFallback(
         changedConfig
       )}`
     )
@@ -246,5 +248,5 @@ function emitWarningIfConfigIsChanged(config0: Partial<IApmConfig>) {
 function logConfigToConsole(config: any) {
   const configToBeLogged = { ...config }
   if (configToBeLogged.secretToken) configToBeLogged.secretToken = "********"
-  myConsole(`ApmHelper.init() called with config: ${StringUtil.stringifySafeWithFallback(configToBeLogged)}`)
+  myConsole(`ApmHelper.init() called with config: ${StringUtils.stringifySafeWithFallback(configToBeLogged)}`)
 }
