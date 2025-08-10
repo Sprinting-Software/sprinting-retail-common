@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.2.0 - 2025-08-10 Nikola</h2>
+
+- Upgrade elastic-apm-node from 4.1.0 to 4.13.0
+
 <h2>Release letter for version 11.1.0 - 2025-07-19 Nikola</h2>
 
 - Increase the size of contextData to 30 fields from 10 fields
