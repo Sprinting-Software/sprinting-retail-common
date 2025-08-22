@@ -69,7 +69,9 @@ export class ApmHelper {
     // In newer versions of APM, we need to set the environment like this:
     // Notice that this would only be relevant if you are not setting environment explicitly in the config.
     // In the old version APM has fallback to NODE_ENV, now APM has fallback to ELASTIC_APM_ENVIRONMENT.
-    process.env.ELASTIC_APM_ENVIRONMENT = process.env.NODE_ENV
+    if (!apmConfigSingleton.environment) {
+      process.env.ELASTIC_APM_ENVIRONMENT = process.env.NODE_ENV
+    }
 
     // APM is a little special with respect to how it is imported. For this reason we need to use require() instead of import.
     try {
