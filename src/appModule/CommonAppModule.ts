@@ -15,6 +15,7 @@ import { LibraryDebugFlags } from "../config/LibraryDebugFlags"
 import { GlobalProcessHandlerProvider } from "./GlobalProcessHandlerProvider"
 import { ConfigModule } from "../config/ConfigModule"
 import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
+import { FetchService } from "../http/FetchService"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -47,6 +48,7 @@ export class CommonAppModule {
           provide: ApmHelper,
           useValue: ApmHelper.Instance,
         },
+        FetchService,
         {
           provide: LoadBalancingTimeoutBootstrap,
           useFactory: (refHost: HttpAdapterHost<any>, logger: LoggerService) =>
@@ -67,7 +69,7 @@ export class CommonAppModule {
           scope: Scope.REQUEST,
         },
       ],
-      exports: [LoggerModule, TenantContext, ApmHelper, SeederModule],
+      exports: [LoggerModule, TenantContext, ApmHelper, SeederModule, FetchService],
     }
   }
   /**
@@ -83,6 +85,7 @@ export class CommonAppModule {
       module: CommonAppModule, // needed for dynamic modules
       imports: [ConfigModule.forRoot(configProvider), LoggerModule.forRoot(configProvider), SeederModule],
       providers: [
+        FetchService,
         {
           provide: ApmHelper,
           useValue: ApmHelper.Instance,
@@ -107,7 +110,7 @@ export class CommonAppModule {
           scope: Scope.REQUEST,
         },
       ],
-      exports: [ConfigModule, LoggerModule, TenantContext, ApmHelper, SeederModule],
+      exports: [ConfigModule, LoggerModule, TenantContext, ApmHelper, SeederModule, FetchService],
     }
   }
 

@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.2.2 - 2025-09-19 Djordje</h2>
+
+- FetchService wrapper and FetchOrFail methods with telemetry and logging via LoggerService2
+
 <h2>Release letter for version 11.2.1 - 2025-08-22 Nikola</h2>
 
 - Fixing the issue where environment in ELK was not properly taking it from the passed in initialization parameter but instead taking it from the NODE_ENV which implies that environments in ELK containing more than just the environment prefix.
