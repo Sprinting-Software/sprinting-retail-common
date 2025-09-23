@@ -55,9 +55,9 @@ export async function fetchOrFail(
           status: response.status,
           durationMs: Date.now() - started,
           ...logOptions?.extraContext,
+          url: toUrlString(input),
         },
         {
-          url: input,
           response: logOptions?.logResponseBody ? StringUtils.redactAndTruncateForLogging(result) : undefined,
         }
       )
@@ -96,15 +96,17 @@ export async function fetchOrFailRaw(
   const { host, path } = parseUrlParts(urlStr)
   const agent = ApmHelper.Instance.getApmAgent()
   const span: any = agent?.startSpan(`HTTP ${method} ${host || "unknown"}`, "external", "http", "request")
-  try {
-    span?.setLabel?.("method", method)
-    span?.setServiceTarget?.("http", host)
-    if (serviceName) span?.setLabel?.("service", serviceName)
-    span?.setLabel?.("url_host", host || "")
-    span?.setLabel?.("url_full", urlStr)
-    if (path) span?.setLabel?.("url_path", StringUtils.truncate(path, 120))
-    if (urlStr) span?.setLabel?.("url_query", new URL(urlStr).search || "")
-  } catch {}
+  if (span) {
+    try {
+      span.setLabel?.("method", method)
+      span.setServiceTarget?.("http", host)
+      if (serviceName) span.setLabel?.("service", serviceName)
+      span.setLabel?.("url_host", host || "")
+      span.setLabel?.("url_full", urlStr)
+      if (path) span.setLabel?.("url_path", StringUtils.truncate(path, 120))
+      if (urlStr) span.setLabel?.("url_query", new URL(urlStr).search || "")
+    } catch {}
+  }
 
   const response = await fetch(input, init)
   if (!response.ok) {
@@ -113,14 +115,16 @@ export async function fetchOrFailRaw(
     const myinit = (init?.headers as any)["Authorization"]
       ? { ...init, headers: { ...init?.headers, Authorization: "****" } }
       : init
-    try {
-      span?.setOutcome?.("failure")
-      span?.setLabel?.("status", response.status)
-      span?.setLabel?.("ok", false as any)
-    } catch {}
-    try {
-      span?.end?.()
-    } catch {}
+    if (span) {
+      try {
+        span.setOutcome?.("failure")
+        span.setLabel?.("status", response.status)
+        span.setLabel?.("ok", false as any)
+      } catch {}
+      try {
+        span.end?.()
+      } catch {}
+    }
     throw new Exception(response.status, serviceName ? `${serviceName}Error` : "OutboundHttpCallFailed")
       .setDebugData({
         errorBody,
@@ -130,15 +134,17 @@ export async function fetchOrFailRaw(
       })
       .setContextData({ serviceName: serviceName })
   }
-  try {
-    span?.setOutcome?.("success")
-    span?.setLabel?.("status", response.status)
-    span?.setLabel?.("ok", true as any)
-  } catch {}
-  try {
-    span?.setLabel?.("labels", JSON.stringify(ApmHelper.getLabelsOfCurrentTransaction()))
-    span?.end?.()
-  } catch {}
+  if (span) {
+    try {
+      span.setOutcome?.("success")
+      span.setLabel?.("status", response.status)
+      span.setLabel?.("ok", true as any)
+    } catch {}
+    try {
+      span.setLabel?.("labels", JSON.stringify(ApmHelper.getLabelsOfCurrentTransaction()))
+      span.end?.()
+    } catch {}
+  }
   return response
 }
 
