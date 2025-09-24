@@ -1,6 +1,6 @@
 {
   "name": "sprinting-retail-common",
-  "version": "11.2.2",
+  "version": "11.2.2-beta",
   "description": "Error handling and logging with APM for NestJS",
   "contributors": [],
   "license": "MIT",

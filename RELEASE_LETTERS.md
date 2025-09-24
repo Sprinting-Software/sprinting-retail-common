@@ -1,4 +1,4 @@
-<h2>Release letter for version 11.2.2 - 2025-09-19 Djordje</h2>
+<h2>Release letter for version 11.2.2-beta - 2025-09-24 Djordje</h2>
 
 - FetchService wrapper and FetchOrFail methods with telemetry and logging via LoggerService2
 
