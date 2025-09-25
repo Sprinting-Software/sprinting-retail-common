@@ -11,7 +11,7 @@ class MockTransport extends Transport {
     this.logMessages = []
   }
 
-  log(info, callback) {
+  log(info: any, callback: () => void) {
     this.logMessages.push(info)
     if (callback) {
       callback()
@@ -20,7 +20,7 @@ class MockTransport extends Transport {
   }
 }
 
-function clean(obj) {
+function clean(obj: any) {
   delete obj.timestamp
   delete obj["@timestamp"]
   delete obj[Symbol.for("level")]
@@ -160,6 +160,7 @@ describe("LoggerService", () => {
             "weighingId": "324234-23423423",
             "weightKg": 100,
           },
+          "custom": undefined,
           "data": {
             "someKey": "someValue",
             "someKey2": "someValue2",

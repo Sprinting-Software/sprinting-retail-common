@@ -2,7 +2,6 @@ import { LoggerService } from "./LoggerService"
 import { IEventLogContext } from "./types"
 import { LoggerHelper } from "./LoggerHelper"
 import { Injectable } from "@nestjs/common"
-import { StringUtils } from "../helpers/StringUtils"
 
 /**
  *
@@ -32,25 +31,22 @@ export class LoggerService2 {
    * @param fileName Always pass __filename here. It will be used to identify the source file of the log message.
    * @param eventName This expresses what the event is about. It becomes a separate field in the log record.
    * @param eventDomain This separates events in different domains. It becomes a separate field in the log record.
-   * @param eventContext This data will be added as individual fields in the log record. It will be free-text searchable in ELK.
-   * @param eventData This data will be serialized to JSON and logged in a single field named "json". It will be free-text searchable in ELK.
+   * @param eventContext This data will be added as individual fields in the log record. It will be free-text searchable and aggregatable in ELK.
+   * @param customData This data will be added under event.custom and it will not be free-text searchable in ELK.
    */
-  event(fileName: string, eventName: string, eventDomain: string, eventContext: IEventLogContext, eventData: any) {
+  event(
+    fileName: string,
+    eventName: string,
+    eventDomain: string,
+    eventContext: IEventLogContext,
+    customData: Record<string, any>
+  ) {
     const message = LoggerHelper.myconcatEssentialData(
       `EVENT: ${eventDomain ? `${eventDomain} / ` : ""}${eventName}`,
       eventContext
     )
-    this.logger.event(
-      fileName,
-      eventName,
-      undefined,
-      eventDomain,
-      {
-        json: StringUtils.stringifySafeWithFallback(eventData, 4),
-      },
-      message,
-      eventContext
-    )
+    // We are not using all fields as the purpose of LoggerService2 is to alter the signature and deprecate certain fields.
+    this.logger.event(fileName, eventName, undefined, eventDomain, undefined, message, eventContext, customData)
   }
 
   logError(error: Error | unknown, contextData?: Record<string, any>) {

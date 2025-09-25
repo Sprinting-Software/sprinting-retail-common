@@ -220,14 +220,27 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
     return this.contextProvider?.getContextOrUndefined()
   }
 
+  /**
+   *
+   * @param fileName Always pass __filename here. It will be used to identify the source file of the log message.
+   * @param eventName This expresses what the event is about. It becomes a separate field in the log record.
+   * @param eventCategory This separates events in different categories. It becomes a separate field in the log record.
+   * @param eventDomain This separates events in different domains. It becomes a separate field in the log record.
+   * @param eventData This data will serialized as json under event.data.json. It will be free-text searchable in ELK.
+   * @param message Optional message that will be logged. If not provided, a default message will be created.
+   * @param eventContext This data will be added as individual fields in the log record. It will be free-text searchable in ELK.
+   * @param customData This data will be added under event.custom and it will not be free-text searchable in ELK.
+   *
+   */
   event(
     fileName: string,
     eventName: string,
     eventCategory: string,
     eventDomain: string,
-    eventData: any,
+    eventData: any, // Deprecated, use customData instead
     message?: string,
-    eventContext?: IEventLogContext
+    eventContext?: IEventLogContext,
+    customData?: Record<string, any>
   ) {
     const ctx = this.getAsyncContext()
 
@@ -246,6 +259,7 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
       domain: eventDomain,
       data: eventData,
       context: eventContext,
+      custom: customData,
     }
 
     if (this.config?.elkRestApi?.useForEvents && this.tcpLoggerEvents) {
