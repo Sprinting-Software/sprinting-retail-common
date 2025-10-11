@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.3.2 - 2025-10-11 Nikola</h2>
+
+Add more verbose DEBUG logging
+
 <h2>Release letter for version 11.3.1 - 2025-09-25 Nikola</h2>
 
 - Adding support for custom fields in ELK events. Custom fields will appear under event.custom.xxx and will not be free-text searchable or aggregatable in ELK.

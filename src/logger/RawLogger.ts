@@ -1,10 +1,10 @@
-function isEnabled() {
-  return process.env.DEBUG_ERROR_HANDLING === "true" ? true : false
-}
+const IS_DEBUG_ENABLED =
+  process.env.DEBUG_ERROR_HANDLING === "true" || process.env.DEBUG_LOGGING === "true" ? true : false
+
 export const RawLogger = {
-  isEnabled: isEnabled,
+  isEnabled: () => IS_DEBUG_ENABLED,
   debug: (...args: Array<any>) => {
-    if (isEnabled()) {
+    if (IS_DEBUG_ENABLED) {
       // eslint-disable-next-line no-console
       console.log(...args)
     }

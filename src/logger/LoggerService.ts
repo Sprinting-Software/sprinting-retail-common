@@ -384,6 +384,7 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
       // Add the context to the labels to make it compliant with APM ELK
       obj.labels = { ...obj.labels, ...context }
     }
+    RawLogger.debug("Raw log sent to ELK: ", obj)
     return obj
   }
 
