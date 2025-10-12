@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.3.3 - 2025-10-11 Nikola</h2>
+
+- Improved error handling and logging in case of errors while sending errors or events via tcp to ELK.
+
 <h2>Release letter for version 11.3.2 - 2025-10-11 Nikola</h2>
 
 Add more verbose DEBUG logging
