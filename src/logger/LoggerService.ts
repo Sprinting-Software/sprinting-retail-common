@@ -132,15 +132,17 @@ export class LoggerService implements /*OnModuleDestroy,*/ OnApplicationShutdown
     })
     if (this.udpTransport) {
       try {
-        this.udpTransport.close() // Important: prevent unhandled socket state
+        // UDP sockets may throw "Not connected" error on disconnect
+        // This is expected and harmless - we just want to close the socket
+        this.udpTransport.close()
         this.udpTransport = null
       } catch (err) {
-        RawLogger.debug("Error during UDP transport cleanup", { err })
+        // Silently ignore "Not connected" errors during shutdown
+        if (err instanceof Error && !err.message.includes("Not connected")) {
+          RawLogger.debug("Error during UDP transport cleanup", { err })
+        }
       }
     }
-    /*this.destroyTcpLoggers().catch((err) => {
-      RawLogger.debug("Error during logger cleanup", { error: err })
-    })*/
   }
 
   // Clean up on module destruction
