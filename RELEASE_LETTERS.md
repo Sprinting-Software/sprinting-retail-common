@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.3.5-withErrorMessage - 2026-05-08 dilic</h2>
+
+- Patch from version '10.5.1-withErrorMessage' included
+
 <h2>Release letter for version 11.3.5 - 2025-10-11 Nikola</h2>
 
 - Improve code of shutting down the logger UDP channel to avoid noisy errors to be shown in the logs
