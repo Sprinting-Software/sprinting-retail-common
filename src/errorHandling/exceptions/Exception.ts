@@ -3,6 +3,7 @@ import { HttpStatus } from "@nestjs/common"
 import { inspect } from "util"
 import { ExceptionConst } from "./ExceptionConst"
 import { StringUtils } from "../../helpers/StringUtils"
+import { LibrarySettings } from "../../config/LibrarySettings"
 
 export interface ExceptionHttpResponse {
   httpStatus: number
@@ -217,7 +218,12 @@ export class Exception extends Error {
     if (this.errorName === "SecurityException" && isSecurityRelated) {
       // Don't leak security information in production
     } else {
-      // obj.message = this.description
+      // Only expose the human-readable description to clients when the consuming service has
+      // explicitly opted in at boot time. This replaces the legacy "-withErrorMessage" fork:
+      // mainline keeps internal descriptions hidden, opted-in services (e.g. BifrostNest) surface them.
+      if (LibrarySettings.includeErrorMessageInHttpResponse) {
+        obj.message = this.description
+      }
       obj.contextData = this.contextData
     }
     // Additional error details are included for BAD_REQUEST and NOT_FOUND errors
