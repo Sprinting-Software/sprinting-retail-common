@@ -17,10 +17,12 @@ export class LoggerModule {
       providers: [
         {
           provide: LoggerService,
-          useFactory: (asyncContext: AsyncContext) => {
+          useFactory: (asyncContext?: AsyncContext) => {
             return new LoggerService(config, undefined, asyncContext)
           },
-          inject: [AsyncContext],
+          // Optional: the logger enriches logs with async/trace context when AsyncContextModule
+          // is present, but must not force every consumer of CommonAppModule to import it.
+          inject: [{ token: AsyncContext, optional: true }],
         },
         LoggerService2,
         {
@@ -45,11 +47,12 @@ export class LoggerModule {
       providers: [
         {
           provide: LoggerService,
-          useFactory: (asyncContext: AsyncContext) => {
+          useFactory: (asyncContext?: AsyncContext) => {
             const loggerConfig = ConfigMapper.mapToLoggerConfig(provider.config)
             return new LoggerService(loggerConfig, undefined, asyncContext)
           },
-          inject: [AsyncContext],
+          // Optional: see forRootV2 above — keeps AsyncContext a soft, opt-in dependency.
+          inject: [{ token: AsyncContext, optional: true }],
         },
         LoggerService2,
         {
