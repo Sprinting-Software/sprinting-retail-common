@@ -1,3 +1,10 @@
+
+
+<h2>Release letter for version 11.4.0 - 2026-06-03</h2>
+
+- Add option to include message in errors to avoid branching. Now it can be opted in using LibrarySettings at boot time.
+- Make AsyncContext optional in LoggerModule
+
 <h2>Release letter for version 11.3.5 - 2025-10-11 Nikola</h2>
 
 - Improve code of shutting down the logger UDP channel to avoid noisy errors to be shown in the logs
