@@ -44,4 +44,13 @@ export interface LibConfig {
    * This is useful during testing where other libraries may set up their own handlers.
    */
   skipGlobalProcessHandlers?: boolean
+  /**
+   * When true, the human-readable error `description` is included as `message` in the HTTP
+   * response body for general (non-security) errors.
+   *
+   * Defaults to false so that internal error descriptions are never leaked to clients unless a
+   * service explicitly opts in. Setting this to true reproduces the behaviour of the legacy
+   * `-withErrorMessage` library fork (as used by BifrostNest).
+   */
+  includeErrorMessageInHttpResponse?: boolean
 }
