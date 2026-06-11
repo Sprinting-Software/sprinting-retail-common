@@ -15,6 +15,7 @@ import { LibraryDebugFlags } from "../config/LibraryDebugFlags"
 import { GlobalProcessHandlerProvider } from "./GlobalProcessHandlerProvider"
 import { ConfigModule } from "../config/ConfigModule"
 import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
+import { LibrarySettings } from "../config/LibrarySettings"
 
 /**
  * Import this module from AppModule in your projects like this:
@@ -25,6 +26,10 @@ import { RetailCommonConfig } from "../config/interface/RetailCommonConfig"
 @Module({})
 export class CommonAppModule {
   static forRoot(config: LibConfig): DynamicModule {
+    // Pass flags to LibrarySettings
+    if (config.includeErrorMessageInHttpResponse) {
+      LibrarySettings.configure({ includeErrorMessageInHttpResponse: true })
+    }
     //if (!config.skipGlobalProcessHandlers) this.setupGlobalProcessHandlers(config)
     const _isProduction = LibraryDebugFlags.SimulateProduction() || config.isProdZone
     const conditionalProvider = config.skipGlobalProcessHandlers
