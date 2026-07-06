@@ -1,5 +1,16 @@
 
 
+<h2>Release letter for version 12.0.0 - 2026-07-02</h2>
+
+Major version upgrade — NestJS 10 → 11.
+
+- Upgraded `@nestjs/common` and `@nestjs/core` from v10 to v11.
+- Upgraded `TypeScript` from 4.9 to 5.9.
+- Upgraded `reflect-metadata` from 0.1 to 0.2 (required by NestJS 11).
+- Added `rxjs` to devDependencies (required by NestJS 11 type declarations at build time).
+
+**Breaking changes:** Requires consumers to be on NestJS 11.
+
 <h2>Release letter for version 11.4.0 - 2026-06-03</h2>
 
 - Add option to include message in errors to avoid branching. Now it can be opted in using LibrarySettings at boot time.
