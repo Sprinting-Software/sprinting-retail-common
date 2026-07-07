@@ -1,5 +1,11 @@
 
 
+<h2>Release letter for version 12.0.1 - 2026-07-07</h2>
+
+- Upgraded Node.js from 18.20.4 to 24.18.0.
+- Fixed critical security vulnerability: upgraded `convict` from 6.2.4 to 6.2.5 (prototype pollution CVE).
+- Added `strict-allow-scripts=true` to protect against supply-chain attacks on install scripts.
+
 <h2>Release letter for version 12.0.0 - 2026-07-02</h2>
 
 Major version upgrade — NestJS 10 → 11.
