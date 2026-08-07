@@ -1,5 +1,5 @@
 import { AsyncContext } from "../../asyncLocalContext/AsyncContext"
-import { LoggerService } from "../LoggerService"
+import { LegacyLoggerService } from "../LegacyLoggerService"
 
 import Transport from "winston-transport"
 
@@ -32,7 +32,6 @@ describe("LoggerService", () => {
   const mockConfig = {
     env: "test",
     serviceName: "TestSystemName",
-    enableElkLogs: true,
     enableConsoleLogs: true,
     elkLogstash: {
       isUDPEnabled: false,
@@ -46,7 +45,7 @@ describe("LoggerService", () => {
     {},
     { allowDefaultContextPropertyInitialization: true, allowDefaultContextPropertyInitializationRepeatedly: true }
   )
-  const loggerService = new LoggerService(mockConfig, [mockTransport], asyncContext)
+  const loggerService = new LegacyLoggerService(mockConfig, [mockTransport], asyncContext)
 
   afterEach(() => {
     jest.clearAllMocks()

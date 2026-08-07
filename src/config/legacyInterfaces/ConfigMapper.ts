@@ -1,5 +1,5 @@
 import { ConfigLegacyV1 } from "./ConfigLegacyV1"
-import { LibConfig } from "../interface/LibConfig"
+import { BaseLibConfig, ElkV7Config, ElkV9Config, ElkVersion, LibConfig } from "../interface/LibConfig"
 import { RetailCommonConfig } from "../interface/RetailCommonConfig"
 
 const PRODUCTION_ENV_PREFIX = "p"
@@ -7,19 +7,80 @@ const PRODUCTION_ENV_PREFIX = "p"
 function isProduction(envPrefix: string) {
   return envPrefix.startsWith(PRODUCTION_ENV_PREFIX)
 }
-
 export class ConfigMapper {
-  // Jan 2025: Nikola: This mapping of config is pretty horrible. We should
-  // refactor it one day.
-  public static mapToLoggerConfig(appConfig: RetailCommonConfig): LibConfig {
+  // --- Helpers ---
+  private static buildDataStream(appConfig: RetailCommonConfig): string {
+    return `logs-${appConfig.systemName}-${appConfig.envPrefix}`
+  }
+
+  public static mapToLoggerConfig(
+    appConfig: RetailCommonConfig,
+    version?: typeof ElkVersion.V7
+  ): LibConfig & ElkV7Config
+
+  public static mapToLoggerConfig(appConfig: RetailCommonConfig, version: typeof ElkVersion.V9): LibConfig & ElkV9Config
+
+  public static mapToLoggerConfig(
+    appConfig: RetailCommonConfig,
+    version: ElkVersion = ElkVersion.V7
+  ): LibConfig & (ElkV7Config | ElkV9Config) {
+    const base = this.mapBase(appConfig)
+
+    switch (version) {
+      case ElkVersion.V9:
+        return {
+          ...base,
+          ...this.mapV9(appConfig),
+        }
+
+      case ElkVersion.V7:
+      default:
+        return {
+          ...base,
+          ...this.mapV7(appConfig),
+        }
+    }
+  }
+
+  // --- Base config ---
+  private static mapBase(appConfig: RetailCommonConfig): BaseLibConfig {
     return {
-      logLevel: appConfig.elk.logLevel,
-      env: appConfig.envPrefix, // `${appConfig.envPrefix}-env`,
+      env: appConfig.envPrefix,
       serviceName: appConfig.systemName,
-      enableElkLogs: appConfig.elk.logstash.isEnabled,
-      enableConsoleLogs: appConfig.enableConsoleLogs,
-      elkRestApi: { ...appConfig.elk.restApi },
       envTags: appConfig.elk.envTags,
+      logLevel: appConfig.elk.logLevel,
+      enableConsoleLogs: appConfig.enableConsoleLogs,
+    }
+  }
+
+  // --- V9 ---
+  private static mapV9(appConfig: RetailCommonConfig): {
+    elkVersion: typeof ElkVersion.V9
+    elkRestApi: ElkV9Config["elkRestApi"]
+  } {
+    const restApi = appConfig.elk.restApi
+
+    if (!restApi) {
+      throw new Error("ELK V9 requires elk.restApi configuration")
+    }
+
+    return {
+      elkVersion: ElkVersion.V9,
+      elkRestApi: {
+        endpoint: restApi.endpoint,
+        apiKey: restApi.apiKey,
+        dataStream: this.buildDataStream(appConfig),
+      },
+    }
+  }
+
+  // --- V7 ---
+  private static mapV7(appConfig: RetailCommonConfig): ElkV7Config & {
+    elkVersion: typeof ElkVersion.V7
+  } {
+    return {
+      elkVersion: ElkVersion.V7,
+      elkRestApi: { ...appConfig.elk.restApi },
       elkLogstash: {
         isUDPEnabled: true,
         host: appConfig.elk.logstash.host,

@@ -17,6 +17,7 @@ export * from "./src/errorHandling/GlobalErrorFilter"
 export * from "./src/errorHandling/exceptions/DbError"
 export * from "./src/logger/LogContext"
 export * from "./src/logger/LoggerService"
+export * from "./src/logger/LegacyLoggerService"
 export * from "./src/logger/LoggerService2"
 export { AsyncContext } from "./src/asyncLocalContext/AsyncContext"
 export { AsyncContextModule } from "./src/asyncLocalContext/AsyncContextModule"
@@ -25,10 +26,19 @@ export { TraceContext } from "./src/asyncLocalContext/TraceContext"
 export * from "./src/asyncLocalContext/types"
 export { IEventLogContext } from "./src/logger/types"
 export * from "./src/logger/LoggerModule"
+export * from "./src/logger/BulkLogService"
+export * from "./src/logger/ElkV9LoggerService"
 export * from "./src/testUtil/RetailTestUtil"
 export { CatchAsync } from "./src/testUtil/RetailTestUtil"
 export { CatchSync } from "./src/testUtil/RetailTestUtil"
-export { /** @deprecated */ LibConfig as LoggerConfig, LibConfig } from "./src/config/interface/LibConfig"
+export {
+  /** @deprecated */ LibConfig as LoggerConfig,
+  LibConfig,
+  ElkVersion,
+  ElkV7Config,
+  ElkV9BulkConfig,
+  ElkV9Config,
+} from "./src/config/interface/LibConfig"
 export * from "./src/seeder/SeederService"
 export * from "./src/seeder/SeederModule"
 export * from "./src/seeder/SeederHelper"

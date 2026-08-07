@@ -1,4 +1,5 @@
-
+<h2>Release letter for version 11.5.0-beta - 2026-08-07</h2>
+- Added support for the ELK 9 stack
 
 <h2>Release letter for version 11.4.0 - 2026-06-03</h2>
 

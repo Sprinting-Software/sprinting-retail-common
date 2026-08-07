@@ -6,9 +6,9 @@ import { ElkCustomIndexMessage, ElkLog, ElkRestApiConfig } from "./types"
 export class ElkRestApi {
   static hasNotified = false
 
-  private endpoint: string
-  private apiKey: string
-  private indexName: string
+  private readonly endpoint: string
+  private readonly apiKey: string
+  private readonly indexName: string
 
   constructor(config: ElkRestApiConfig) {
     /*if (!config.endpoint || !config.apiKey || !config.indexName) {

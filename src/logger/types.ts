@@ -48,6 +48,7 @@ export interface ElkCustomIndexMessage {
 export interface LogMessageExtended extends LogMessage {
   timestamp: string
   "@timestamp": string
+  "log.level"?: Exclude<LogLevel, LogLevel.event>
   meta?: Record<string, string | boolean | number>
 }
 
