@@ -4,9 +4,11 @@ import { BulkLogService } from "../BulkLogService"
 const config: ElkV9BulkConfig = {
   endpoint: "http://elasticsearch:9200/",
   apiKey: "secret",
-  dataStream: "logs-my-service-prod",
   flushIntervalMs: 60000,
 }
+
+const INDEX = "logs-apm-prod-my-service-log-2026.34"
+const ERROR_INDEX = "logs-apm-prod-my-service-error-2026.34"
 
 describe("BulkLogService", () => {
   let fetchMock: jest.SpyInstance
@@ -22,17 +24,17 @@ describe("BulkLogService", () => {
     jest.useRealTimers()
   })
 
-  it("posts newline-terminated data-stream NDJSON with the API key", async () => {
+  it("posts newline-terminated NDJSON with the API key, using each entry's own index", async () => {
     const service = new BulkLogService({ ...config, maxBatchSize: 2 })
-    service.log({ message: "hello", "@timestamp": "now" })
-    service.log({ message: "world" })
+    service.log(INDEX, { message: "hello", "@timestamp": "now" })
+    service.log(ERROR_INDEX, { message: "world" })
 
     await service.flush()
 
     expect(fetchMock).toHaveBeenCalledWith("http://elasticsearch:9200/_bulk", {
       method: "POST",
       headers: { "Content-Type": "application/x-ndjson", Authorization: "ApiKey secret" },
-      body: '{"create":{"_index":"logs-my-service-prod"}}\n{"message":"hello","@timestamp":"now"}\n{"create":{"_index":"logs-my-service-prod"}}\n{"message":"world"}\n',
+      body: `{"create":{"_index":"${INDEX}"}}\n{"message":"hello","@timestamp":"now"}\n{"create":{"_index":"${ERROR_INDEX}"}}\n{"message":"world"}\n`,
     })
     await service.onModuleDestroy()
   })
@@ -40,16 +42,16 @@ describe("BulkLogService", () => {
   it("drops the oldest log when the buffer is full", async () => {
     const errorSpy = jest.spyOn(console, "log").mockImplementation()
     const service = new BulkLogService({ ...config, maxBatchSize: 3, maxBufferSize: 2 })
-    service.log({ message: "old" })
-    service.log({ message: "newer" })
-    service.log({ message: "newest" })
+    service.log(INDEX, { message: "old" })
+    service.log(INDEX, { message: "newer" })
+    service.log(INDEX, { message: "newest" })
 
     await service.flush()
 
     expect(fetchMock.mock.calls[0][1].body).not.toContain('"old"')
     expect(fetchMock.mock.calls[0][1].body).toContain('"newer"')
     expect(fetchMock.mock.calls[0][1].body).toContain('"newest"')
-    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", { message: "old" })
+    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", INDEX, { message: "old" })
     await service.onModuleDestroy()
     errorSpy.mockRestore()
   })
@@ -60,7 +62,7 @@ describe("BulkLogService", () => {
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) } as Response)
     const service = new BulkLogService({ ...config, maxRetries: 1 })
-    service.log({ message: "retry" })
+    service.log(INDEX, { message: "retry" })
     const flushing = service.flush()
 
     await jest.advanceTimersByTimeAsync(500)
@@ -76,7 +78,7 @@ describe("BulkLogService", () => {
       .mockResolvedValueOnce({ ok: false, status: 503, text: async () => "" } as Response)
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ errors: false }) } as Response)
     const service = new BulkLogService({ ...config, maxRetries: 1 })
-    service.log({ message: "retry" })
+    service.log(INDEX, { message: "retry" })
     const flushing = service.flush()
 
     await jest.advanceTimersByTimeAsync(500)
@@ -94,13 +96,13 @@ describe("BulkLogService", () => {
       json: async () => ({ errors: true, items: [{ create: { status: 201 } }, { create: { status: 400 } }] }),
     } as Response)
     const service = new BulkLogService(config)
-    service.log({ message: "sent" })
-    service.log({ message: "failed" })
+    service.log(INDEX, { message: "sent" })
+    service.log(INDEX, { message: "failed" })
 
     await service.flush()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", { message: "failed" })
+    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", INDEX, { message: "failed" })
     errorSpy.mockRestore()
     await service.onModuleDestroy()
   })
@@ -110,14 +112,14 @@ describe("BulkLogService", () => {
     const errorSpy = jest.spyOn(console, "log").mockImplementation()
     fetchMock.mockRejectedValue(new Error("offline"))
     const service = new BulkLogService({ ...config, maxRetries: 1 })
-    service.log({ message: "fallback" })
+    service.log(INDEX, { message: "fallback" })
     const flushing = service.flush()
 
     await jest.advanceTimersByTimeAsync(500)
     await flushing
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", { message: "fallback" })
+    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", INDEX, { message: "fallback" })
     await service.onModuleDestroy()
     errorSpy.mockRestore()
   })
@@ -126,12 +128,12 @@ describe("BulkLogService", () => {
     const errorSpy = jest.spyOn(console, "log").mockImplementation()
     fetchMock.mockResolvedValueOnce({ ok: false, status: 401, text: async () => "" } as Response)
     const service = new BulkLogService(config)
-    service.log({ message: "unauthorized" })
+    service.log(INDEX, { message: "unauthorized" })
 
     await service.flush()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", { message: "unauthorized" })
+    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", INDEX, { message: "unauthorized" })
     await service.onModuleDestroy()
     errorSpy.mockRestore()
   })
@@ -139,7 +141,7 @@ describe("BulkLogService", () => {
   it("flushes on the configured interval", async () => {
     jest.useFakeTimers()
     const service = new BulkLogService({ ...config, flushIntervalMs: 1000 })
-    service.log({ message: "interval" })
+    service.log(INDEX, { message: "interval" })
 
     await jest.advanceTimersByTimeAsync(1000)
 
@@ -152,19 +154,19 @@ describe("BulkLogService", () => {
     const service = new BulkLogService(config)
     const circular: Record<string, any> = { message: "circular" }
     circular.self = circular
-    service.log(circular)
+    service.log(INDEX, circular)
 
     await service.flush()
 
     expect(fetchMock).not.toHaveBeenCalled()
-    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", circular)
+    expect(errorSpy).toHaveBeenCalledWith("ELK v9 fallback log", INDEX, circular)
     await service.onModuleDestroy()
     errorSpy.mockRestore()
   })
 
   it("drains buffered logs on module destruction", async () => {
     const service = new BulkLogService({ ...config, maxBatchSize: 2 })
-    for (let index = 0; index < 5; index++) service.log({ index })
+    for (let index = 0; index < 5; index++) service.log(INDEX, { index })
 
     await service.onModuleDestroy()
 

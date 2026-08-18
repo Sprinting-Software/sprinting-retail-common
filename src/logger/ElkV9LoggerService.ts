@@ -14,6 +14,25 @@ import { LoggerService } from "./LoggerService"
 
 const { combine, printf, timestamp } = winston.format
 
+// Kept in sync conceptually with LegacyLoggerService's own getYearAndWeek(), but duplicated
+// rather than shared — the two logger implementations are intentionally independent.
+function getYearAndWeek(): string {
+  const date = new Date()
+  const year = date.getFullYear()
+  const firstDayOfYear = new Date(year, 0, 1)
+  const dayOfYear = Math.floor((date.getTime() - firstDayOfYear.getTime()) / (24 * 60 * 60 * 1000)) + 1
+  const weekNumber = Math.ceil((dayOfYear + firstDayOfYear.getDay()) / 7)
+  return `${year}.${weekNumber.toString().padStart(2, "0")}`
+}
+
+type IndexLogType = "event" | "error" | "log"
+
+function getIndexLogType(logType: LogLevel): IndexLogType {
+  if (logType === LogLevel.event) return "event"
+  if (logType === LogLevel.error) return "error"
+  return "log"
+}
+
 @Injectable()
 export class ElkV9LoggerService extends LoggerService {
   private readonly consoleLogger: winston.Logger
@@ -179,7 +198,17 @@ export class ElkV9LoggerService extends LoggerService {
       eventObj["transaction.id"] = tx.ids["transaction.id"]
     }
     this.consoleLogger.log(logMessage.logType === LogLevel.event ? LogLevel.info : logMessage.logType, { ...eventObj })
-    this.bulk.log(eventObj)
+    this.bulk.log(this.buildIndexName(logMessage.logType), eventObj)
+  }
+
+  /**
+   * Builds the target index name for a log, split by type (event/error/log) with weekly
+   * rotation, e.g. `logs-apm-a-bifrostbackend-error-2026.34`.
+   */
+  private buildIndexName(logType: LogLevel): string {
+    const env = this.config.env.split("-")[0]
+    const indexLogType = getIndexLogType(logType)
+    return `logs-apm-${env}-${this.config.serviceName}-${indexLogType}-${getYearAndWeek()}`
   }
 
   private static _getCallerFile(error?: Error) {

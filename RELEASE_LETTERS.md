@@ -1,3 +1,6 @@
+<h2>Release letter for version 11.5.1-beta - 2026-08-18</h2>
+- ELK v9 logs (via BulkLogService) are now split into three separate weekly-rotating indices by log type instead of one shared index: `logs-apm-{env}-{serviceName}-{event|error|log}-{yyyy.ww}`. Each entry in a bulk request now carries its own target index.
+
 <h2>Release letter for version 11.5.0-beta - 2026-08-07</h2>
 - Added support for the ELK 9 stack
 

@@ -5,15 +5,21 @@ import { fetchOrFailRaw } from "../http/fetchOrFail"
 
 export const ELK_V9_CONFIG = Symbol("ELK_V9_CONFIG")
 
+export type BulkLogEntry = {
+  /** Target index for this specific document (see ElkV9LoggerService for how this is built). */
+  index: string
+  doc: Record<string, any>
+}
+
 class BulkDeliveryError extends Error {
-  constructor(message: string, readonly logs: Record<string, any>[]) {
+  constructor(message: string, readonly entries: BulkLogEntry[]) {
     super(message)
   }
 }
 
 @Injectable()
 export class BulkLogService implements OnModuleDestroy {
-  private readonly buffer: Record<string, any>[] = []
+  private readonly buffer: BulkLogEntry[] = []
   private readonly timer: NodeJS.Timeout
   private flushing: Promise<void> | undefined
   private readonly batchSize: number
@@ -28,15 +34,20 @@ export class BulkLogService implements OnModuleDestroy {
     this.timer.unref()
   }
 
-  log(log: Record<string, any>): void {
+  /**
+   * @param index Target index for this document, e.g. `logs-apm-a-bifrostbackend-error-2026.34`
+   *   (see ElkV9LoggerService.buildIndexName). Each entry in a single batch may target a
+   *   different index — the Elasticsearch `_bulk` API supports mixed-index requests natively.
+   */
+  log(index: string, doc: Record<string, any>): void {
     try {
       if (this.buffer.length >= this.maxBufferSize) {
         this.fallback([this.buffer.shift()], new Error("ELK v9 log buffer is full"))
       }
-      this.buffer.push(log)
+      this.buffer.push({ index, doc })
       if (this.buffer.length >= this.batchSize) void this.flush()
     } catch (error) {
-      this.fallback([log], error)
+      this.fallback([{ index, doc }], error)
     }
   }
 
@@ -44,9 +55,9 @@ export class BulkLogService implements OnModuleDestroy {
     if (this.flushing) return this.flushing
     if (!this.buffer.length) return Promise.resolve()
 
-    const logs = this.buffer.splice(0, this.batchSize)
-    this.flushing = this.send(logs)
-      .catch((error) => this.fallback(error instanceof BulkDeliveryError ? error.logs : logs, error))
+    const entries = this.buffer.splice(0, this.batchSize)
+    this.flushing = this.send(entries)
+      .catch((error) => this.fallback(error instanceof BulkDeliveryError ? error.entries : entries, error))
       .finally(() => {
         this.flushing = undefined
         if (this.buffer.length >= this.batchSize) void this.flush()
@@ -59,9 +70,9 @@ export class BulkLogService implements OnModuleDestroy {
     while (this.flushing || this.buffer.length) await this.flush()
   }
 
-  private async send(logs: Record<string, any>[]): Promise<void> {
-    const payload = logs
-      .flatMap((log) => [JSON.stringify({ create: { _index: this.config.dataStream } }), JSON.stringify(log)])
+  private async send(entries: BulkLogEntry[]): Promise<void> {
+    const payload = entries
+      .flatMap(({ index, doc }) => [JSON.stringify({ create: { _index: index } }), JSON.stringify(doc)])
       .join("\n")
       .concat("\n")
     const url = `${this.config.endpoint.replace(/\/$/, "")}/_bulk`
@@ -90,14 +101,14 @@ export class BulkLogService implements OnModuleDestroy {
 
       const result = await response.json()
       if (result.errors) {
-        const failedLogs = result.items
-          ?.map((item: Record<string, { status: number }>, index: number) =>
-            Object.values(item).some(({ status }) => status >= 300) ? logs[index] : undefined
+        const failedEntries = result.items
+          ?.map((item: Record<string, { status: number }>, itemIndex: number) =>
+            Object.values(item).some(({ status }) => status >= 300) ? entries[itemIndex] : undefined
           )
-          .filter((log: Record<string, any> | undefined): log is Record<string, any> => Boolean(log))
+          .filter((entry: BulkLogEntry | undefined): entry is BulkLogEntry => Boolean(entry))
         throw new BulkDeliveryError(
           "Elasticsearch bulk request contained item failures",
-          failedLogs?.length ? failedLogs : logs
+          failedEntries?.length ? failedEntries : entries
         )
       }
       return
@@ -108,14 +119,14 @@ export class BulkLogService implements OnModuleDestroy {
     return new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt))
   }
 
-  private fallback(logs: Array<Record<string, any> | undefined>, error: unknown): void {
+  private fallback(entries: Array<BulkLogEntry | undefined>, error: unknown): void {
     try {
       // eslint-disable-next-line no-console
       console.log("Failed to deliver ELK v9 logs; writing to console", error)
-      for (const log of logs) {
-        if (log) {
+      for (const entry of entries) {
+        if (entry) {
           // eslint-disable-next-line no-console
-          console.log("ELK v9 fallback log", log)
+          console.log("ELK v9 fallback log", entry.index, entry.doc)
         }
       }
     } catch {

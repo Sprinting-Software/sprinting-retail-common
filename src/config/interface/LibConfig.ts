@@ -26,7 +26,13 @@ export type ElkV7Config = {
 export type ElkV9BulkConfig = {
   endpoint: string
   apiKey: string
-  dataStream: string
+  /**
+   * @deprecated No longer used to select the target index. ElkV9LoggerService now computes a
+   * separate, weekly-rotating index per log type (event/error/log) from the surrounding
+   * LibConfig's `env`/`serviceName` instead. Kept optional so existing configs that still set
+   * it don't need to change.
+   */
+  dataStream?: string
   maxBatchSize?: number
   flushIntervalMs?: number
   maxRetries?: number

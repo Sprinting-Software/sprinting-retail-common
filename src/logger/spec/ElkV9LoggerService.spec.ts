@@ -17,6 +17,7 @@ describe("ElkV9LoggerService", () => {
     logger.info("orders.service", "created", { orderId: "o-1" })
 
     expect(bulk.log).toHaveBeenCalledWith(
+      expect.stringMatching(/^logs-apm-.*-log-\d{4}\.\d{2}$/),
       expect.objectContaining({
         filename: "orders.service",
         message: "created { orderId: 'o-1' }",
@@ -29,7 +30,7 @@ describe("ElkV9LoggerService", () => {
       })
     )
     expect(consoleLog.mock.calls[0][0]).toEqual(expect.objectContaining({ message: "created { orderId: 'o-1' }" }))
-    expect((bulk.log as jest.Mock).mock.calls[0][0]).not.toHaveProperty("ecs.version")
+    expect((bulk.log as jest.Mock).mock.calls[0][1]).not.toHaveProperty("ecs.version")
     consoleLog.mockRestore()
   })
 
@@ -45,6 +46,7 @@ describe("ElkV9LoggerService", () => {
 
     expect(captureError).toHaveBeenCalledTimes(1)
     expect(bulk.log).toHaveBeenCalledWith(
+      expect.stringMatching(/^logs-apm-.*-error-\d{4}\.\d{2}$/),
       expect.objectContaining({
         filename: expect.any(String),
         message: expect.stringContaining("context: 'orders'"),
@@ -62,7 +64,7 @@ describe("ElkV9LoggerService", () => {
 
     logger.logError(new Error("x".repeat(200)))
 
-    expect((bulk.log as jest.Mock).mock.calls[0][0].message).toContain("...(truncated due to configured limit)")
+    expect((bulk.log as jest.Mock).mock.calls[0][1].message).toContain("...(truncated due to configured limit)")
     captureError.mockRestore()
   })
 })
