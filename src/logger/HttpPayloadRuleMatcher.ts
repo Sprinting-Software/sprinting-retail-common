@@ -2,7 +2,7 @@ import { HttpPayloadDirection, HttpPayloadLogRule } from "../config/interface/Li
 
 export type HttpPayloadMatchInput = {
   direction: HttpPayloadDirection
-  verb: string
+  method: string
   domain: string
   path: string
 }
@@ -23,7 +23,7 @@ export function matchHttpPayloadRule(
   if (!rules?.length) return undefined
   return rules.find((rule) => {
     if (rule.direction !== input.direction) return false
-    if (rule.verb && rule.verb !== "*" && rule.verb.toLowerCase() !== input.verb.toLowerCase()) return false
+    if (rule.method && rule.method !== "*" && rule.method.toLowerCase() !== input.method.toLowerCase()) return false
     if (!globToRegExp(rule.domain).test(input.domain)) return false
     if (!globToRegExp(rule.path).test(input.path)) return false
     return true

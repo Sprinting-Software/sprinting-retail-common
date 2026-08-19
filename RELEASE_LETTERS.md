@@ -1,3 +1,12 @@
+<h2>Release letter for version 11.5.3-beta - 2026-08-19</h2>
+- `httpPayload()` field names now match the pre-existing AxiosFactory/LogHelper outbound logger convention for consistency: `verb` → `method`, `requestBody` → `payload`, `responseBody` → `responsePayload`. Also added `route` (defaults to `path`), `headers`, `responseHeaders`, `responseTime`, `success` (defaults to `statusCode < 300` when omitted), and `error`.
+- Added `logType: "httpPayload"` plus a new `httpLogType: "InboundHttpCall" | "OutboundHttpCall"` field.
+- `HttpPayloadLoggingConfig` now requires `defaultSamplingRate`, applied when no rule matches a call (previously: no match meant nothing was logged at all). A matching rule's `samplingRate` still overrides the default. Rules also support `logRequest`/`logResponse` (default true) to include/omit just one side of a call.
+- `headers`/`responseHeaders` now drop a fixed set of noise/boilerplate headers entirely (accept, host, content-length, cache-control, etc.) before the existing sensitive-word redaction runs.
+- Removed automatic `authorization`/`cookie` redaction from `headers`/`responseHeaders` — retail-common no longer overrides these, so a caller that already masked them itself isn't clobbered. Callers that don't already mask sensitive headers are responsible for doing so before calling `httpPayload()`.
+- Fixed a real bug: ELK v9 index names could contain uppercase characters (e.g. `httpPayload` in the index name), which Elasticsearch rejects outright, silently dropping affected logs. All index names are now lowercased.
+- `StringUtils` (`src/helpers/StringUtils.ts`) is now exported from the package's public API.
+
 <h2>Release letter for version 11.5.2-beta - 2026-08-19</h2>
 - Supersedes 11.5.1-beta, which never actually published with these changes due to a lockfile-drift CI failure followed by an npm "cannot publish over previously published version" conflict — republished under this version instead.
 - ELK v9 logs (via BulkLogService) are now split into three separate weekly-rotating indices by log type instead of one shared index: `{env}-{serviceName}-{event|error|log}-{yyyy.ww}`. Each entry in a bulk request now carries its own target index.

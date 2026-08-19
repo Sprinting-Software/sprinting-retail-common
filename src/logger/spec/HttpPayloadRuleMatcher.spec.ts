@@ -4,7 +4,7 @@ import { matchHttpPayloadRule } from "../HttpPayloadRuleMatcher"
 describe("matchHttpPayloadRule", () => {
   const baseInput = {
     direction: "outbound" as const,
-    verb: "GET",
+    method: "GET",
     domain: "api.sprinting.io",
     path: "/api/v2/orders/123",
   }
@@ -46,22 +46,28 @@ describe("matchHttpPayloadRule", () => {
     expect(matchHttpPayloadRule([rule], { ...baseInput, path: "/api/v2/customers/123" })).toBeUndefined()
   })
 
-  it("matches a specific verb case-insensitively, or any verb when omitted or '*'", () => {
-    const getRule: HttpPayloadLogRule = { direction: "outbound", domain: "*", path: "*", verb: "get", samplingRate: 1 }
-    expect(matchHttpPayloadRule([getRule], baseInput)).toBe(getRule)
-    expect(matchHttpPayloadRule([getRule], { ...baseInput, verb: "POST" })).toBeUndefined()
-
-    const anyVerbRule: HttpPayloadLogRule = {
+  it("matches a specific method case-insensitively, or any method when omitted or '*'", () => {
+    const getRule: HttpPayloadLogRule = {
       direction: "outbound",
       domain: "*",
       path: "*",
-      verb: "*",
+      method: "get",
       samplingRate: 1,
     }
-    expect(matchHttpPayloadRule([anyVerbRule], { ...baseInput, verb: "POST" })).toBe(anyVerbRule)
+    expect(matchHttpPayloadRule([getRule], baseInput)).toBe(getRule)
+    expect(matchHttpPayloadRule([getRule], { ...baseInput, method: "POST" })).toBeUndefined()
 
-    const noVerbRule: HttpPayloadLogRule = { direction: "outbound", domain: "*", path: "*", samplingRate: 1 }
-    expect(matchHttpPayloadRule([noVerbRule], { ...baseInput, verb: "DELETE" })).toBe(noVerbRule)
+    const anyMethodRule: HttpPayloadLogRule = {
+      direction: "outbound",
+      domain: "*",
+      path: "*",
+      method: "*",
+      samplingRate: 1,
+    }
+    expect(matchHttpPayloadRule([anyMethodRule], { ...baseInput, method: "POST" })).toBe(anyMethodRule)
+
+    const noMethodRule: HttpPayloadLogRule = { direction: "outbound", domain: "*", path: "*", samplingRate: 1 }
+    expect(matchHttpPayloadRule([noMethodRule], { ...baseInput, method: "DELETE" })).toBe(noMethodRule)
   })
 
   it("returns the first matching rule when several would match", () => {

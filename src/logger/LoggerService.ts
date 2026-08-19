@@ -1,14 +1,28 @@
 import { IEventLogContext, LogLevel, LogMessage } from "./types"
 import { HttpPayloadDirection } from "../config/interface/LibConfig"
 
+/**
+ * Field names deliberately match the old AxiosFactory/LogHelper.outboundHttpCall() logger
+ * (method, payload, responsePayload, headers, responseHeaders, responseTime, success, error)
+ * for consistency with existing Kibana searches/dashboards built against that shape.
+ */
 export type HttpPayloadLogParams = {
   direction: HttpPayloadDirection
-  verb: string
+  method: string
   domain: string
   path: string
+  /** Optional normalized route (e.g. with path params templated out). Defaults to `path` if omitted. */
+  route?: string
   statusCode?: number
-  requestBody?: any
-  responseBody?: any
+  payload?: any
+  responsePayload?: any
+  headers?: Record<string, any>
+  responseHeaders?: Record<string, any>
+  /** Duration of the call in milliseconds. */
+  responseTime?: number
+  /** Defaults to `statusCode < 300` when omitted and statusCode is present. */
+  success?: boolean
+  error?: any
 }
 
 export abstract class LoggerService {

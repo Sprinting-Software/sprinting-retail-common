@@ -213,37 +213,67 @@ export class ElkV9LoggerService extends LoggerService {
   private buildIndexName(logType: LogLevel): string {
     const env = this.config.env.split("-")[0]
     const indexLogType = getIndexLogType(logType)
-    return `${env}-${this.config.serviceName}-${indexLogType}-${getYearAndWeek()}`
+    return `${env}-${this.config.serviceName}-${indexLogType}-${getYearAndWeek()}`.toLowerCase()
   }
 
   /**
-   * Logs an HTTP request/response payload if a configured rule matches the call and the
-   * rule's sampling rate selects it. Bodies are redacted via StringUtils.redactAndTruncateForLogging
-   * before being sent, since they may contain sensitive data.
+   * Logs an HTTP request/response payload, subject to the configured sampling rate. A matching
+   * rule (see HttpPayloadRuleMatcher) overrides `defaultSamplingRate`/`logRequest`/`logResponse`
+   * for that call; otherwise the config's `defaultSamplingRate` applies (with both bodies logged).
+   * Bodies and headers are redacted via StringUtils.redactAndTruncateForLogging before being sent,
+   * since they may contain sensitive data. Header redaction additionally always prunes
+   * authorization/cookie-style keys, which aren't covered by the default sensitive-word list.
    */
   httpPayload(params: HttpPayloadLogParams): void {
-    const rule = matchHttpPayloadRule(this.config.httpPayloadLogging?.rules, params)
-    if (!rule) return
-    if (Math.random() >= rule.samplingRate) return
+    const config = this.config.httpPayloadLogging
+    if (!config) return
+
+    const rule = matchHttpPayloadRule(config.rules, params)
+    const samplingRate = rule?.samplingRate ?? config.defaultSamplingRate
+    if (Math.random() >= samplingRate) return
+
+    const logRequest = rule?.logRequest ?? true
+    const logResponse = rule?.logResponse ?? true
 
     const timestamp = new Date().toISOString()
     const env = this.config.env.split("-")[0]
     const doc: Record<string, any> = {
       direction: params.direction,
-      verb: params.verb,
+      method: params.method,
       domain: params.domain,
       path: params.path,
+      route: params.route ?? params.path,
       statusCode: params.statusCode,
-      requestBody:
-        params.requestBody !== undefined ? StringUtils.redactAndTruncateForLogging(params.requestBody) : undefined,
-      responseBody:
-        params.responseBody !== undefined ? StringUtils.redactAndTruncateForLogging(params.responseBody) : undefined,
+      success: params.success ?? (params.statusCode !== undefined ? params.statusCode < 300 : undefined),
+      ...(logRequest &&
+        params.payload !== undefined && {
+          payload: StringUtils.redactAndTruncateForLogging(params.payload),
+        }),
+      ...(logResponse &&
+        params.responsePayload !== undefined && {
+          responsePayload: StringUtils.redactAndTruncateForLogging(params.responsePayload),
+        }),
+      ...(logRequest &&
+        params.headers !== undefined && {
+          headers: ElkV9LoggerService.redactHeaders(params.headers, ElkV9LoggerService.NOISE_REQUEST_HEADER_KEYS),
+        }),
+      ...(logResponse &&
+        params.responseHeaders !== undefined && {
+          responseHeaders: ElkV9LoggerService.redactHeaders(
+            params.responseHeaders,
+            ElkV9LoggerService.NOISE_RESPONSE_HEADER_KEYS
+          ),
+        }),
+      responseTime: params.responseTime,
+      error: params.error !== undefined ? StringUtils.redactAndTruncateForLogging(params.error) : undefined,
       system: this.config.serviceName,
       component: this.config.serviceName,
       env,
       systemEnv: `${env}-${this.config.serviceName}`,
       service: { name: this.config.serviceName, environment: env },
       labels: { envTags: this.config.envTags, ...this.getAsyncContext() },
+      logType: "httpPayload",
+      httpLogType: params.direction === "inbound" ? "InboundHttpCall" : "OutboundHttpCall",
       "log.level": LogLevel.info,
       "@timestamp": timestamp,
       timestamp,
@@ -257,9 +287,48 @@ export class ElkV9LoggerService extends LoggerService {
     this.bulk.log(this.buildHttpPayloadIndexName(), doc)
   }
 
+  // Noise headers dropped before logging (transport/boilerplate, not sensitive) — matches the
+  // convention already used in Club's LogContext.ts (filteredRequestHeaders/filteredResponseHeaders).
+  private static readonly NOISE_REQUEST_HEADER_KEYS = [
+    "accept",
+    "host",
+    "accept-encoding",
+    "user-agent",
+    "content-type",
+    "content-length",
+    "connection",
+    "cache-control",
+    "postman-token",
+    "x-forwarded-for",
+    "x-forwarded-proto",
+    "x-forwarded-port",
+    "x-amzn-trace-id",
+  ]
+  private static readonly NOISE_RESPONSE_HEADER_KEYS = [
+    "accept-ranges",
+    "access-control-expose-headers",
+    "cache-control",
+    "content-length",
+    "content-type",
+    "vary",
+  ]
+
+  /**
+   * Drops noise headers, then applies the default sensitive-word redaction (password/secret/token/
+   * apikey/etc). Deliberately does NOT redact authorization/cookie itself — callers (e.g. Club) may
+   * already mask those before calling httpPayload(), and forcing our own redaction here would
+   * clobber an already-masked value. Callers that don't pre-mask sensitive headers are responsible
+   * for doing so before calling httpPayload().
+   */
+  private static redactHeaders(headers: Record<string, any>, noiseKeys: string[]): Record<string, any> {
+    const noiseKeySet = new Set(noiseKeys)
+    const filtered = Object.fromEntries(Object.entries(headers).filter(([key]) => !noiseKeySet.has(key.toLowerCase())))
+    return StringUtils.redactAndTruncateForLogging(filtered)
+  }
+
   private buildHttpPayloadIndexName(): string {
     const env = this.config.env.split("-")[0]
-    return `${env}-${this.config.serviceName}-httpPayload-${getYearAndWeek()}`
+    return `${env}-${this.config.serviceName}-httpPayload-${getYearAndWeek()}`.toLowerCase()
   }
 
   private static _getCallerFile(error?: Error) {

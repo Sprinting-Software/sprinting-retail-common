@@ -69,24 +69,30 @@ describe("ElkV9LoggerService", () => {
   })
 
   describe("httpPayload", () => {
-    const call = { direction: "outbound" as const, verb: "GET", domain: "api.sprinting.io", path: "/api/v2/orders/1" }
+    const call = {
+      direction: "outbound" as const,
+      method: "GET",
+      domain: "api.sprinting.io",
+      path: "/api/v2/orders/1",
+    }
 
-    it("does nothing when no rule matches the call", () => {
+    afterEach(() => {
+      jest.spyOn(Math, "random").mockRestore()
+    })
+
+    it("does nothing when httpPayloadLogging isn't configured at all", () => {
       const bulk = { log: jest.fn() } as unknown as BulkLogService
-      const logger = new ElkV9LoggerService({ ...LibTestConfigV9, httpPayloadLogging: { rules: [] } }, bulk)
+      const logger = new ElkV9LoggerService(LibTestConfigV9, bulk)
 
       logger.httpPayload(call)
 
       expect(bulk.log).not.toHaveBeenCalled()
     })
 
-    it("does nothing when the matching rule's sampling rate excludes this call", () => {
+    it("does nothing when no rule matches and the default sampling rate excludes this call", () => {
       const bulk = { log: jest.fn() } as unknown as BulkLogService
       const logger = new ElkV9LoggerService(
-        {
-          ...LibTestConfigV9,
-          httpPayloadLogging: { rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 0.5 }] },
-        },
+        { ...LibTestConfigV9, httpPayloadLogging: { defaultSamplingRate: 0.5, rules: [] } },
         bulk
       )
       jest.spyOn(Math, "random").mockReturnValue(0.9)
@@ -94,7 +100,38 @@ describe("ElkV9LoggerService", () => {
       logger.httpPayload(call)
 
       expect(bulk.log).not.toHaveBeenCalled()
-      jest.spyOn(Math, "random").mockRestore()
+    })
+
+    it("falls back to the default sampling rate when no rule matches", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        { ...LibTestConfigV9, httpPayloadLogging: { defaultSamplingRate: 1, rules: [] } },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload(call)
+
+      expect(bulk.log).toHaveBeenCalled()
+    })
+
+    it("a matching rule's sampling rate overrides the default, even when the default would exclude it", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload(call)
+
+      expect(bulk.log).toHaveBeenCalled()
     })
 
     it("sends to a dedicated httpPayload index and redacts sensitive fields when sampled", () => {
@@ -102,26 +139,230 @@ describe("ElkV9LoggerService", () => {
       const logger = new ElkV9LoggerService(
         {
           ...LibTestConfigV9,
-          httpPayloadLogging: { rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }] },
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
         },
         bulk
       )
       jest.spyOn(Math, "random").mockReturnValue(0)
 
-      logger.httpPayload({ ...call, statusCode: 200, requestBody: { password: "secret", orderId: "o-1" } })
+      logger.httpPayload({ ...call, statusCode: 200, payload: { password: "secret", orderId: "o-1" } })
 
       expect(bulk.log).toHaveBeenCalledWith(
-        expect.stringMatching(/^(?!logs-apm-).*-httpPayload-\d{4}\.\d{2}$/),
+        expect.stringMatching(/^(?!logs-apm-).*-httppayload-\d{4}\.\d{2}$/),
         expect.objectContaining({
           direction: "outbound",
-          verb: "GET",
+          method: "GET",
           domain: "api.sprinting.io",
           path: "/api/v2/orders/1",
+          route: "/api/v2/orders/1",
           statusCode: 200,
-          requestBody: expect.objectContaining({ password: "REDACTED", orderId: "o-1" }),
+          success: true,
+          logType: "httpPayload",
+          httpLogType: "OutboundHttpCall",
+          payload: expect.objectContaining({ password: "REDACTED", orderId: "o-1" }),
         })
       )
-      jest.spyOn(Math, "random").mockRestore()
+    })
+
+    it("uses an explicit route when provided instead of defaulting to path", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, path: "/api/v2/orders/123", route: "/api/v2/orders/{id}" })
+
+      expect(bulk.log).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ path: "/api/v2/orders/123", route: "/api/v2/orders/{id}" })
+      )
+    })
+
+    it("derives success from statusCode when not explicitly provided", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, statusCode: 500 })
+
+      expect(bulk.log).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ success: false }))
+    })
+
+    it("logs responseTime and error when provided", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, responseTime: 198, error: { message: "connection reset" } })
+
+      expect(bulk.log).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ responseTime: 198, error: expect.objectContaining({ message: "connection reset" }) })
+      )
+    })
+
+    it("passes authorization through untouched, trusting the caller to have already masked it", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      // Simulates a caller (e.g. Club) that already hashed the token before calling httpPayload().
+      logger.httpPayload({
+        ...call,
+        headers: { Authorization: "Bearer md5:9f8e7d6c5b4a", "x-request-id": "req-1" },
+      })
+
+      const doc = (bulk.log as jest.Mock).mock.calls[0][1]
+      expect(doc.headers.Authorization).toBe("Bearer md5:9f8e7d6c5b4a")
+      expect(doc.headers["x-request-id"]).toBe("req-1")
+    })
+
+    it("drops noise headers (transport/boilerplate) from headers and responseHeaders", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({
+        ...call,
+        headers: { Host: "api.sprinting.io", "Content-Type": "application/json", "x-request-id": "req-1" },
+        responseHeaders: { "Content-Length": "123", Vary: "Accept-Encoding", "x-request-id": "req-1" },
+      })
+
+      const doc = (bulk.log as jest.Mock).mock.calls[0][1]
+      expect(doc.headers).toEqual({ "x-request-id": "req-1" })
+      expect(doc.responseHeaders).toEqual({ "x-request-id": "req-1" })
+    })
+
+    it("still redacts header values that match the default sensitive-word list", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, headers: { "x-api-key": "raw-secret-value", "x-request-id": "req-1" } })
+
+      const doc = (bulk.log as jest.Mock).mock.calls[0][1]
+      expect(doc.headers["x-api-key"]).toBe("REDACTED")
+      expect(doc.headers["x-request-id"]).toBe("req-1")
+    })
+
+    it("sets httpLogType to InboundHttpCall for inbound calls", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "inbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, direction: "inbound" })
+
+      expect(bulk.log).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ logType: "httpPayload", httpLogType: "InboundHttpCall" })
+      )
+    })
+
+    it("omits payload when the matching rule sets logRequest: false", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1, logRequest: false }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, payload: { a: 1 }, responsePayload: { b: 2 } })
+
+      const doc = (bulk.log as jest.Mock).mock.calls[0][1]
+      expect(doc).not.toHaveProperty("payload")
+      expect(doc.responsePayload).toEqual({ b: 2 })
+    })
+
+    it("omits responsePayload when the matching rule sets logResponse: false", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1, logResponse: false }],
+          },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, payload: { a: 1 }, responsePayload: { b: 2 } })
+
+      const doc = (bulk.log as jest.Mock).mock.calls[0][1]
+      expect(doc.payload).toEqual({ a: 1 })
+      expect(doc).not.toHaveProperty("responsePayload")
     })
   })
 })

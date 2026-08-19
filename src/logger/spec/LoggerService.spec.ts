@@ -322,7 +322,7 @@ describe("LoggerService", () => {
 
   it("httpPayload() is a safe no-op on LegacyLoggerService", () => {
     expect(() =>
-      loggerService.httpPayload({ direction: "outbound", verb: "GET", domain: "example.com", path: "/x" })
+      loggerService.httpPayload({ direction: "outbound", method: "GET", domain: "example.com", path: "/x" })
     ).not.toThrow()
     expect(mockTransport.logMessages).toHaveLength(0)
   })

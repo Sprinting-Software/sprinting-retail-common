@@ -43,17 +43,24 @@ export type HttpPayloadDirection = "inbound" | "outbound"
 
 export type HttpPayloadLogRule = {
   direction: HttpPayloadDirection
-  /** e.g. "GET". Omitted or "*" matches any verb. */
-  verb?: string
+  /** e.g. "GET". Omitted or "*" matches any method. */
+  method?: string
   /** Exact or wildcard, e.g. "*.sprinting.io" */
   domain: string
   /** Exact or wildcard, e.g. "/api/v2/orders/*" */
   path: string
-  /** Fraction (0..1) of matching calls to actually log. */
+  /** Fraction (0..1) of matching calls to actually log. Overrides defaultSamplingRate for calls matching this rule. */
   samplingRate: number
+  /** Whether to include the request body when this rule matches. Defaults to true. */
+  logRequest?: boolean
+  /** Whether to include the response body when this rule matches. Defaults to true. */
+  logResponse?: boolean
 }
 
 export type HttpPayloadLoggingConfig = {
+  /** Sampling rate (0..1) applied when no rule in `rules` matches the call, instead of not logging at all. */
+  defaultSamplingRate: number
+  /** Rules are checked first-match-wins; a match overrides defaultSamplingRate (and logRequest/logResponse) for that call. */
   rules: HttpPayloadLogRule[]
 }
 
