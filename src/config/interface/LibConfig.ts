@@ -39,10 +39,29 @@ export type ElkV9BulkConfig = {
   maxBufferSize?: number
 }
 
+export type HttpPayloadDirection = "inbound" | "outbound"
+
+export type HttpPayloadLogRule = {
+  direction: HttpPayloadDirection
+  /** e.g. "GET". Omitted or "*" matches any verb. */
+  verb?: string
+  /** Exact or wildcard, e.g. "*.sprinting.io" */
+  domain: string
+  /** Exact or wildcard, e.g. "/api/v2/orders/*" */
+  path: string
+  /** Fraction (0..1) of matching calls to actually log. */
+  samplingRate: number
+}
+
+export type HttpPayloadLoggingConfig = {
+  rules: HttpPayloadLogRule[]
+}
+
 export type ElkV9Config = {
   elkVersion: typeof ElkVersion.V9
   elkRestApi: ElkV9BulkConfig
   errorTruncationLimit?: number
+  httpPayloadLogging?: HttpPayloadLoggingConfig
 }
 
 /**

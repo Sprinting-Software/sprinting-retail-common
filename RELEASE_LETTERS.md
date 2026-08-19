@@ -1,5 +1,6 @@
 <h2>Release letter for version 11.5.1-beta - 2026-08-18</h2>
 - ELK v9 logs (via BulkLogService) are now split into three separate weekly-rotating indices by log type instead of one shared index: `logs-apm-{env}-{serviceName}-{event|error|log}-{yyyy.ww}`. Each entry in a bulk request now carries its own target index.
+- Added `httpPayload()` to LoggerService for logging HTTP request/response payloads, ELK v9 only. Configure via `ElkV9Config.httpPayloadLogging.rules`: match by direction (inbound/outbound), verb, and wildcard domain/path, each rule with its own sampling rate. Matching payloads are redacted (via `StringUtils.redactAndTruncateForLogging`) and sent to a dedicated weekly-rotating index: `logs-apm-{env}-{serviceName}-httpPayload-{yyyy.ww}`. `LegacyLoggerService` is unaffected — the base `LoggerService.httpPayload()` is a no-op by default.
 
 <h2>Release letter for version 11.5.0-beta - 2026-08-07</h2>
 - Added support for the ELK 9 stack

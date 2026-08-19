@@ -1,4 +1,15 @@
 import { IEventLogContext, LogLevel, LogMessage } from "./types"
+import { HttpPayloadDirection } from "../config/interface/LibConfig"
+
+export type HttpPayloadLogParams = {
+  direction: HttpPayloadDirection
+  verb: string
+  domain: string
+  path: string
+  statusCode?: number
+  requestBody?: any
+  responseBody?: any
+}
 
 export abstract class LoggerService {
   abstract info(fileName: string, message: string, messageData?: Record<string, any>): void
@@ -32,4 +43,14 @@ export abstract class LoggerService {
     context?: Record<string, any>,
     isEvent?: boolean
   ): LogMessage
+
+  /**
+   * Logs an HTTP request/response payload, subject to the configured sampling rules.
+   * No-op by default so existing LoggerService implementations don't need to change;
+   * only ElkV9LoggerService currently implements this.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  httpPayload(params: HttpPayloadLogParams): void {
+    // Intentionally empty default implementation.
+  }
 }

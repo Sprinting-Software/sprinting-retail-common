@@ -67,4 +67,61 @@ describe("ElkV9LoggerService", () => {
     expect((bulk.log as jest.Mock).mock.calls[0][1].message).toContain("...(truncated due to configured limit)")
     captureError.mockRestore()
   })
+
+  describe("httpPayload", () => {
+    const call = { direction: "outbound" as const, verb: "GET", domain: "api.sprinting.io", path: "/api/v2/orders/1" }
+
+    it("does nothing when no rule matches the call", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService({ ...LibTestConfigV9, httpPayloadLogging: { rules: [] } }, bulk)
+
+      logger.httpPayload(call)
+
+      expect(bulk.log).not.toHaveBeenCalled()
+    })
+
+    it("does nothing when the matching rule's sampling rate excludes this call", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: { rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 0.5 }] },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0.9)
+
+      logger.httpPayload(call)
+
+      expect(bulk.log).not.toHaveBeenCalled()
+      jest.spyOn(Math, "random").mockRestore()
+    })
+
+    it("sends to a dedicated httpPayload index and redacts sensitive fields when sampled", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          httpPayloadLogging: { rules: [{ direction: "outbound", domain: "*", path: "*", samplingRate: 1 }] },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, statusCode: 200, requestBody: { password: "secret", orderId: "o-1" } })
+
+      expect(bulk.log).toHaveBeenCalledWith(
+        expect.stringMatching(/^logs-apm-.*-httpPayload-\d{4}\.\d{2}$/),
+        expect.objectContaining({
+          direction: "outbound",
+          verb: "GET",
+          domain: "api.sprinting.io",
+          path: "/api/v2/orders/1",
+          statusCode: 200,
+          requestBody: expect.objectContaining({ password: "REDACTED", orderId: "o-1" }),
+        })
+      )
+      jest.spyOn(Math, "random").mockRestore()
+    })
+  })
 })

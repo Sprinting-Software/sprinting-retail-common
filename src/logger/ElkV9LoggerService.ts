@@ -10,7 +10,9 @@ import { Exception } from "../errorHandling/exceptions/Exception"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 import { IEventLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
 import { BulkLogService } from "./BulkLogService"
-import { LoggerService } from "./LoggerService"
+import { HttpPayloadLogParams, LoggerService } from "./LoggerService"
+import { matchHttpPayloadRule } from "./HttpPayloadRuleMatcher"
+import { StringUtils } from "../helpers/StringUtils"
 
 const { combine, printf, timestamp } = winston.format
 
@@ -209,6 +211,52 @@ export class ElkV9LoggerService extends LoggerService {
     const env = this.config.env.split("-")[0]
     const indexLogType = getIndexLogType(logType)
     return `logs-apm-${env}-${this.config.serviceName}-${indexLogType}-${getYearAndWeek()}`
+  }
+
+  /**
+   * Logs an HTTP request/response payload if a configured rule matches the call and the
+   * rule's sampling rate selects it. Bodies are redacted via StringUtils.redactAndTruncateForLogging
+   * before being sent, since they may contain sensitive data.
+   */
+  httpPayload(params: HttpPayloadLogParams): void {
+    const rule = matchHttpPayloadRule(this.config.httpPayloadLogging?.rules, params)
+    if (!rule) return
+    if (Math.random() >= rule.samplingRate) return
+
+    const timestamp = new Date().toISOString()
+    const env = this.config.env.split("-")[0]
+    const doc: Record<string, any> = {
+      direction: params.direction,
+      verb: params.verb,
+      domain: params.domain,
+      path: params.path,
+      statusCode: params.statusCode,
+      requestBody:
+        params.requestBody !== undefined ? StringUtils.redactAndTruncateForLogging(params.requestBody) : undefined,
+      responseBody:
+        params.responseBody !== undefined ? StringUtils.redactAndTruncateForLogging(params.responseBody) : undefined,
+      system: this.config.serviceName,
+      component: this.config.serviceName,
+      env,
+      systemEnv: `${env}-${this.config.serviceName}`,
+      service: { name: this.config.serviceName, environment: env },
+      labels: { envTags: this.config.envTags, ...this.getAsyncContext() },
+      "log.level": LogLevel.info,
+      "@timestamp": timestamp,
+      timestamp,
+    }
+    const tx = ApmHelper.Instance.getApmAgent().currentTransaction
+    if (tx) {
+      doc["trace.id"] = tx.ids["trace.id"]
+      doc["transaction.id"] = tx.ids["transaction.id"]
+    }
+    this.consoleLogger.log(LogLevel.info, doc)
+    this.bulk.log(this.buildHttpPayloadIndexName(), doc)
+  }
+
+  private buildHttpPayloadIndexName(): string {
+    const env = this.config.env.split("-")[0]
+    return `logs-apm-${env}-${this.config.serviceName}-httpPayload-${getYearAndWeek()}`
   }
 
   private static _getCallerFile(error?: Error) {
