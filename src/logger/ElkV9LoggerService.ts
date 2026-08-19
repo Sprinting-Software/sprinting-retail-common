@@ -205,12 +205,15 @@ export class ElkV9LoggerService extends LoggerService {
 
   /**
    * Builds the target index name for a log, split by type (event/error/log) with weekly
-   * rotation, e.g. `logs-apm-a-bifrostbackend-error-2026.34`.
+   * rotation, e.g. `a-bifrostbackend-error-2026.34`. Deliberately matches LegacyLoggerService's
+   * own index naming (`${env}-${serviceName}-${logType}-${yyyy.ww}`, see initTcpLogger) rather
+   * than a `logs-apm-` prefix: that prefix collides with Kibana's APM app's own index pattern,
+   * which pulls these (non-APM-shaped) documents into trace views it can't render, breaking them.
    */
   private buildIndexName(logType: LogLevel): string {
     const env = this.config.env.split("-")[0]
     const indexLogType = getIndexLogType(logType)
-    return `logs-apm-${env}-${this.config.serviceName}-${indexLogType}-${getYearAndWeek()}`
+    return `${env}-${this.config.serviceName}-${indexLogType}-${getYearAndWeek()}`
   }
 
   /**
@@ -256,7 +259,7 @@ export class ElkV9LoggerService extends LoggerService {
 
   private buildHttpPayloadIndexName(): string {
     const env = this.config.env.split("-")[0]
-    return `logs-apm-${env}-${this.config.serviceName}-httpPayload-${getYearAndWeek()}`
+    return `${env}-${this.config.serviceName}-httpPayload-${getYearAndWeek()}`
   }
 
   private static _getCallerFile(error?: Error) {

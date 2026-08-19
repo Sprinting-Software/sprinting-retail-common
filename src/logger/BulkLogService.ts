@@ -35,7 +35,7 @@ export class BulkLogService implements OnModuleDestroy {
   }
 
   /**
-   * @param index Target index for this document, e.g. `logs-apm-a-bifrostbackend-error-2026.34`
+   * @param index Target index for this document, e.g. `a-bifrostbackend-error-2026.34`
    *   (see ElkV9LoggerService.buildIndexName). Each entry in a single batch may target a
    *   different index — the Elasticsearch `_bulk` API supports mixed-index requests natively.
    */

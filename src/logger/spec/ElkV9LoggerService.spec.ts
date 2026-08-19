@@ -17,7 +17,7 @@ describe("ElkV9LoggerService", () => {
     logger.info("orders.service", "created", { orderId: "o-1" })
 
     expect(bulk.log).toHaveBeenCalledWith(
-      expect.stringMatching(/^logs-apm-.*-log-\d{4}\.\d{2}$/),
+      expect.stringMatching(/^(?!logs-apm-).*-log-\d{4}\.\d{2}$/),
       expect.objectContaining({
         filename: "orders.service",
         message: "created { orderId: 'o-1' }",
@@ -46,7 +46,7 @@ describe("ElkV9LoggerService", () => {
 
     expect(captureError).toHaveBeenCalledTimes(1)
     expect(bulk.log).toHaveBeenCalledWith(
-      expect.stringMatching(/^logs-apm-.*-error-\d{4}\.\d{2}$/),
+      expect.stringMatching(/^(?!logs-apm-).*-error-\d{4}\.\d{2}$/),
       expect.objectContaining({
         filename: expect.any(String),
         message: expect.stringContaining("context: 'orders'"),
@@ -111,7 +111,7 @@ describe("ElkV9LoggerService", () => {
       logger.httpPayload({ ...call, statusCode: 200, requestBody: { password: "secret", orderId: "o-1" } })
 
       expect(bulk.log).toHaveBeenCalledWith(
-        expect.stringMatching(/^logs-apm-.*-httpPayload-\d{4}\.\d{2}$/),
+        expect.stringMatching(/^(?!logs-apm-).*-httpPayload-\d{4}\.\d{2}$/),
         expect.objectContaining({
           direction: "outbound",
           verb: "GET",

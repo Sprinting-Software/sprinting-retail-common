@@ -7,8 +7,8 @@ const config: ElkV9BulkConfig = {
   flushIntervalMs: 60000,
 }
 
-const INDEX = "logs-apm-prod-my-service-log-2026.34"
-const ERROR_INDEX = "logs-apm-prod-my-service-error-2026.34"
+const INDEX = "prod-my-service-log-2026.34"
+const ERROR_INDEX = "prod-my-service-error-2026.34"
 
 describe("BulkLogService", () => {
   let fetchMock: jest.SpyInstance
