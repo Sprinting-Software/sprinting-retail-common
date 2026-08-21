@@ -10,14 +10,14 @@ export class TraceContextMiddleware implements NestMiddleware {
 
   use(req: Request, _res: Response, next: NextFunction): void {
     try {
-      const requestRoute = req.route?.path
-      const requestRouteRoots = getRoots(requestRoute, 5, "requestRoute")
+      // requestRoute (the matched route *pattern*, e.g. /orders/{id}) is deliberately NOT set
+      // here: this middleware runs before Express's router has matched the request, so
+      // req.route is always undefined at this point. See RouteContextInterceptor, which runs
+      // after routing (as a NestJS interceptor) and sets requestRoute correctly.
       const url: RequestTrace = {
         requestDomain: req.headers.host || "",
         requestUrl: `${req.protocol}://${req.headers.host || ""}${req.originalUrl}`,
         requestRouteRaw: req.originalUrl,
-        requestRoute: requestRoute || "",
-        ...requestRouteRoots,
       }
       this.applicationContext.initProperties(removeUndefinedFields(url), true)
     } catch (error) {
@@ -61,7 +61,7 @@ function removeUndefinedFields(x: any): Record<string, any> {
  * @param route  the path string, with or without a leading slash
  * @param n      how many levels to return
  */
-function getRoots(route: string, n: number, fieldName = "level"): Record<string, string> {
+export function getRoots(route: string, n: number, fieldName = "level"): Record<string, string> {
   if (!route) return {}
 
   // Remember if there was a leading slash

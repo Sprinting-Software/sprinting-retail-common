@@ -15,7 +15,8 @@ import { RawLogger } from "./RawLogger"
 import { ExceptionConst } from "../errorHandling/exceptions/ExceptionConst"
 import { ElkBufferedTcpSender } from "./ElkBufferedTcpSender"
 import { AsyncContext } from "../asyncLocalContext/AsyncContext"
-import { LoggerService } from "./LoggerService"
+import { HttpPayloadLogParams, LoggerService } from "./LoggerService"
+import { buildHttpPayloadDocument } from "./HttpPayloadDocBuilder"
 
 const { timestamp, printf, combine } = winston.format
 
@@ -44,6 +45,7 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
   private envPrefix: string
   private tcpLoggerEvents: ElkBufferedTcpLogger
   private tcpLoggerErrors: ElkBufferedTcpLogger
+  private tcpLoggerHttpPayload: ElkBufferedTcpLogger
   private tcpSender: ElkBufferedTcpSender
   udpTransport: UDPTransport
 
@@ -84,6 +86,10 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
     if (config.elkRestApi?.useForErrors) {
       // Find year and week number
       this.tcpLoggerErrors = this.initTcpLogger(config, "error")
+    }
+
+    if (config.httpPayloadLogging) {
+      this.tcpLoggerHttpPayload = this.initHttpPayloadLogger(config)
     }
     // You can use this to get insight into what is sent to ELK
     /*const consoleLogFormatter = winston.format((info) => {
@@ -161,6 +167,11 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
       await this.tcpLoggerErrors.flushAndStop() // Ensure remaining logs are flushed
       this.tcpLoggerErrors = null
     }
+    if (this.tcpLoggerHttpPayload) {
+      RawLogger.debug("Cleaning up logger...")
+      await this.tcpLoggerHttpPayload.flushAndStop() // Ensure remaining logs are flushed
+      this.tcpLoggerHttpPayload = null
+    }
     if (this.tcpSender) {
       RawLogger.debug("Cleaning up logger...")
       await this.tcpSender.flushAndStop() // Ensure remaining logs are flushed
@@ -176,6 +187,29 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
         apiKey: config.elkRestApi.apiKey,
         endpoint: config.elkRestApi.endpoint,
         indexName: `${config.env}-${config.serviceName}-${logType}-${yyyyww}`,
+      })
+    )
+
+    tcpLogger.start()
+    return tcpLogger
+  }
+
+  /**
+   * Reuses the same elkRestApi endpoint/apiKey as events/errors (see initTcpLogger) — the buffered
+   * REST/TCP transport, not UDP. Uses its own classic weekly-rotating index naming (not a data
+   * stream, and not shared with ElkV9LoggerService's `logs-*` scheme) since this targets a
+   * different, older ELK cluster whose API key is scoped to a fixed, pre-provisioned set of
+   * indices and can't auto-create new data streams. Lowercased — Elasticsearch rejects uppercase
+   * index names outright.
+   */
+  private initHttpPayloadLogger(config: LibConfig & ElkV7Config) {
+    if (!config.elkRestApi) return
+    const yyyyww = getYearAndWeek()
+    const tcpLogger = new ElkBufferedTcpLogger(
+      new ElkRestApi({
+        apiKey: config.elkRestApi.apiKey,
+        endpoint: config.elkRestApi.endpoint,
+        indexName: `${config.env}-${config.serviceName}-httppayload-${yyyyww}`.toLowerCase(),
       })
     )
 
@@ -298,6 +332,28 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
       },
     })
     LegacyLoggerService.loggerConsoleOnly.info("Sent to index", { indexName, id })
+  }
+
+  /**
+   * Logs an HTTP request/response payload, subject to the configured sampling rate. Matching,
+   * sampling, and document assembly are shared with ElkV9LoggerService via buildHttpPayloadDocument
+   * — only the send step (below) differs: sent via the buffered REST/TCP transport (same mechanism
+   * as events/errors), not UDP.
+   */
+  httpPayload(params: HttpPayloadLogParams): void {
+    const doc = buildHttpPayloadDocument(params, this.config.httpPayloadLogging, {
+      serviceName: this.config.serviceName,
+      env: this.config.env,
+      envTags: this.config.envTags,
+      asyncContextData: this.getAsyncContext(),
+    })
+    if (!doc) return
+
+    // Pass a copy to the console logger -- ecsFormat's apmIntegration mutates the object it
+    // receives (injecting ecs.version/service.name/event.dataset etc.), which would otherwise
+    // leak into the document actually sent to Elasticsearch and corrupt its service.* fields.
+    LegacyLoggerService.loggerConsoleOnly.info({ ...doc })
+    this.tcpLoggerHttpPayload?.sendObject(doc)
   }
 
   private enrichForTcpAndSend(logMessage: LogMessage, type: "event" | "error") {

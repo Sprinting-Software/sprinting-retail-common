@@ -17,7 +17,7 @@ describe("ElkV9LoggerService", () => {
     logger.info("orders.service", "created", { orderId: "o-1" })
 
     expect(bulk.log).toHaveBeenCalledWith(
-      expect.stringMatching(/^(?!logs-apm-).*-log-\d{4}\.\d{2}$/),
+      expect.stringMatching(/^logs-.*-log-\d{4}\.\d{2}$/),
       expect.objectContaining({
         filename: "orders.service",
         message: "created { orderId: 'o-1' }",
@@ -46,7 +46,7 @@ describe("ElkV9LoggerService", () => {
 
     expect(captureError).toHaveBeenCalledTimes(1)
     expect(bulk.log).toHaveBeenCalledWith(
-      expect.stringMatching(/^(?!logs-apm-).*-error-\d{4}\.\d{2}$/),
+      expect.stringMatching(/^logs-.*-error-\d{4}\.\d{2}$/),
       expect.objectContaining({
         filename: expect.any(String),
         message: expect.stringContaining("context: 'orders'"),
@@ -151,13 +151,13 @@ describe("ElkV9LoggerService", () => {
       logger.httpPayload({ ...call, statusCode: 200, payload: { password: "secret", orderId: "o-1" } })
 
       expect(bulk.log).toHaveBeenCalledWith(
-        expect.stringMatching(/^(?!logs-apm-).*-httppayload-\d{4}\.\d{2}$/),
+        expect.stringMatching(/^logs-.*-httppayload-\d{4}\.\d{2}$/),
         expect.objectContaining({
           direction: "outbound",
-          method: "GET",
-          domain: "api.sprinting.io",
-          path: "/api/v2/orders/1",
-          route: "/api/v2/orders/1",
+          httpMethod: "GET",
+          httpDomain: "api.sprinting.io",
+          httpPath: "/api/v2/orders/1",
+          httpRoute: "/api/v2/orders/1",
           statusCode: 200,
           success: true,
           logType: "httpPayload",
@@ -185,7 +185,7 @@ describe("ElkV9LoggerService", () => {
 
       expect(bulk.log).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ path: "/api/v2/orders/123", route: "/api/v2/orders/{id}" })
+        expect.objectContaining({ httpPath: "/api/v2/orders/123", httpRoute: "/api/v2/orders/{id}" })
       )
     })
 

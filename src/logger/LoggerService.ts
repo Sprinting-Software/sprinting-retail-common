@@ -23,6 +23,12 @@ export type HttpPayloadLogParams = {
   /** Defaults to `statusCode < 300` when omitted and statusCode is present. */
   success?: boolean
   error?: any
+  /**
+   * Pass-through correlation id, entirely up to the caller (e.g. an id from an upstream/downstream
+   * request header, or their own request-scoped tracking id -- matches Club's LogContext.http.
+   * requestTraceId convention). Not generated or interpreted here; only included when provided.
+   */
+  requestTraceId?: string
 }
 
 export abstract class LoggerService {

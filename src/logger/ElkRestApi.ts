@@ -1,5 +1,5 @@
 import { StringUtils } from "../helpers/StringUtils"
-import { fetchOrFail } from "../http/fetchOrFail"
+import { fetchOrFail, fetchOrFailRaw } from "../http/fetchOrFail"
 import { RawLogger } from "./RawLogger"
 import { ElkCustomIndexMessage, ElkLog, ElkRestApiConfig } from "./types"
 
@@ -74,11 +74,15 @@ export class ElkRestApi {
       .join("\n")}\n`
 
     try {
-      const response = await fetchOrFail(`${this.endpoint}/_bulk`, {
-        method: "POST",
-        headers: this.getHeaders(),
-        body: bulkRequestBody,
-      })
+      const response = await fetchOrFailRaw(
+        `${this.endpoint}/_bulk`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: bulkRequestBody,
+        },
+        "ElkRestApi"
+      )
 
       let result: any
       try {

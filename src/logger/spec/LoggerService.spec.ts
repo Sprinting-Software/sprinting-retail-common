@@ -320,7 +320,8 @@ describe("LoggerService", () => {
     })
   })
 
-  it("httpPayload() is a safe no-op on LegacyLoggerService", () => {
+  it("httpPayload() is a safe no-op when httpPayloadLogging isn't configured (mockConfig has none)", () => {
+    // See LegacyLoggerServiceHttpPayload.spec.ts for coverage of the real, configured behavior.
     expect(() =>
       loggerService.httpPayload({ direction: "outbound", method: "GET", domain: "example.com", path: "/x" })
     ).not.toThrow()

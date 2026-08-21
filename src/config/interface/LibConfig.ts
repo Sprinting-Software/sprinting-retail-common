@@ -21,6 +21,11 @@ export type ElkV7Config = {
     host: string
     port: number
   }
+  /**
+   * httpPayload() logging (see LoggerService.httpPayload). Reuses the same elkRestApi
+   * endpoint/apiKey as events/errors — sent via the same buffered REST/TCP transport, not UDP.
+   */
+  httpPayloadLogging?: HttpPayloadLoggingConfig
 }
 
 export type ElkV9BulkConfig = {

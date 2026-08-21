@@ -11,20 +11,13 @@ import { ServerException } from "../errorHandling/exceptions/ServerException"
 import { IEventLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
 import { BulkLogService } from "./BulkLogService"
 import { HttpPayloadLogParams, LoggerService } from "./LoggerService"
-import { matchHttpPayloadRule } from "./HttpPayloadRuleMatcher"
-import { StringUtils } from "../helpers/StringUtils"
+import { buildHttpPayloadDocument } from "./HttpPayloadDocBuilder"
 
 const { combine, printf, timestamp } = winston.format
 
-// Kept in sync conceptually with LegacyLoggerService's own getYearAndWeek(), but duplicated
-// rather than shared — the two logger implementations are intentionally independent.
-function getYearAndWeek(): string {
+function getYearAndMonth(): string {
   const date = new Date()
-  const year = date.getFullYear()
-  const firstDayOfYear = new Date(year, 0, 1)
-  const dayOfYear = Math.floor((date.getTime() - firstDayOfYear.getTime()) / (24 * 60 * 60 * 1000)) + 1
-  const weekNumber = Math.ceil((dayOfYear + firstDayOfYear.getDay()) / 7)
-  return `${year}.${weekNumber.toString().padStart(2, "0")}`
+  return `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, "0")}`
 }
 
 type IndexLogType = "event" | "error" | "log"
@@ -204,131 +197,42 @@ export class ElkV9LoggerService extends LoggerService {
   }
 
   /**
-   * Builds the target index name for a log, split by type (event/error/log) with weekly
-   * rotation, e.g. `a-bifrostbackend-error-2026.34`. Deliberately matches LegacyLoggerService's
-   * own index naming (`${env}-${serviceName}-${logType}-${yyyy.ww}`, see initTcpLogger) rather
-   * than a `logs-apm-` prefix: that prefix collides with Kibana's APM app's own index pattern,
-   * which pulls these (non-APM-shaped) documents into trace views it can't render, breaking them.
+   * Builds the target data stream name for a log, split by type (event/error/log) with monthly
+   * rotation, e.g. `logs-a-bifrostbackend-error-2026.08`. Starting with `logs-` is what gets this
+   * auto-created by the standard `logs-*-*` index template and picked up by Kibana's default Log
+   * Sources (`logs-*`) -- an earlier attempt at `logs-apm-{env}-{serviceName}-{logType}-{yyyy.ww}`
+   * broke Kibana's APM trace view, which is why this avoids a literal `apm` path segment.
    */
   private buildIndexName(logType: LogLevel): string {
     const env = this.config.env.split("-")[0]
     const indexLogType = getIndexLogType(logType)
-    return `${env}-${this.config.serviceName}-${indexLogType}-${getYearAndWeek()}`.toLowerCase()
+    return `logs-${env}-${this.config.serviceName}-${indexLogType}-${getYearAndMonth()}`.toLowerCase()
   }
 
   /**
-   * Logs an HTTP request/response payload, subject to the configured sampling rate. A matching
-   * rule (see HttpPayloadRuleMatcher) overrides `defaultSamplingRate`/`logRequest`/`logResponse`
-   * for that call; otherwise the config's `defaultSamplingRate` applies (with both bodies logged).
-   * Bodies and headers are redacted via StringUtils.redactAndTruncateForLogging before being sent,
-   * since they may contain sensitive data. Header redaction additionally always prunes
-   * authorization/cookie-style keys, which aren't covered by the default sensitive-word list.
+   * Logs an HTTP request/response payload, subject to the configured sampling rate. Matching,
+   * sampling, and document assembly are shared with LegacyLoggerService via buildHttpPayloadDocument
+   * — only the send step (below) differs per logger.
    */
   httpPayload(params: HttpPayloadLogParams): void {
-    const config = this.config.httpPayloadLogging
-    if (!config) return
+    const doc = buildHttpPayloadDocument(params, this.config.httpPayloadLogging, {
+      serviceName: this.config.serviceName,
+      env: this.config.env,
+      envTags: this.config.envTags,
+      asyncContextData: this.getAsyncContext(),
+    })
+    if (!doc) return
 
-    const rule = matchHttpPayloadRule(config.rules, params)
-    const samplingRate = rule?.samplingRate ?? config.defaultSamplingRate
-    if (Math.random() >= samplingRate) return
-
-    const logRequest = rule?.logRequest ?? true
-    const logResponse = rule?.logResponse ?? true
-
-    const timestamp = new Date().toISOString()
-    const env = this.config.env.split("-")[0]
-    const doc: Record<string, any> = {
-      direction: params.direction,
-      method: params.method,
-      domain: params.domain,
-      path: params.path,
-      route: params.route ?? params.path,
-      statusCode: params.statusCode,
-      success: params.success ?? (params.statusCode !== undefined ? params.statusCode < 300 : undefined),
-      ...(logRequest &&
-        params.payload !== undefined && {
-          payload: StringUtils.redactAndTruncateForLogging(params.payload),
-        }),
-      ...(logResponse &&
-        params.responsePayload !== undefined && {
-          responsePayload: StringUtils.redactAndTruncateForLogging(params.responsePayload),
-        }),
-      ...(logRequest &&
-        params.headers !== undefined && {
-          headers: ElkV9LoggerService.redactHeaders(params.headers, ElkV9LoggerService.NOISE_REQUEST_HEADER_KEYS),
-        }),
-      ...(logResponse &&
-        params.responseHeaders !== undefined && {
-          responseHeaders: ElkV9LoggerService.redactHeaders(
-            params.responseHeaders,
-            ElkV9LoggerService.NOISE_RESPONSE_HEADER_KEYS
-          ),
-        }),
-      responseTime: params.responseTime,
-      error: params.error !== undefined ? StringUtils.redactAndTruncateForLogging(params.error) : undefined,
-      system: this.config.serviceName,
-      component: this.config.serviceName,
-      env,
-      systemEnv: `${env}-${this.config.serviceName}`,
-      service: { name: this.config.serviceName, environment: env },
-      labels: { envTags: this.config.envTags, ...this.getAsyncContext() },
-      logType: "httpPayload",
-      httpLogType: params.direction === "inbound" ? "InboundHttpCall" : "OutboundHttpCall",
-      "log.level": LogLevel.info,
-      "@timestamp": timestamp,
-      timestamp,
-    }
-    const tx = ApmHelper.Instance.getApmAgent().currentTransaction
-    if (tx) {
-      doc["trace.id"] = tx.ids["trace.id"]
-      doc["transaction.id"] = tx.ids["transaction.id"]
-    }
-    this.consoleLogger.log(LogLevel.info, doc)
+    // Pass a copy to the console logger -- ecsFormat's apmIntegration mutates the object it
+    // receives (injecting ecs.version/service.name/event.dataset etc.), which would otherwise
+    // leak into the document actually sent to Elasticsearch and corrupt its service.* fields.
+    this.consoleLogger.log(LogLevel.info, { ...doc })
     this.bulk.log(this.buildHttpPayloadIndexName(), doc)
-  }
-
-  // Noise headers dropped before logging (transport/boilerplate, not sensitive) — matches the
-  // convention already used in Club's LogContext.ts (filteredRequestHeaders/filteredResponseHeaders).
-  private static readonly NOISE_REQUEST_HEADER_KEYS = [
-    "accept",
-    "host",
-    "accept-encoding",
-    "user-agent",
-    "content-type",
-    "content-length",
-    "connection",
-    "cache-control",
-    "postman-token",
-    "x-forwarded-for",
-    "x-forwarded-proto",
-    "x-forwarded-port",
-    "x-amzn-trace-id",
-  ]
-  private static readonly NOISE_RESPONSE_HEADER_KEYS = [
-    "accept-ranges",
-    "access-control-expose-headers",
-    "cache-control",
-    "content-length",
-    "content-type",
-    "vary",
-  ]
-
-  /**
-   * Drops noise headers, then applies the default sensitive-word redaction (password/secret/token/
-   * apikey/etc). Deliberately does NOT redact authorization/cookie itself — callers (e.g. Club) may
-   * already mask those before calling httpPayload(), and forcing our own redaction here would
-   * clobber an already-masked value. Callers that don't pre-mask sensitive headers are responsible
-   * for doing so before calling httpPayload().
-   */
-  private static redactHeaders(headers: Record<string, any>, noiseKeys: string[]): Record<string, any> {
-    const noiseKeySet = new Set(noiseKeys)
-    const filtered = Object.fromEntries(Object.entries(headers).filter(([key]) => !noiseKeySet.has(key.toLowerCase())))
-    return StringUtils.redactAndTruncateForLogging(filtered)
   }
 
   private buildHttpPayloadIndexName(): string {
     const env = this.config.env.split("-")[0]
-    return `${env}-${this.config.serviceName}-httpPayload-${getYearAndWeek()}`.toLowerCase()
+    return `logs-${env}-${this.config.serviceName}-httppayload-${getYearAndMonth()}`.toLowerCase()
   }
 
   private static _getCallerFile(error?: Error) {
