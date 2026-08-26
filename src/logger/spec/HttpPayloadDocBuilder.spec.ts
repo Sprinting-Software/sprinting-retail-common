@@ -133,6 +133,55 @@ describe("buildHttpPayloadDocument", () => {
     })
   })
 
+  it("appends the status code to the message when present", () => {
+    jest.spyOn(Math, "random").mockReturnValue(0)
+    const doc = buildHttpPayloadDocument({ ...call, statusCode: 200 }, { defaultSamplingRate: 1, rules: [] }, context)
+    expect(doc.message).toBe("GET api.sprinting.io/api/v2/orders/1 -> 200")
+  })
+
+  it("appends the error to the message when there is no status code", () => {
+    jest.spyOn(Math, "random").mockReturnValue(0)
+    const doc = buildHttpPayloadDocument(
+      { ...call, error: "socket hang up" },
+      { defaultSamplingRate: 1, rules: [] },
+      context
+    )
+    expect(doc.message).toBe("GET api.sprinting.io/api/v2/orders/1 -> socket hang up")
+  })
+
+  it("omits the trailing arrow entirely when neither a status code nor an error is present", () => {
+    jest.spyOn(Math, "random").mockReturnValue(0)
+    const doc = buildHttpPayloadDocument(call, { defaultSamplingRate: 1, rules: [] }, context)
+    expect(doc.message).toBe("GET api.sprinting.io/api/v2/orders/1")
+  })
+
+  it("does not include an InboundHttpCall/OutboundHttpCall prefix in the message - that's the httpLogType field", () => {
+    jest.spyOn(Math, "random").mockReturnValue(0)
+    const doc = buildHttpPayloadDocument(
+      { ...call, direction: "inbound", statusCode: 200 },
+      { defaultSamplingRate: 1, rules: [] },
+      context
+    )
+    expect(doc.message).toBe("GET api.sprinting.io/api/v2/orders/1 -> 200")
+    expect(doc.httpLogType).toBe("InboundHttpCall")
+  })
+
+  it("uses the caller-provided message verbatim when present, ignoring the auto-generated shape", () => {
+    jest.spyOn(Math, "random").mockReturnValue(0)
+    const doc = buildHttpPayloadDocument(
+      { ...call, statusCode: 200, message: "Fetched order 1 from Sprinting" },
+      { defaultSamplingRate: 1, rules: [] },
+      context
+    )
+    expect(doc.message).toBe("Fetched order 1 from Sprinting")
+  })
+
+  it("falls back to the auto-generated message when message is not provided", () => {
+    jest.spyOn(Math, "random").mockReturnValue(0)
+    const doc = buildHttpPayloadDocument({ ...call, statusCode: 200 }, { defaultSamplingRate: 1, rules: [] }, context)
+    expect(doc.message).toBe("GET api.sprinting.io/api/v2/orders/1 -> 200")
+  })
+
   it("includes trace.id/transaction.id when there is a current APM transaction", () => {
     jest.spyOn(Math, "random").mockReturnValue(0)
     jest.spyOn(ApmHelper.Instance, "getApmAgent").mockReturnValue({

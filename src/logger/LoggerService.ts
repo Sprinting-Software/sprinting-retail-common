@@ -29,6 +29,12 @@ export type HttpPayloadLogParams = {
    * requestTraceId convention). Not generated or interpreted here; only included when provided.
    */
   requestTraceId?: string
+  /**
+   * Used verbatim as the document's message when provided. Falls back to an auto-generated
+   * `"{method} {domain}{path} -> {statusCode|error}"` (omitting the arrow entirely when neither
+   * statusCode nor error is present) when omitted.
+   */
+  message?: string
 }
 
 export abstract class LoggerService {

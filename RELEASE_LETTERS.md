@@ -1,3 +1,7 @@
+<h2>Release letter for version 11.5.5-beta - 2026-08-26</h2>
+- `httpPayload()` now accepts an optional `message` on `HttpPayloadLogParams`, used verbatim as the document's `message` field instead of the auto-generated `"{method} {domain}{path} -> {statusCode|error}"` line. Falls back to the auto-generated message when omitted, so existing callers are unaffected. Lets callers (e.g. Club's inbound logging, which logs three phases per request) give each document its own distinguishing text.
+- Dropped the `"InboundHttpCall:"/"OutboundHttpCall:"` prefix from the auto-generated `message` — that classification is already carried by the `httpLogType` field, so the prefix was duplicate, unfilterable text.
+
 <h2>Release letter for version 11.5.4-beta - 2026-08-21</h2>
 - `LegacyLoggerService.httpPayload()` is now a real implementation instead of a no-op: it reuses the existing buffered REST/TCP transport (`ElkBufferedTcpLogger`/`ElkRestApi`, same as events/errors) to send to a dedicated index. Matching/sampling/redaction/doc-shape logic is shared with `ElkV9LoggerService` via a new `HttpPayloadDocBuilder.ts` (`buildHttpPayloadDocument()`), so both loggers behave identically — only the send step differs.
 - Added `httpPayloadLogging` to `ElkV7Config` (previously only on `ElkV9Config`), so `LegacyLoggerService` consumers can configure it the same way.

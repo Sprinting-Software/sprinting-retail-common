@@ -78,9 +78,15 @@ export function buildHttpPayloadDocument(
   // Kibana's APM trace "Logs" tab only picks up documents that look like a log record (it needs
   // a message + processor.event to render/correlate them) -- log/event/error already have both;
   // httpPayload didn't, which is why it never showed up there even with trace.id/transaction.id set.
-  const message = `${httpLogType}: ${params.method ?? ""} ${params.domain ?? ""}${params.path ?? ""} -> ${
-    params.statusCode ?? params.error ?? "ERROR"
-  }`.trim()
+  // No "InboundHttpCall:"/"OutboundHttpCall:" prefix here - that classification is already the
+  // httpLogType field below, driven by the caller's own direction param; repeating it as a message
+  // prefix would just be duplicate, unfilterable text.
+  const outcome = params.statusCode ?? params.error
+  const message =
+    params.message ??
+    `${params.method ?? ""} ${params.domain ?? ""}${params.path ?? ""}${
+      outcome !== undefined ? ` -> ${outcome}` : ""
+    }`.trim()
   const doc: Record<string, any> = {
     message,
     direction: params.direction,
