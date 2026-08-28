@@ -1,44 +1,91 @@
 import { PrincipalName } from "../../baseData/PrincipalName"
 
-/**
- * This configuration is used to configure the instantiation of this library
- */
-export interface LibConfig {
-  logLevel?: string | undefined
-  env: string
-  isProdZone?: boolean
-  serviceName: PrincipalName
-  envTags?: string | undefined
-  /**
-   * If set to false, then no logs or events will be sent to ELK.
-   * APM may still be sent.
-   */
-  enableElkLogs: boolean
-  enableConsoleLogs: boolean
+export const ElkVersion = {
+  V7: "v7",
+  V9: "v9",
+} as const
+export type ElkVersion = (typeof ElkVersion)[keyof typeof ElkVersion]
+
+export type ElkV7Config = {
+  elkVersion?: typeof ElkVersion.V7
+  errorTruncationLimit?: number
   elkRestApi?: {
-    /**
-     * Set to true if events should be sent via the Elastic Rest API instead of over UDP.
-     * This will remove the limitation of UDP which can only send a limited amount of data per event.
-     */
     useForEvents: boolean
     useForErrors: boolean
     endpoint: string
     apiKey: string
-    /**
-     * If set to true, then you can send arbitrary objects to the ELK API
-     */
     enableTcpSender: boolean
   }
-  /**
-   * If set to -1, then no truncation will be done.
-   * Otherwise truncation will be done.
-   */
-  errorTruncationLimit?: number
   elkLogstash: {
     isUDPEnabled: boolean
     host: string
     port: number
   }
+  /**
+   * httpPayload() logging (see LoggerService.httpPayload). Reuses the same elkRestApi
+   * endpoint/apiKey as events/errors — sent via the same buffered REST/TCP transport, not UDP.
+   */
+  httpPayloadLogging?: HttpPayloadLoggingConfig
+}
+
+export type ElkV9BulkConfig = {
+  endpoint: string
+  apiKey: string
+  /**
+   * @deprecated No longer used to select the target index. ElkV9LoggerService now computes a
+   * separate, weekly-rotating index per log type (event/error/log) from the surrounding
+   * LibConfig's `env`/`serviceName` instead. Kept optional so existing configs that still set
+   * it don't need to change.
+   */
+  dataStream?: string
+  maxBatchSize?: number
+  flushIntervalMs?: number
+  maxRetries?: number
+  maxBufferSize?: number
+}
+
+export type HttpPayloadDirection = "inbound" | "outbound"
+
+export type HttpPayloadLogRule = {
+  direction: HttpPayloadDirection
+  /** e.g. "GET". Omitted or "*" matches any method. */
+  method?: string
+  /** Exact or wildcard, e.g. "*.sprinting.io" */
+  domain: string
+  /** Exact or wildcard, e.g. "/api/v2/orders/*" */
+  path: string
+  /** Fraction (0..1) of matching calls to actually log. Overrides defaultSamplingRate for calls matching this rule. */
+  samplingRate: number
+  /** Whether to include the request body when this rule matches. Defaults to true. */
+  logRequest?: boolean
+  /** Whether to include the response body when this rule matches. Defaults to true. */
+  logResponse?: boolean
+}
+
+export type HttpPayloadLoggingConfig = {
+  /** Sampling rate (0..1) applied when no rule in `rules` matches the call, instead of not logging at all. */
+  defaultSamplingRate: number
+  /** Rules are checked first-match-wins; a match overrides defaultSamplingRate (and logRequest/logResponse) for that call. */
+  rules: HttpPayloadLogRule[]
+}
+
+export type ElkV9Config = {
+  elkVersion: typeof ElkVersion.V9
+  elkRestApi: ElkV9BulkConfig
+  errorTruncationLimit?: number
+  httpPayloadLogging?: HttpPayloadLoggingConfig
+}
+
+/**
+ * This configuration is used to configure the instantiation of this library
+ */
+export interface BaseLibConfig {
+  env: string
+  logLevel?: string
+  enableConsoleLogs?: boolean
+  isProdZone?: boolean
+  serviceName: PrincipalName
+  envTags?: string
   /**
    * Set to true if you don't want to set up the global process handlers for uncaught exceptions and unhandled rejections.
    * This is useful during testing where other libraries may set up their own handlers.
@@ -54,3 +101,5 @@ export interface LibConfig {
    */
   includeErrorMessageInHttpResponse?: boolean
 }
+
+export type LibConfig = BaseLibConfig & (ElkV7Config | ElkV9Config)

@@ -38,6 +38,57 @@ const config: RetailCommonConfig = {
 export class AppModule {}
 ```
 
+<h2>ELK configuration</h2>
+
+Pass one configuration to `CommonAppModule.forRoot(config)`. `elkConfig.version` selects the logger implementation.
+
+```ts
+import { LibConfig } from "sprinting-retail-common"
+
+const elk7Config: LibConfig = {
+  serviceName: "orders-service",
+  env: "production",
+  enableConsoleLogs: false,
+  enableElkLogs: true,
+  elkConfig: { version: "v7" },
+  elkLogstash: {
+    isUDPEnabled: true,
+    host: "logstash.example.com",
+    port: 51420,
+  },
+  elkRestApi: {
+    useForEvents: false,
+    useForErrors: false,
+    enableTcpSender: false,
+    endpoint: "http://elasticsearch.example.com:9200",
+    apiKey: process.env.ELK_API_KEY!,
+  },
+}
+```
+
+```ts
+import { LibConfig } from "sprinting-retail-common"
+
+const elk9Config: LibConfig = {
+  serviceName: "orders-service",
+  env: "production",
+  enableConsoleLogs: false,
+  enableElkLogs: true,
+  elkConfig: {
+    version: "v9",
+    node: "https://elasticsearch.example.com:9200",
+    apiKey: process.env.ELK_API_KEY!,
+    dataStream: "logs-orders-service-production",
+    maxBatchSize: 100,
+    flushIntervalMs: 1000,
+    maxRetries: 3,
+    maxBufferSize: 1000,
+  },
+}
+```
+
+ELK 9 uses `ElkV9LoggerService` and the Elasticsearch `_bulk` API. Logs are sent as NDJSON `create` operations to the configured data stream, with `@timestamp` and ECS `log.level`. The service batches in memory, retries network/5xx failures, falls back to the console after delivery failure, and flushes pending logs on shutdown. `node` must be an Elasticsearch endpoint, not a Kibana (`.kb.`) URL.
+
 <h2>Using the LoggerService</h2>
 
 Once you have imported CommonAppModule in your AppModule,
@@ -92,7 +143,7 @@ The logError function will both log the error as part of application logs and at
 
 <h2>Appendix</h2>
 
-For the sending logs the module using Logstash UDP transport.
+ELK 7 sends logs through the Logstash UDP transport.
 To test if udp port is responding, use netcat.
 
 `$ nc -v -u -z -w 3 10.0.0.xxx 5xxx`
