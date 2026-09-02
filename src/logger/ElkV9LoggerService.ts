@@ -197,8 +197,8 @@ export class ElkV9LoggerService extends LoggerService {
   }
 
   /**
-   * Builds the target data stream name for a log, split by type (event/error/log) with monthly
-   * rotation, e.g. `logs-a-bifrostbackend-error-2026.08`. Starting with `logs-` is what gets this
+   * Builds the target data stream name for a log, split by type (event/error/log), e.g.
+   * `logs-a-bifrostbackend-error`. Starting with `logs-` is what gets this
    * auto-created by the standard `logs-*-*` index template and picked up by Kibana's default Log
    * Sources (`logs-*`) -- an earlier attempt at `logs-apm-{env}-{serviceName}-{logType}-{yyyy.ww}`
    * broke Kibana's APM trace view, which is why this avoids a literal `apm` path segment.
@@ -206,7 +206,7 @@ export class ElkV9LoggerService extends LoggerService {
   private buildIndexName(logType: LogLevel): string {
     const env = this.config.env.split("-")[0]
     const indexLogType = getIndexLogType(logType)
-    return `logs-${env}-${this.config.serviceName}-${indexLogType}-${getYearAndMonth()}`.toLowerCase()
+    return `logs-${env}-${this.config.serviceName}-${indexLogType}`.toLowerCase()
   }
 
   /**

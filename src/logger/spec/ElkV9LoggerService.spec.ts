@@ -17,7 +17,7 @@ describe("ElkV9LoggerService", () => {
     logger.info("orders.service", "created", { orderId: "o-1" })
 
     expect(bulk.log).toHaveBeenCalledWith(
-      expect.stringMatching(/^logs-.*-log-\d{4}\.\d{2}$/),
+      expect.stringMatching(/^logs-.*-log$/),
       expect.objectContaining({
         filename: "orders.service",
         message: "created { orderId: 'o-1' }",
@@ -34,6 +34,15 @@ describe("ElkV9LoggerService", () => {
     consoleLog.mockRestore()
   })
 
+  it("uses an undated event data stream name", () => {
+    const bulk = { log: jest.fn() } as unknown as BulkLogService
+    const logger = new ElkV9LoggerService(LibTestConfigV9, bulk)
+
+    logger.event("orders.service", "created", "order", "sales", {})
+
+    expect(bulk.log).toHaveBeenCalledWith(expect.stringMatching(/^logs-.*-event$/), expect.any(Object))
+  })
+
   it("routes error through logError with APM, context, and a caller filename", () => {
     const bulk = { log: jest.fn(), upsert: jest.fn() } as unknown as BulkLogService
     const captureError = jest.spyOn(ApmHelper.Instance, "captureError").mockImplementation()
@@ -46,7 +55,7 @@ describe("ElkV9LoggerService", () => {
 
     expect(captureError).toHaveBeenCalledTimes(1)
     expect(bulk.log).toHaveBeenCalledWith(
-      expect.stringMatching(/^logs-.*-error-\d{4}\.\d{2}$/),
+      expect.stringMatching(/^logs-.*-error$/),
       expect.objectContaining({
         filename: expect.any(String),
         message: expect.stringContaining("context: 'orders'"),
