@@ -9,10 +9,6 @@ function isProduction(envPrefix: string) {
 }
 export class ConfigMapper {
   // --- Helpers ---
-  private static buildDataStream(appConfig: RetailCommonConfig): string {
-    return `logs-${appConfig.systemName}-${appConfig.envPrefix}`
-  }
-
   public static mapToLoggerConfig(
     appConfig: RetailCommonConfig,
     version?: typeof ElkVersion.V7
@@ -69,7 +65,6 @@ export class ConfigMapper {
       elkRestApi: {
         endpoint: restApi.endpoint,
         apiKey: restApi.apiKey,
-        dataStream: this.buildDataStream(appConfig),
       },
     }
   }

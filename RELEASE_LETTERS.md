@@ -1,3 +1,6 @@
+<h2>Release letter for version 11.6.2 - 2026-09-04</h2>
+- Removed `dataStream` property in `ElkV9BulkConfig`.
+
 <h2>Release letter for version 11.6.1 - 2026-09-02</h2>
 - Fixed an issue with the `buildIndexName` method in `ElkV9LoggerService`.
 

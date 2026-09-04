@@ -70,7 +70,6 @@ describe("CommonAppModule", () => {
           elkRestApi: {
             endpoint: "http://localhost:9200",
             apiKey: "test-key",
-            dataStream: "logs-test-default",
           },
         }),
       ],

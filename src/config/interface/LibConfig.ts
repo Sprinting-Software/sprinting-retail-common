@@ -37,7 +37,6 @@ export type ElkV9BulkConfig = {
    * LibConfig's `env`/`serviceName` instead. Kept optional so existing configs that still set
    * it don't need to change.
    */
-  dataStream?: string
   maxBatchSize?: number
   flushIntervalMs?: number
   maxRetries?: number

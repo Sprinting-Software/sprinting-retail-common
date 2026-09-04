@@ -66,7 +66,6 @@ describe("LoggerModule", () => {
             elkRestApi: {
               endpoint: "http://elasticsearch:9200",
               apiKey: "test-api-key",
-              dataStream: "logs-test",
             },
           }),
         ],

@@ -78,7 +78,6 @@ const elk9Config: LibConfig = {
     version: "v9",
     node: "https://elasticsearch.example.com:9200",
     apiKey: process.env.ELK_API_KEY!,
-    dataStream: "logs-orders-service-production",
     maxBatchSize: 100,
     flushIntervalMs: 1000,
     maxRetries: 3,
