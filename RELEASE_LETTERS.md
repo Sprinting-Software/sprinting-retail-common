@@ -1,3 +1,14 @@
+<h2>Release letter for version 12.1.0 - 2026-09-15</h2>
+Merges the ELK v9 logging line (previously shipped as the 11.5.x/11.6.x long-term-support releases below) into the main 12.x line.
+
+- Added support for the ELK v9 stack: a new `ElkV9LoggerService` and `BulkLogService` (bulk-indexing to Elasticsearch data streams), with `LegacyLoggerService` extracted from the old monolithic `LoggerService` for the existing ELK v7 transport.
+- Added `httpPayload()` logging (on `LoggerService`, implemented by both `ElkV9LoggerService` and `LegacyLoggerService`) for logging inbound/outbound HTTP request/response payloads, configurable via `httpPayloadLogging.rules` with a `logToConsole` flag on `HttpPayloadLogParams`.
+- ELK v9 index naming: `logs-{env}-{serviceName}-{type}-{yyyy.mm}`, matched by the standard `logs-*-*` data-stream template so Kibana's default Log Sources (including the trace "Logs" tab) pick it up.
+- Added `RouteContextInterceptor` (wired via `AsyncContextModule`) so `labels.requestRoute` is populated correctly on every log line.
+- Bumped `elastic-apm-node` to `^4.18.0` (from `4.13.0`), pulling in `@opentelemetry/core`/`@opentelemetry/sdk-metrics` v2 and `require-in-the-middle` v8.
+
+See the 11.5.0-beta through 11.6.3 entries below for the full incremental history of this work.
+
 <h2>Release letter for version 11.6.3 - 2026-09-15</h2>
 - Added a `logToConsole` flag to the `HttpPayloadLogParams` type.
 
