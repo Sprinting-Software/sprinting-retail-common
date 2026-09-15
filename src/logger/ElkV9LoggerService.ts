@@ -15,11 +15,6 @@ import { buildHttpPayloadDocument } from "./HttpPayloadDocBuilder"
 
 const { combine, printf, timestamp } = winston.format
 
-function getYearAndMonth(): string {
-  const date = new Date()
-  return `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, "0")}`
-}
-
 type IndexLogType = "event" | "error" | "log"
 
 function getIndexLogType(logType: LogLevel): IndexLogType {
@@ -232,7 +227,7 @@ export class ElkV9LoggerService extends LoggerService {
 
   private buildHttpPayloadIndexName(): string {
     const env = this.config.env.split("-")[0]
-    return `logs-${env}-${this.config.serviceName}-httppayload-${getYearAndMonth()}`.toLowerCase()
+    return `logs-${env}-${this.config.serviceName}-httppayload`.toLowerCase()
   }
 
   private static _getCallerFile(error?: Error) {
