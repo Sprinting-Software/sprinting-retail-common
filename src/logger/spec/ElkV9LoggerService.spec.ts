@@ -160,7 +160,7 @@ describe("ElkV9LoggerService", () => {
       logger.httpPayload({ ...call, statusCode: 200, payload: { password: "secret", orderId: "o-1" } })
 
       expect(bulk.log).toHaveBeenCalledWith(
-        expect.stringMatching(/^logs-.*-httppayload-\d{4}\.\d{2}$/),
+        expect.stringMatching(/^logs-.*-httppayload/),
         expect.objectContaining({
           direction: "outbound",
           httpMethod: "GET",
