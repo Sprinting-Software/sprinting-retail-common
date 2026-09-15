@@ -210,6 +210,7 @@ export class ElkV9LoggerService extends LoggerService {
    * — only the send step (below) differs per logger.
    */
   httpPayload(params: HttpPayloadLogParams): void {
+    const { logToConsole = true } = params
     const doc = buildHttpPayloadDocument(params, this.config.httpPayloadLogging, {
       serviceName: this.config.serviceName,
       env: this.config.env,
@@ -218,10 +219,12 @@ export class ElkV9LoggerService extends LoggerService {
     })
     if (!doc) return
 
-    // Pass a copy to the console logger -- ecsFormat's apmIntegration mutates the object it
-    // receives (injecting ecs.version/service.name/event.dataset etc.), which would otherwise
-    // leak into the document actually sent to Elasticsearch and corrupt its service.* fields.
-    this.consoleLogger.log(LogLevel.info, { ...doc })
+    if (logToConsole) {
+      // Pass a copy to the console logger because ecsFormat's apmIntegration mutates the object it
+      // receives (injecting ecs.version/service.name/event.dataset etc.), which would otherwise
+      // leak into the document actually sent to Elasticsearch and corrupt its service.* fields.
+      this.consoleLogger.log(LogLevel.info, { ...doc })
+    }
     this.bulk.log(this.buildHttpPayloadIndexName(), doc)
   }
 

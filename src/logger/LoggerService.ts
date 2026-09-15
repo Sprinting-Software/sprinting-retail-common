@@ -18,6 +18,8 @@ export type HttpPayloadLogParams = {
   responsePayload?: any
   headers?: Record<string, any>
   responseHeaders?: Record<string, any>
+  /** Set to false to send the HTTP payload only to ELK. Defaults to true. */
+  logToConsole?: boolean
   /** Duration of the call in milliseconds. */
   responseTime?: number
   /** Defaults to `statusCode < 300` when omitted and statusCode is present. */

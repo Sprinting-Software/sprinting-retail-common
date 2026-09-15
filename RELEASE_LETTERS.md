@@ -1,3 +1,6 @@
+<h2>Release letter for version 11.6.3 - 2026-09-15</h2>
+- Added a `logToConsole` flag to the `HttpPayloadLogParams` type.
+
 <h2>Release letter for version 11.6.2 - 2026-09-15</h2>
 - Removed `dataStream` property in `ElkV9BulkConfig`.
 - Fixed the `buildHttpPayloadIndexName` method.

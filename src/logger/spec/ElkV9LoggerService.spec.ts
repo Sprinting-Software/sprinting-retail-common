@@ -332,6 +332,51 @@ describe("ElkV9LoggerService", () => {
       )
     })
 
+    it("can skip console output without skipping ELK delivery", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          enableConsoleLogs: true,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "inbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      const consoleLog = jest.spyOn(winston.transports.Console.prototype, "log").mockImplementation()
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, direction: "inbound", logToConsole: false })
+
+      expect(consoleLog).not.toHaveBeenCalled()
+      expect(bulk.log).toHaveBeenCalledTimes(1)
+      consoleLog.mockRestore()
+    })
+
+    it("logs to console by default", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          enableConsoleLogs: true,
+          httpPayloadLogging: {
+            defaultSamplingRate: 0,
+            rules: [{ direction: "inbound", domain: "*", path: "*", samplingRate: 1 }],
+          },
+        },
+        bulk
+      )
+      const consoleLog = jest.spyOn(winston.transports.Console.prototype, "log").mockImplementation()
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, direction: "inbound" })
+
+      expect(consoleLog).toHaveBeenCalledTimes(1)
+      consoleLog.mockRestore()
+    })
+
     it("omits payload when the matching rule sets logRequest: false", () => {
       const bulk = { log: jest.fn() } as unknown as BulkLogService
       const logger = new ElkV9LoggerService(
