@@ -1,4 +1,5 @@
 import { ICommonLogContext, LoggerService } from "../LoggerService"
+import { LegacyLoggerService } from "../LegacyLoggerService"
 import { ClientException } from "../../errorHandling/exceptions/ClientException"
 
 /**
@@ -25,7 +26,7 @@ describe("logger", () => {
         "Please set the environment variables LOGSTASH_PORT and LOGSTASH_HOST in the file .run/Run all cross tests.run.xml. Please don't check in this change."
       )
     }
-    loggerService = new LoggerService(logstashConfig)
+    loggerService = new LegacyLoggerService(logstashConfig)
   })
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function

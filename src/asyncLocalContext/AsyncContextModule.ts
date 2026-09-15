@@ -1,11 +1,12 @@
 import { DynamicModule, Global, MiddlewareConsumer, Module, NestModule } from "@nestjs/common"
 import { AsyncContext } from "./AsyncContext"
 import { AsyncContextMiddleware } from "./AsyncContextMiddleware"
-import { APP_GUARD, Reflector } from "@nestjs/core"
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from "@nestjs/core"
 import { setApmLabelCallback, AsyncContextOptions } from "./types"
 import { ApmHelper } from "../apm/ApmHelper"
 import { TenantContextGuard } from "./TenantContextGuard"
 import { TraceContextMiddleware } from "./TraceContextMiddleware"
+import { RouteContextInterceptor } from "./RouteContextInterceptor"
 import { SystemContextBase } from "./SystemContextBase"
 import { TraceContext } from "./TraceContext"
 import { RawLogger } from "../logger/RawLogger"
@@ -63,6 +64,10 @@ export class AsyncContextModule implements NestModule {
           inject: [SystemContextBase, Reflector],
           useFactory: (systemContext: SystemContextBase, reflector: Reflector) =>
             new TenantContextGuard(systemContext, reflector, options?.strictHandlingOfTenantIdHeader),
+        },
+        {
+          provide: APP_INTERCEPTOR,
+          useClass: RouteContextInterceptor,
         },
       ],
       exports: [AsyncContext, TraceContext],

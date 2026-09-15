@@ -1,8 +1,9 @@
 import { DynamicModule, Global, Module, Scope } from "@nestjs/common"
 import { LoggerModule } from "../logger/LoggerModule"
 import { APP_FILTER, HttpAdapterHost, REQUEST } from "@nestjs/core"
-import { LibConfig } from "../config/interface/LibConfig"
+import { ElkV7Config, ElkVersion, LibConfig } from "../config/interface/LibConfig"
 import { LoggerService } from "../logger/LoggerService"
+import { LegacyLoggerService } from "../logger/LegacyLoggerService"
 import TenantContext from "../contextdeprecated/TenantContext"
 import { GlobalErrorFilter } from "../errorHandling/GlobalErrorFilter"
 import { TenantContextFactory } from "../contextdeprecated/TenantContextFactory"
@@ -45,7 +46,10 @@ export class CommonAppModule {
         ]
     return {
       module: CommonAppModule, // needed for dynamic modules
-      imports: [LoggerModule.forRootV2(config), SeederModule],
+      imports: [
+        config.elkVersion === ElkVersion.V9 ? LoggerModule.forRootV3(config) : LoggerModule.forRootV2(config),
+        SeederModule,
+      ],
       providers: [
         ...conditionalProvider,
         {
@@ -122,12 +126,12 @@ export class CommonAppModule {
    * @private
    */
   private static setupGlobalProcessHandlersObsolete(configProvider: RetailCommonConfigProvider) {
-    const loggerConfig: LibConfig = ConfigMapper.mapToLoggerConfig(configProvider.config)
+    const loggerConfig: LibConfig & ElkV7Config = ConfigMapper.mapToLoggerConfig(configProvider.config)
     CommonAppModule.setupGlobalProcessHandlers(loggerConfig)
   }
 
-  private static setupGlobalProcessHandlers(loggerConfig: LibConfig) {
-    const logger = new LoggerService(loggerConfig)
+  private static setupGlobalProcessHandlers(loggerConfig: LibConfig & ElkV7Config) {
+    const logger = new LegacyLoggerService(loggerConfig)
     GlobalProcessHandlerProvider.setupGlobalProcessHandlersWithLogger(logger)
   }
 }

@@ -15,7 +15,7 @@ export type FetchResponse<T = any> = {
 export async function fetchOrFail(input: RequestInfo, init?: RequestInit, nameOfService?: string) {
   const response = await fetchOrFailRaw(input, init, nameOfService)
   const contentType = response.headers.get("Content-Type")
-  if (contentType && contentType.includes("application/json")) {
+  if (contentType?.includes("application/json")) {
     return await response.json()
   } else {
     return await response.text()
