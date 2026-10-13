@@ -28,7 +28,8 @@ export class TraceContextMiddleware implements NestMiddleware {
       const clientRoute = req.headers["x-clientroute"]?.toString()
       const clientRouteRoots = getRoots(clientRoute, 5, "clientRoute")
       const client: ClientTrace = {
-        clientTraceId: req.headers["x-clienttraceid"]?.toString(),
+        // GBO and bifrostshop3 send X-Client-TraceId; older clients X-ClientTraceId.
+        clientTraceId: (req.headers["x-clienttraceid"] ?? req.headers["x-client-traceid"])?.toString(),
         clientInMemoryId: req.headers["x-clientinmemoryid"]?.toString(),
         clientLoginSessionId: req.headers["x-clientloginsessionid"]?.toString(),
         clientRoute,
