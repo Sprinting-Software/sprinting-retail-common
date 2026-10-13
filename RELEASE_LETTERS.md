@@ -1,3 +1,11 @@
+<h2>Release letter for version 11.7.0 - 2026-10-13</h2>
+- ELK v9 record tenant convention: a record's tenant is the `tenantId` of its own data, i.e. the `eventContext` of `event()`, the `contextData` of `logError`/`logException`, the `messageData` of `info`/`debug`/`warn`. When present (21, "21" or "tid21") it sets `labels.tenantId` (21) and `labels.tenant` ("tid21") on that record, over the trace context; otherwise the trace context's tenant stays. Jobs and crons get their tenant on the record without a request.
+- ELK v9 labels carry tenants as monikers only: `labels.tenant` ("tid21") and `labels.rootTenant`; the numeric `tenantId`/`rootTenantId` of the trace context are no longer written to labels (they gave one field two types across data streams). The trace context itself is unchanged.
+- `event()` takes `message?: string | { concatFields: string[] }` (`EventMessage`). With `{ concatFields: ["orderNumber", "status"] }` the message is composed from those fields, each taken from the event data, else its context, else its custom data: `EVENT: OrderConfirmed - orderNumber: BI0001258, status: confirmed` (scalar values only, strings up to 60 characters, at most 500 characters in total). A string is used as is; without a message it stays `EVENT: <name> <category> <domain>`. Both loggers.
+- ELK v9: `env` is the environment name and is used as given for the data streams and on every document (`env`, `systemEnv`, `service.environment`, httpPayload included): `env: "p-bm20"` gives `logs-p-bm20-bifrostbackend-event`. It is no longer cut at the first dash, so the service sets the env name it wants in its config.
+- The ELK v7 logger behaves as before apart from accepting `concatFields`. Its httpPayload documents carry `env` as configured, like its index names (before: cut at the first dash).
+- `TraceContextMiddleware` reads `clientTraceId` from `X-Client-TraceId` as well as `X-ClientTraceId`.
+
 <h2>Release letter for version 11.6.3 - 2026-09-15</h2>
 - Added a `logToConsole` flag to the `HttpPayloadLogParams` type.
 
