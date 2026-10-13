@@ -10,6 +10,7 @@ import { RouteContextInterceptor } from "./RouteContextInterceptor"
 import { SystemContextBase } from "./SystemContextBase"
 import { TraceContext } from "./TraceContext"
 import { RawLogger } from "../logger/RawLogger"
+import { isNumericTenantIdKey } from "../logger/TenantLabels"
 @Global()
 @Module({})
 export class AsyncContextModule implements NestModule {
@@ -47,7 +48,8 @@ export class AsyncContextModule implements NestModule {
             // Suppress errors in setting APM labels
             RawLogger.error(e)
           }
-          ApmHelper.Instance.setLabelOnCurrentTransaction(key, value?.toString())
+          // Same labels as the ELK records: tenants as monikers (tenant, rootTenant) only.
+          if (!isNumericTenantIdKey(key)) ApmHelper.Instance.setLabelOnCurrentTransaction(key, value?.toString())
         }
     return {
       module: AsyncContextModule,
