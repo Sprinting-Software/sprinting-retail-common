@@ -46,6 +46,7 @@ function redactHeaders(headers: Record<string, any>, noiseKeys: string[]): Recor
 
 export type HttpPayloadDocContext = {
   serviceName: string
+  /** The environment name written on the document as is, e.g. `p-bm20`. */
   env: string
   envTags?: string
   asyncContextData?: Record<string, any>
@@ -73,7 +74,7 @@ export function buildHttpPayloadDocument(
   const logResponse = rule?.logResponse ?? true
 
   const timestamp = new Date().toISOString()
-  const env = context.env.split("-")[0]
+  const env = context.env
   const httpLogType = params.direction === "inbound" ? "InboundHttpCall" : "OutboundHttpCall"
   // Kibana's APM trace "Logs" tab only picks up documents that look like a log record (it needs
   // a message + processor.event to render/correlate them) -- log/event/error already have both;

@@ -43,6 +43,136 @@ describe("ElkV9LoggerService", () => {
     expect(bulk.log).toHaveBeenCalledWith(expect.stringMatching(/^logs-.*-event$/), expect.any(Object))
   })
 
+  it("uses env as given in data stream names", () => {
+    const bulk = { log: jest.fn() } as unknown as BulkLogService
+    const logger = new ElkV9LoggerService({ ...LibTestConfigV9, env: "p-bm20" }, bulk)
+
+    logger.event("orders.service", "created", "order", "sales", {})
+    logger.info("orders.service", "created")
+
+    expect(bulk.log).toHaveBeenCalledWith(
+      `logs-p-bm20-${LibTestConfig.serviceName}-event`.toLowerCase(),
+      expect.any(Object)
+    )
+    expect(bulk.log).toHaveBeenCalledWith(
+      `logs-p-bm20-${LibTestConfig.serviceName}-log`.toLowerCase(),
+      expect.any(Object)
+    )
+  })
+
+  it("writes env as the env of the document", () => {
+    const bulk = { log: jest.fn() } as unknown as BulkLogService
+    const logger = new ElkV9LoggerService({ ...LibTestConfigV9, env: "p-bm20" }, bulk)
+
+    logger.event("orders.service", "created", "order", "sales", {})
+
+    expect((bulk.log as jest.Mock).mock.calls[0][1]).toEqual(
+      expect.objectContaining({
+        env: "p-bm20",
+        systemEnv: `p-bm20-${LibTestConfig.serviceName}`,
+        service: { name: LibTestConfig.serviceName, environment: "p-bm20" },
+      })
+    )
+  })
+
+  it("writes tenants as monikers only: no numeric tenantId or rootTenantId in labels", () => {
+    const bulk = { log: jest.fn() } as unknown as BulkLogService
+    const traceContext = {
+      getContextOrUndefined: () => ({ tenantId: 21, tenant: "tid21", rootTenantId: 21, rootTenant: "tid21" }),
+    } as AsyncContext
+    new ElkV9LoggerService(LibTestConfigV9, bulk, traceContext).info("orders.service", "created")
+
+    const labels = (bulk.log as jest.Mock).mock.calls[0][1].labels
+    expect(labels).toEqual(expect.objectContaining({ tenant: "tid21", rootTenant: "tid21" }))
+    expect(labels).not.toHaveProperty("tenantId")
+    expect(labels).not.toHaveProperty("rootTenantId")
+  })
+
+  describe("event message", () => {
+    const messageOf = (call: (logger: ElkV9LoggerService) => void) => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      call(new ElkV9LoggerService(LibTestConfigV9, bulk))
+      return (bulk.log as jest.Mock).mock.calls[0][1].message
+    }
+    const context = { orderNumber: "BI0001258", status: "confirmed", shopId: "s-1" }
+
+    it("is EVENT with name, category and domain by default", () => {
+      expect(messageOf((l) => l.event("f", "OrderConfirmed", "c", "Orders", undefined, undefined, context))).toBe(
+        "EVENT: OrderConfirmed c Orders"
+      )
+    })
+
+    it("is composed from the concatFields of the event data, context and custom data, in that order", () => {
+      expect(
+        messageOf((l) =>
+          l.event(
+            "f",
+            "OrderConfirmed",
+            "c",
+            "Orders",
+            { orderNumber: "B1", status: "confirmed" },
+            { concatFields: ["orderNumber", "status", "tenantId", "lineCount"] },
+            { tenantId: 21, status: "pending" },
+            { lineCount: 3 }
+          )
+        )
+      ).toBe("EVENT: OrderConfirmed - orderNumber: B1, status: confirmed, tenantId: 21, lineCount: 3")
+    })
+
+    it("is the caller's message when given", () => {
+      expect(messageOf((l) => l.event("f", "OrderConfirmed", "c", "Orders", undefined, "custom", context))).toBe(
+        "custom"
+      )
+    })
+  })
+
+  describe("record tenant", () => {
+    const docs = (bulk: BulkLogService) => (bulk.log as jest.Mock).mock.calls.map((call) => call[1])
+    const traceContext = {
+      getContextOrUndefined: () => ({ tenantId: 2, tenant: "tid2", userId: "u-1" }),
+    } as AsyncContext
+
+    it("takes the tenant from the record's own data, over the trace context", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(LibTestConfigV9, bulk, traceContext)
+
+      logger.event("orders.service", "created", "order", "sales", undefined, undefined, { tenantId: 21 })
+      logger.info("orders.service", "created", { tenantId: "21" })
+      logger.debug("orders.service", "created", { tenantId: 21 })
+      logger.warn("orders.service", "slow", { tenantId: "tid21" })
+      logger.logError(new Error("failed"), { tenantId: 21 })
+      logger.logException("Failed", "failed", { tenantId: 21 })
+
+      expect(docs(bulk)).toHaveLength(6)
+      for (const doc of docs(bulk)) {
+        expect(doc.labels).toEqual(expect.objectContaining({ tenant: "tid21", userId: "u-1" }))
+      }
+    })
+
+    it("applies to that record only", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(LibTestConfigV9, bulk)
+
+      logger.info("orders.service", "first", { tenantId: 21 })
+      logger.info("orders.service", "second")
+
+      expect(docs(bulk)[0].labels).toEqual(expect.objectContaining({ tenant: "tid21" }))
+      expect(docs(bulk)[1].labels).not.toHaveProperty("tenant")
+    })
+
+    it("keeps the trace context's tenant when the record names none or an invalid one", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(LibTestConfigV9, bulk, traceContext)
+
+      logger.info("orders.service", "created", { tenantId: "abc" })
+      logger.event("orders.service", "created", "order", "sales", undefined, undefined, { orderNumber: "B1" })
+
+      for (const doc of docs(bulk)) {
+        expect(doc.labels).toEqual(expect.objectContaining({ tenant: "tid2" }))
+      }
+    })
+  })
+
   it("routes error through logError with APM, context, and a caller filename", () => {
     const bulk = { log: jest.fn(), upsert: jest.fn() } as unknown as BulkLogService
     const captureError = jest.spyOn(ApmHelper.Instance, "captureError").mockImplementation()
@@ -173,6 +303,26 @@ describe("ElkV9LoggerService", () => {
           httpLogType: "OutboundHttpCall",
           payload: expect.objectContaining({ password: "REDACTED", orderId: "o-1" }),
         })
+      )
+    })
+
+    it("writes env as the env of the httpPayload document", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(
+        {
+          ...LibTestConfigV9,
+          env: "p-bm20",
+          httpPayloadLogging: { defaultSamplingRate: 1, rules: [] },
+        },
+        bulk
+      )
+      jest.spyOn(Math, "random").mockReturnValue(0)
+
+      logger.httpPayload({ ...call, statusCode: 200 })
+
+      expect(bulk.log).toHaveBeenCalledWith(
+        `logs-p-bm20-${LibTestConfig.serviceName}-httppayload`.toLowerCase(),
+        expect.objectContaining({ env: "p-bm20", service: expect.objectContaining({ environment: "p-bm20" }) })
       )
     })
 

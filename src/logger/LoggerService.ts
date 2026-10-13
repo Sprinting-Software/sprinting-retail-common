@@ -1,4 +1,5 @@
 import { IEventLogContext, LogLevel, LogMessage } from "./types"
+import { EventMessage } from "./LoggerHelper"
 import { HttpPayloadDirection } from "../config/interface/LibConfig"
 
 /**
@@ -52,7 +53,8 @@ export abstract class LoggerService {
     eventCategory: string,
     eventDomain: string,
     eventData: any,
-    message?: string,
+    /** The message, or `{ concatFields }` to compose it from those fields of the event (see eventMessage). */
+    message?: EventMessage,
     eventContext?: IEventLogContext,
     customData?: Record<string, any>
   ): void

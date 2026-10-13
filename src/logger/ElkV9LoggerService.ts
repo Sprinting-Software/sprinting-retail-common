@@ -12,6 +12,8 @@ import { IEventLogContext, LogLevel, LogMessage, LogMessageExtended } from "./ty
 import { BulkLogService } from "./BulkLogService"
 import { HttpPayloadLogParams, LoggerService } from "./LoggerService"
 import { buildHttpPayloadDocument } from "./HttpPayloadDocBuilder"
+import { EventMessage, eventMessage } from "./LoggerHelper"
+import { withoutNumericTenantIds, withRecordTenant } from "./TenantLabels"
 
 const { combine, printf, timestamp } = winston.format
 
@@ -76,18 +78,19 @@ export class ElkV9LoggerService extends LoggerService {
     eventCategory: string,
     eventDomain: string,
     eventData: any,
-    message?: string,
+    message?: EventMessage,
     eventContext?: IEventLogContext,
     customData?: Record<string, any>
   ): void {
-    this.write(LogLevel.event, message || `EVENT: ${eventName} ${eventCategory} ${eventDomain}`, fileName, undefined, {
+    const event = {
       name: eventName,
       category: eventCategory,
       domain: eventDomain,
       data: eventData,
       context: eventContext,
       custom: customData,
-    })
+    }
+    this.write(LogLevel.event, eventMessage(event, message), fileName, undefined, event)
   }
 
   logError(error: Exception | Error, contextData?: Record<string, any>): void {
@@ -104,7 +107,7 @@ export class ElkV9LoggerService extends LoggerService {
       LogLevel.error,
       exceptionString,
       exception.contextData,
-      this.getAsyncContext()
+      withRecordTenant(this.getAsyncContext(), exception.contextData)
     )
     this.enrichAndSend(formattedMessage)
   }
@@ -126,7 +129,7 @@ export class ElkV9LoggerService extends LoggerService {
     context?: Record<string, any>,
     isEvent = false
   ): LogMessage {
-    const env = this.config.env.split("-")[0]
+    const env = this.config.env
     return {
       filename: fileName,
       system: this.config.serviceName,
@@ -134,7 +137,7 @@ export class ElkV9LoggerService extends LoggerService {
       env,
       systemEnv: `${env}-${this.config.serviceName}`,
       logType: logLevel,
-      labels: { envTags: this.config.envTags, ...context },
+      labels: { envTags: this.config.envTags, ...withoutNumericTenantIds(context) },
       message: message + (data ? ` ${util.inspect(data, false, 10)}` : ""),
       service: { name: this.config.serviceName, environment: env },
       processor: { event: isEvent ? "event" : logLevel },
@@ -158,7 +161,8 @@ export class ElkV9LoggerService extends LoggerService {
         level,
         message,
         data,
-        this.getAsyncContext(),
+        // The record's tenant comes from its own data: the event context of an event, else the message data.
+        withRecordTenant(this.getAsyncContext(), event ? event.context : data),
         level === LogLevel.event
       )
       if (event) logMessage.event = event
@@ -199,9 +203,8 @@ export class ElkV9LoggerService extends LoggerService {
    * broke Kibana's APM trace view, which is why this avoids a literal `apm` path segment.
    */
   private buildIndexName(logType: LogLevel): string {
-    const env = this.config.env.split("-")[0]
     const indexLogType = getIndexLogType(logType)
-    return `logs-${env}-${this.config.serviceName}-${indexLogType}`.toLowerCase()
+    return `logs-${this.config.env}-${this.config.serviceName}-${indexLogType}`.toLowerCase()
   }
 
   /**
@@ -229,8 +232,7 @@ export class ElkV9LoggerService extends LoggerService {
   }
 
   private buildHttpPayloadIndexName(): string {
-    const env = this.config.env.split("-")[0]
-    return `logs-${env}-${this.config.serviceName}-httppayload`.toLowerCase()
+    return `logs-${this.config.env}-${this.config.serviceName}-httppayload`.toLowerCase()
   }
 
   private static _getCallerFile(error?: Error) {
