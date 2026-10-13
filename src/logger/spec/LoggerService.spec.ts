@@ -320,6 +320,20 @@ describe("LoggerService", () => {
     })
   })
 
+  it("composes the event message from concatFields", () => {
+    loggerService.event(
+      "test-file",
+      "SomeEvent",
+      "Payment",
+      "SomeDomain",
+      { someKey: "someValue" },
+      {
+        concatFields: ["someKey"],
+      }
+    )
+    expect(mockTransport.logMessages.pop().message).toBe("EVENT: SomeEvent - someKey: someValue")
+  })
+
   it("httpPayload() is a safe no-op when httpPayloadLogging isn't configured (mockConfig has none)", () => {
     // See LegacyLoggerServiceHttpPayload.spec.ts for coverage of the real, configured behavior.
     expect(() =>

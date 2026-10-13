@@ -17,6 +17,7 @@ import { ElkBufferedTcpSender } from "./ElkBufferedTcpSender"
 import { AsyncContext } from "../asyncLocalContext/AsyncContext"
 import { HttpPayloadLogParams, LoggerService } from "./LoggerService"
 import { buildHttpPayloadDocument } from "./HttpPayloadDocBuilder"
+import { EventMessage, eventMessage } from "./LoggerHelper"
 
 const { timestamp, printf, combine } = winston.format
 
@@ -290,7 +291,7 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
     eventCategory: string,
     eventDomain: string,
     eventData: any, // Deprecated, use customData instead
-    message?: string,
+    message?: EventMessage,
     eventContext?: IEventLogContext,
     customData?: Record<string, any>
   ) {
@@ -299,7 +300,17 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
     const logMessage = this.formatMessage(
       fileName,
       LogLevel.event,
-      message || `EVENT: ${eventName} ${eventCategory} ${eventDomain}`,
+      eventMessage(
+        {
+          name: eventName,
+          category: eventCategory,
+          domain: eventDomain,
+          data: eventData,
+          context: eventContext,
+          custom: customData,
+        },
+        message
+      ),
       undefined,
       ctx,
       true
