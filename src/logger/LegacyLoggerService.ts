@@ -15,7 +15,7 @@ import { RawLogger } from "./RawLogger"
 import { ExceptionConst } from "../errorHandling/exceptions/ExceptionConst"
 import { ElkBufferedTcpSender } from "./ElkBufferedTcpSender"
 import { AsyncContext } from "../asyncLocalContext/AsyncContext"
-import { HttpPayloadLogParams, LoggerService } from "./LoggerService"
+import { CustomIndexDocument, HttpPayloadLogParams, LoggerService } from "./LoggerService"
 import { buildHttpPayloadDocument } from "./HttpPayloadDocBuilder"
 import { EventMessage, eventMessage } from "./LoggerHelper"
 
@@ -333,7 +333,7 @@ export class LegacyLoggerService extends LoggerService implements OnApplicationS
     }
   }
 
-  sendToIndex({ indexName, id, data }: { indexName: string; id: string; data: Record<string, any> }) {
+  sendToIndex({ indexName, id, data }: CustomIndexDocument) {
     this.tcpSender.sendObject({
       indexName,
       id,

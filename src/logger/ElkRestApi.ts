@@ -50,8 +50,8 @@ export class ElkRestApi {
     this.informOnce(indexName)
 
     try {
-      await fetchOrFail(`${this.endpoint}/${indexName}/_doc/${id}`, {
-        method: "PUT",
+      await fetchOrFail(`${this.endpoint}/${indexName}/_doc/${id ?? ""}`, {
+        method: id === undefined ? "POST" : "PUT",
         headers: this.getHeaders(),
         body: StringUtils.stringifySafe(data),
       })

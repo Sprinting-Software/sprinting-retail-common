@@ -9,6 +9,8 @@ export type BulkLogEntry = {
   /** Target index for this specific document (see ElkV9LoggerService for how this is built). */
   index: string
   doc: Record<string, any>
+  /** Indexes the document under this id (replacing one with the same id); otherwise it is created with a generated id. */
+  id?: string
 }
 
 class BulkDeliveryError extends Error {
@@ -38,16 +40,18 @@ export class BulkLogService implements OnModuleDestroy {
    * @param index Target index for this document, e.g. `a-bifrostbackend-error-2026.34`
    *   (see ElkV9LoggerService.buildIndexName). Each entry in a single batch may target a
    *   different index — the Elasticsearch `_bulk` API supports mixed-index requests natively.
+   * @param id Optional document id (custom indices only, see ElkV9LoggerService.sendToIndex).
    */
-  log(index: string, doc: Record<string, any>): void {
+  log(index: string, doc: Record<string, any>, id?: string): void {
+    const entry: BulkLogEntry = id === undefined ? { index, doc } : { index, doc, id }
     try {
       if (this.buffer.length >= this.maxBufferSize) {
         this.fallback([this.buffer.shift()], new Error("ELK v9 log buffer is full"))
       }
-      this.buffer.push({ index, doc })
+      this.buffer.push(entry)
       if (this.buffer.length >= this.batchSize) void this.flush()
     } catch (error) {
-      this.fallback([{ index, doc }], error)
+      this.fallback([entry], error)
     }
   }
 
@@ -71,8 +75,12 @@ export class BulkLogService implements OnModuleDestroy {
   }
 
   private async send(entries: BulkLogEntry[]): Promise<void> {
+    // Data streams only accept `create`; an entry with its own id is an `index` so it can replace that document.
     const payload = entries
-      .flatMap(({ index, doc }) => [JSON.stringify({ create: { _index: index } }), JSON.stringify(doc)])
+      .flatMap(({ index, doc, id }) => [
+        JSON.stringify(id === undefined ? { create: { _index: index } } : { index: { _index: index, _id: id } }),
+        JSON.stringify(doc),
+      ])
       .join("\n")
       .concat("\n")
     const url = `${this.config.endpoint.replace(/\/$/, "")}/_bulk`
