@@ -39,6 +39,19 @@ describe("BulkLogService", () => {
     await service.onModuleDestroy()
   })
 
+  it("indexes an entry with an id under that id, and creates entries without one", async () => {
+    const service = new BulkLogService({ ...config, maxBatchSize: 2 })
+    service.log("d-kiosk-state", { shopId: "s-1" }, "kiosk-1")
+    service.log(INDEX, { message: "hello" })
+
+    await service.flush()
+
+    expect(fetchMock.mock.calls[0][1].body).toBe(
+      `{"index":{"_index":"d-kiosk-state","_id":"kiosk-1"}}\n{"shopId":"s-1"}\n{"create":{"_index":"${INDEX}"}}\n{"message":"hello"}\n`
+    )
+    await service.onModuleDestroy()
+  })
+
   it("drops the oldest log when the buffer is full", async () => {
     const errorSpy = jest.spyOn(console, "log").mockImplementation()
     const service = new BulkLogService({ ...config, maxBatchSize: 3, maxBufferSize: 2 })

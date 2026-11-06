@@ -207,6 +207,33 @@ describe("ElkV9LoggerService", () => {
     captureError.mockRestore()
   })
 
+  describe("sendToIndex", () => {
+    it("sends the document to the given index with env and @timestamp, letting the document override them", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService({ ...LibTestConfigV9, env: "d" }, bulk)
+
+      logger.sendToIndex({ indexName: "d-kiosk-metrics", data: { shopId: "s-1" } })
+      logger.sendToIndex({ indexName: "d-kiosk-metrics", data: { env: "other", "@timestamp": "then" } })
+
+      expect(bulk.log).toHaveBeenNthCalledWith(
+        1,
+        "d-kiosk-metrics",
+        { env: "d", "@timestamp": expect.any(String), shopId: "s-1" },
+        undefined
+      )
+      expect(bulk.log).toHaveBeenNthCalledWith(2, "d-kiosk-metrics", { env: "other", "@timestamp": "then" }, undefined)
+    })
+
+    it("passes the id on so the document replaces the one with that id", () => {
+      const bulk = { log: jest.fn() } as unknown as BulkLogService
+      const logger = new ElkV9LoggerService(LibTestConfigV9, bulk)
+
+      logger.sendToIndex({ indexName: "d-kiosk-state", id: "kiosk-1", data: {} })
+
+      expect(bulk.log).toHaveBeenCalledWith("d-kiosk-state", expect.any(Object), "kiosk-1")
+    })
+  })
+
   describe("httpPayload", () => {
     const call = {
       direction: "outbound" as const,

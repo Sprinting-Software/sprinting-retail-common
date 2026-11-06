@@ -40,6 +40,15 @@ export type HttpPayloadLogParams = {
   message?: string
 }
 
+/** A document for an index of the caller's choosing, outside the log indices/data streams (see sendToIndex). */
+export type CustomIndexDocument = {
+  /** The target index, in lowercase. A data stream name only works without an `id`. */
+  indexName: string
+  /** Writes the document under this id, replacing a document with the same id. Without it the id is generated. */
+  id?: string
+  data: Record<string, any>
+}
+
 export abstract class LoggerService {
   abstract info(fileName: string, message: string, messageData?: Record<string, any>): void
   abstract debug(fileName: string, message: any, messageData?: Record<string, any>): void
@@ -81,6 +90,16 @@ export abstract class LoggerService {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   httpPayload(params: HttpPayloadLogParams): void {
+    // Intentionally empty default implementation.
+  }
+
+  /**
+   * Sends a document to a custom index, e.g. metrics that dashboards read from their own index.
+   * No-op by default so existing LoggerService implementations don't need to change;
+   * ElkV9LoggerService and LegacyLoggerService implement this.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  sendToIndex(document: CustomIndexDocument): void {
     // Intentionally empty default implementation.
   }
 }
