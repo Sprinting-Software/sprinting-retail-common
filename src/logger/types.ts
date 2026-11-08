@@ -41,7 +41,8 @@ export interface ElkLog {
 
 export interface ElkCustomIndexMessage {
   indexName: string
-  id: string
+  /** Without an id the document is created with a generated one. */
+  id?: string
   data: ElkLog
 }
 

@@ -1,3 +1,9 @@
+<h2>Release letter for version 11.8.0 - 2026-11-06</h2>
+- `LoggerService.sendToIndex({ indexName, id?, data })` sends a document to a custom index, e.g. metrics that dashboards read from their own index. It is on the `LoggerService` API now (no-op by default), so services call it without knowing which logger runs.
+- ELK v9: `ElkV9LoggerService.sendToIndex()` goes through the same `BulkLogService` buffer, API key and console fallback as the logs. The document gets `env` and `@timestamp` unless it carries its own. Without an `id` it is created with a generated id (the API key needs `create_doc`, plus `auto_configure` to auto-create the index); with an `id` it replaces the document of that id (the API key needs `index`). A data stream name only works without an `id`.
+- `BulkLogService.log(index, doc, id?)`: an entry with an id is sent as a bulk `index` action with that `_id`; entries without one stay `create`.
+- ELK v7: `LegacyLoggerService.sendToIndex()` takes an optional `id` as well; without one the document is POSTed with a generated id instead of being written to `_doc/undefined`.
+
 <h2>Release letter for version 11.7.0 - 2026-10-13</h2>
 - ELK v9 record tenant convention: a record's tenant is the `tenantId` of its own data, i.e. the `eventContext` of `event()`, the `contextData` of `logError`/`logException`, the `messageData` of `info`/`debug`/`warn`. When present (21, "21" or "tid21") it sets `labels.tenantId` (21) and `labels.tenant` ("tid21") on that record, over the trace context; otherwise the trace context's tenant stays. Jobs and crons get their tenant on the record without a request.
 - ELK v9 labels carry tenants as monikers only: `labels.tenant` ("tid21") and `labels.rootTenant`; the numeric `tenantId`/`rootTenantId` of the trace context are no longer written to labels (they gave one field two types across data streams). The trace context itself is unchanged.

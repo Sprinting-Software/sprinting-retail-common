@@ -231,6 +231,11 @@ try {
 
 ### Custom Index Logging
 
+Both loggers implement `sendToIndex`. The `id` is optional: with it the document replaces the one
+with that id, without it a new document with a generated id is created. On ELK v9 the document goes
+through the same bulk buffer as the logs and gets `env` and `@timestamp` unless it has its own; the
+API key needs `create_doc` + `auto_configure` on the index (`index` as well when an `id` is used).
+
 ```typescript
 // Send data to custom ELK indices
 this.logger.sendToIndex({

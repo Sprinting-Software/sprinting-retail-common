@@ -10,7 +10,7 @@ import { Exception } from "../errorHandling/exceptions/Exception"
 import { ServerException } from "../errorHandling/exceptions/ServerException"
 import { IEventLogContext, LogLevel, LogMessage, LogMessageExtended } from "./types"
 import { BulkLogService } from "./BulkLogService"
-import { HttpPayloadLogParams, LoggerService } from "./LoggerService"
+import { CustomIndexDocument, HttpPayloadLogParams, LoggerService } from "./LoggerService"
 import { buildHttpPayloadDocument } from "./HttpPayloadDocBuilder"
 import { EventMessage, eventMessage } from "./LoggerHelper"
 import { withoutNumericTenantIds, withRecordTenant } from "./TenantLabels"
@@ -233,6 +233,16 @@ export class ElkV9LoggerService extends LoggerService {
 
   private buildHttpPayloadIndexName(): string {
     return `logs-${this.config.env}-${this.config.serviceName}-httppayload`.toLowerCase()
+  }
+
+  /**
+   * Sends a document to a custom index through the same bulk buffer, API key and console fallback as
+   * the logs. The document gets `env` and `@timestamp` unless it carries its own. Without an `id` it is
+   * created (the API key needs `create_doc`, plus `auto_configure` for the index to be auto-created);
+   * with one it replaces the document of that id (the API key needs `index`).
+   */
+  sendToIndex({ indexName, id, data }: CustomIndexDocument): void {
+    this.bulk.log(indexName, { env: this.config.env, "@timestamp": new Date().toISOString(), ...data }, id)
   }
 
   private static _getCallerFile(error?: Error) {
