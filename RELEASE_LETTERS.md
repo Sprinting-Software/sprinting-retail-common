@@ -1,3 +1,6 @@
+<h2>Release letter for version 12.2.1 - 2026-11-09</h2>
+- `ApmHelper` masks the APM `apiKey` as well as the `secretToken` when it logs its config at startup (and in the warning about a second `init()` with a different config). Before, the API key was written to the console in plain text. The first two characters stay visible (`"apiKey":"Rm********"`) so the logged key can be matched to the issued ones; a value of 8 characters or less is masked completely. Same fix as 11.8.1.
+
 <h2>Release letter for version 12.2.0 - 2026-10-13</h2>
 Merges the 11.7.0 long-term-support release into the main 12.x line.
 
