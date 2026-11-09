@@ -237,9 +237,11 @@ function emitWarningIfConfigIsChanged(config0: Partial<IApmConfig>) {
   // must have been called before
   // check if config0 has any values different from ApmHelper.config. If it does, console.log a warning
   const changedConfig = {}
+  const now = maskApmSecrets(config0)
+  const before = maskApmSecrets(apmConfigSingleton)
   Object.keys(config0).forEach((key) => {
     if (apmConfigSingleton[key] !== config0[key]) {
-      changedConfig[key] = `Now: ${config0[key]}, before: ${apmConfigSingleton[key]}`
+      changedConfig[key] = `Now: ${now[key]}, before: ${before[key]}`
     }
   })
   if (Object.keys(changedConfig).length > 0) {
@@ -252,7 +254,20 @@ function emitWarningIfConfigIsChanged(config0: Partial<IApmConfig>) {
 }
 
 function logConfigToConsole(config: any) {
-  const configToBeLogged = { ...config }
-  if (configToBeLogged.secretToken) configToBeLogged.secretToken = "********"
-  myConsole(`ApmHelper.init() called with config: ${StringUtils.stringifySafeWithFallback(configToBeLogged)}`)
+  myConsole(`ApmHelper.init() called with config: ${StringUtils.stringifySafeWithFallback(maskApmSecrets(config))}`)
+}
+
+const APM_SECRET_KEYS = ["secretToken", "apiKey"]
+
+/**
+ * A copy of the APM config with its credentials (secretToken, apiKey) masked, so it can be logged. The first two
+ * characters stay visible to tell which key was applied; a value of 8 characters or less is masked completely.
+ */
+export function maskApmSecrets<T extends Partial<IApmConfig>>(config: T): T {
+  const masked = { ...config }
+  APM_SECRET_KEYS.filter((key) => masked[key]).forEach((key) => {
+    const value = String(masked[key])
+    masked[key] = `${value.length > 8 ? value.slice(0, 2) : ""}********`
+  })
+  return masked
 }
