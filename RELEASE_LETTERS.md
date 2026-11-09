@@ -1,3 +1,6 @@
+<h2>Release letter for version 11.8.1 - 2026-11-09</h2>
+- `ApmHelper` masks the APM `apiKey` as well as the `secretToken` when it logs its config at startup (and in the warning about a second `init()` with a different config). Before, the API key was written to the console in plain text. The first two characters stay visible (`"apiKey":"Rm********"`) so the logged key can be matched to the issued ones; a value of 8 characters or less is masked completely.
+
 <h2>Release letter for version 11.8.0 - 2026-11-06</h2>
 - `LoggerService.sendToIndex({ indexName, id?, data })` sends a document to a custom index, e.g. metrics that dashboards read from their own index. It is on the `LoggerService` API now (no-op by default), so services call it without knowing which logger runs.
 - ELK v9: `ElkV9LoggerService.sendToIndex()` goes through the same `BulkLogService` buffer, API key and console fallback as the logs. The document gets `env` and `@timestamp` unless it carries its own. Without an `id` it is created with a generated id (the API key needs `create_doc`, plus `auto_configure` to auto-create the index); with an `id` it replaces the document of that id (the API key needs `index`). A data stream name only works without an `id`.
